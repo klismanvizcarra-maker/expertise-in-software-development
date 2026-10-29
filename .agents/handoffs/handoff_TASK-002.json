@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-002",
+  "summary": "Implementar linter automatizado de calidad estructural de skills",
+  "source_agent": "qa-security-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-29T21:57:41Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/orchestrator-agent/SKILL.md" },
+    { "type": "file", "path": ".github/workflows/library.yml" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" },
+    { "type": "file", "path": "tests/test-skills.sh" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
