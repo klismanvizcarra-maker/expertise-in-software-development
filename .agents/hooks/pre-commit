@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Git Hook: pre-commit (Escaneo de Secretos y Auditoría de Estado)
+# ==============================================================================
+
+set -e
+
+echo "🔍 Ejecutando pre-commit hook..."
+
+ROOT="$(git rev-parse --show-toplevel)"
+SCRIPTS="$ROOT/.agents/scripts"
+
+# 1. Secretos y archivos .env en los cambios preparados
+if [ -f "$SCRIPTS/scan-secrets.sh" ]; then
+  bash "$SCRIPTS/scan-secrets.sh" --staged
+else
+  echo "⚠️  No se encontró .agents/scripts/scan-secrets.sh; se omite el escaneo de secretos."
+fi
+
+# 2. Integridad de GLOBAL_STATE.md si está presente
+if [ -f "$ROOT/GLOBAL_STATE.md" ] && [ -f "$SCRIPTS/validate-state.sh" ]; then
+  bash "$SCRIPTS/validate-state.sh" "$ROOT/GLOBAL_STATE.md"
+fi
+
+echo "✅ Verificación pre-commit aprobada."
+exit 0

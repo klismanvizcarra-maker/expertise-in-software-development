@@ -1,0 +1,918 @@
+{
+ "_doc": "Batería de activación de skills. Dos tipos de caso: 'entrada' (petición nueva sin tarea: según AGENTS.md debe pasar por nueva-tarea/orchestrator-agent) y 'especialista' (trabajo sobre una TASK ya en curso: debe cargar la skill del rol o la técnica). expect: al menos una debe cargarse (vacío = ninguna). accept: válidas sin contar como acierto. forbid: no deben cargarse.",
+ "cases": [
+  {
+   "id": "orch-01",
+   "prompt": "Quiero añadir un sistema de reservas con pagos a la app; planifica el trabajo",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "product-manager-agent",
+    "payments-stripe",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "backend-agent",
+    "frontend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "orch-02",
+   "prompt": "La tarea TASK-007 está bloqueada en 3/3 rechazos de QA, ¿qué hacemos ahora?",
+   "expect": [
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "estado"
+   ],
+   "forbid": [
+    "qa-review"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "pm-01",
+   "prompt": "Tengo una idea: una app para que los gimnasios gestionen sus clases y reservas. Ayúdame a definirla",
+   "expect": [
+    "product-manager-agent"
+   ],
+   "accept": [
+    "iniciar-proyecto"
+   ],
+   "forbid": [
+    "backend-agent",
+    "frontend-agent",
+    "nueva-tarea"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "pm-02",
+   "prompt": "Escribe las historias de usuario con criterios Gherkin para el registro de usuarios",
+   "expect": [
+    "product-manager-agent"
+   ],
+   "accept": [],
+   "forbid": [
+    "qa-security-agent",
+    "e2e-testing"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "be-01",
+   "prompt": "Crea el endpoint POST /api/v1/orders con validación del body y paginación en el listado",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "backend-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "frontend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "be-02",
+   "prompt": "Add a REST endpoint to delete a customer",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "backend-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "frontend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "db-01",
+   "prompt": "Diseña el esquema de la tabla de pedidos y sus relaciones con usuarios y productos",
+   "expect": [
+    "database-architect-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "backend-agent",
+    "frontend-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "db-02",
+   "prompt": "La consulta del listado de pedidos tarda 4 segundos, revisa los índices",
+   "expect": [
+    "database-architect-agent"
+   ],
+   "accept": [
+    "web-performance",
+    "stack-angular-express-postgres",
+    "bugfix"
+   ],
+   "forbid": [
+    "frontend-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "db-03",
+   "prompt": "Añade una migración con Drizzle para la columna phone en la tabla users",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "database-architect-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "frontend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "dom-01",
+   "prompt": "Define la máquina de estados de un pedido: borrador, pagado, enviado, entregado y cancelado",
+   "expect": [
+    "domain-logic-agent"
+   ],
+   "accept": [
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "frontend-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "dom-02",
+   "prompt": "Implementa el cálculo de prorrateo cuando un cliente cambia de plan a mitad de mes",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "domain-logic-agent",
+    "payments-stripe",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "frontend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "fe-01",
+   "prompt": "Crea la pantalla de listado de pedidos en Angular con estados de carga, vacío y error",
+   "expect": [
+    "frontend-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres",
+    "nueva-tarea",
+    "ui-ux-agent"
+   ],
+   "forbid": [
+    "backend-agent",
+    "mobile-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "fe-02",
+   "prompt": "El formulario de registro no muestra los mensajes de error de validación",
+   "expect": [
+    "bugfix",
+    "frontend-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "backend-agent",
+    "mobile-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "ux-01",
+   "prompt": "La app se ve genérica; define una paleta de colores y un sistema de tokens con modo oscuro",
+   "expect": [
+    "ui-ux-agent"
+   ],
+   "accept": [
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "backend-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "ux-02",
+   "prompt": "Audita la usabilidad y la accesibilidad de la pantalla de checkout",
+   "expect": [
+    "ui-ux-agent"
+   ],
+   "accept": [
+    "qa-security-agent"
+   ],
+   "forbid": [
+    "backend-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "mob-01",
+   "prompt": "Quiero una versión para iPhone y Android de la app con notificaciones push",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "mobile-agent",
+    "product-manager-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "frontend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "qa-01",
+   "prompt": "Haz una auditoría de seguridad OWASP de la API antes del lanzamiento",
+   "expect": [
+    "qa-security-agent"
+   ],
+   "accept": [
+    "qa-review"
+   ],
+   "forbid": [
+    "release"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "qa-02",
+   "prompt": "Revisa la TASK-004, que está en IN_REVIEW_QA",
+   "expect": [
+    "qa-review"
+   ],
+   "accept": [
+    "qa-security-agent"
+   ],
+   "forbid": [
+    "handoff"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "qa-03",
+   "prompt": "Aprueba o rechaza la entrega del endpoint de login",
+   "expect": [
+    "qa-review"
+   ],
+   "accept": [
+    "qa-security-agent"
+   ],
+   "forbid": [
+    "handoff"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "ops-01",
+   "prompt": "Configura un pipeline de GitHub Actions que ejecute los tests y el build",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "devops-cloud-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "release"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "ops-02",
+   "prompt": "Crea un Dockerfile para la API que corra con usuario no root",
+   "expect": [
+    "devops-cloud-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "backend-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "doc-01",
+   "prompt": "Actualiza el README y genera la especificación OpenAPI de los endpoints",
+   "expect": [
+    "docs-architecture-agent"
+   ],
+   "accept": [],
+   "forbid": [
+    "product-manager-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "doc-02",
+   "prompt": "Hemos decidido usar Redis para la caché; deja documentada la decisión",
+   "expect": [
+    "docs-architecture-agent"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "product-manager-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "ai-01",
+   "prompt": "Añade un asistente que resuma los pedidos con un LLM y devuelva JSON validado",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "ai-integrator-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "backend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "ai-02",
+   "prompt": "Quiero búsqueda semántica sobre los artículos de ayuda usando embeddings",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "ai-integrator-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "seo-web"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "est-01",
+   "prompt": "¿Cómo va el proyecto? ¿Qué falta?",
+   "expect": [
+    "estado"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "est-02",
+   "prompt": "Retomo el trabajo de ayer, ¿por dónde sigo?",
+   "expect": [
+    "estado"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "ini-01",
+   "prompt": "Vamos a empezar un proyecto nuevo: configura el stack y el estado global",
+   "expect": [
+    "iniciar-proyecto"
+   ],
+   "accept": [
+    "orchestrator-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "nt-01",
+   "prompt": "Crea una tarea para añadir exportación a CSV del listado de clientes",
+   "expect": [
+    "nueva-tarea"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "backend-agent",
+    "frontend-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "ho-01",
+   "prompt": "Ya terminé la TASK-005, pásala a QA",
+   "expect": [
+    "handoff"
+   ],
+   "accept": [],
+   "forbid": [
+    "qa-review"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "apr-01",
+   "prompt": "Recuerda esto para el futuro: el pool de Postgres se agotaba porque no cerrábamos las conexiones en los tests",
+   "expect": [
+    "aprender"
+   ],
+   "accept": [],
+   "forbid": [
+    "bugfix"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "bug-01",
+   "prompt": "Al guardar un pedido con descuento el total sale negativo",
+   "expect": [
+    "bugfix"
+   ],
+   "accept": [
+    "domain-logic-agent",
+    "backend-agent"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "bug-02",
+   "prompt": "El middleware de autenticación devuelve 500 cuando el token ha expirado",
+   "expect": [
+    "bugfix"
+   ],
+   "accept": [
+    "backend-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "rel-01",
+   "prompt": "Saca la versión 1.2.0 a producción",
+   "expect": [
+    "release"
+   ],
+   "accept": [
+    "devops-cloud-agent"
+   ],
+   "forbid": [],
+   "type": "especialista"
+  },
+  {
+   "id": "rel-02",
+   "prompt": "Prepara el release con el changelog",
+   "expect": [
+    "release"
+   ],
+   "accept": [
+    "docs-architecture-agent"
+   ],
+   "forbid": [],
+   "type": "especialista"
+  },
+  {
+   "id": "stk-01",
+   "prompt": "¿Cómo debería estructurar el monorepo de la nueva app con Angular y Express?",
+   "expect": [
+    "stack-angular-express-postgres"
+   ],
+   "accept": [
+    "iniciar-proyecto"
+   ],
+   "forbid": [
+    "mobile-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "e2e-01",
+   "prompt": "Escribe pruebas end-to-end con Playwright para el flujo de login",
+   "expect": [
+    "e2e-testing"
+   ],
+   "accept": [
+    "qa-security-agent",
+    "nueva-tarea"
+   ],
+   "forbid": [],
+   "type": "especialista"
+  },
+  {
+   "id": "e2e-02",
+   "prompt": "El test E2E del checkout falla de forma intermitente",
+   "expect": [
+    "e2e-testing",
+    "bugfix"
+   ],
+   "accept": [],
+   "forbid": [
+    "nueva-tarea"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "pay-01",
+   "prompt": "Añade suscripciones mensuales con Stripe",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "payments-stripe",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [],
+   "type": "entrada"
+  },
+  {
+   "id": "pay-02",
+   "prompt": "El webhook de Stripe responde con error de firma inválida",
+   "expect": [
+    "payments-stripe"
+   ],
+   "accept": [
+    "bugfix"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "seo-01",
+   "prompt": "La landing no aparece en Google y al compartirla por WhatsApp no sale ninguna imagen",
+   "expect": [
+    "seo-web"
+   ],
+   "accept": [],
+   "forbid": [
+    "web-performance"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "seo-02",
+   "prompt": "Añade sitemap.xml y robots.txt a la web",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "seo-web",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [],
+   "type": "entrada"
+  },
+  {
+   "id": "perf-01",
+   "prompt": "La página principal tarda mucho en cargar en el móvil; mejora el LCP",
+   "expect": [
+    "web-performance"
+   ],
+   "accept": [
+    "bugfix"
+   ],
+   "forbid": [
+    "seo-web",
+    "mobile-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "perf-02",
+   "prompt": "El build falla porque excede el presupuesto de tamaño del bundle",
+   "expect": [
+    "web-performance"
+   ],
+   "accept": [
+    "devops-cloud-agent",
+    "bugfix"
+   ],
+   "forbid": [],
+   "type": "especialista"
+  },
+  {
+   "id": "perf-03",
+   "prompt": "Our checkout page is slow",
+   "expect": [
+    "web-performance"
+   ],
+   "accept": [
+    "bugfix"
+   ],
+   "forbid": [
+    "payments-stripe"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "i18n-01",
+   "prompt": "La app tiene que estar en español y en inglés",
+   "expect": [
+    "nueva-tarea",
+    "orchestrator-agent"
+   ],
+   "accept": [
+    "i18n",
+    "product-manager-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [],
+   "type": "entrada"
+  },
+  {
+   "id": "i18n-02",
+   "prompt": "Traduce la pantalla de precios al inglés",
+   "expect": [
+    "i18n"
+   ],
+   "accept": [],
+   "forbid": [
+    "seo-web"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "neg-01",
+   "prompt": "¿Qué diferencia hay entre una cookie httpOnly y localStorage?",
+   "expect": [],
+   "accept": [],
+   "forbid": [],
+   "type": "especialista"
+  },
+  {
+   "id": "neg-02",
+   "prompt": "Explícame qué hace esta expresión regular: ^[a-z0-9_-]+$",
+   "expect": [],
+   "accept": [],
+   "forbid": [],
+   "type": "especialista"
+  },
+  {
+   "id": "neg-03",
+   "prompt": "Hola, ¿qué puedes hacer en este proyecto?",
+   "expect": [],
+   "accept": [
+    "estado"
+   ],
+   "forbid": [],
+   "type": "especialista"
+  },
+  {
+   "id": "be-03",
+   "type": "especialista",
+   "prompt": "Continúa con la TASK-005: el endpoint POST /api/v1/orders con validación y paginación",
+   "expect": [
+    "backend-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "frontend-agent",
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "db-04",
+   "type": "especialista",
+   "prompt": "Sigue con la TASK-006: añade la migración de Drizzle para la columna phone en users",
+   "expect": [
+    "database-architect-agent",
+    "stack-angular-express-postgres"
+   ],
+   "accept": [],
+   "forbid": [
+    "frontend-agent",
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "dom-03",
+   "type": "especialista",
+   "prompt": "Trabaja en la TASK-007: el cálculo de prorrateo cuando un cliente cambia de plan",
+   "expect": [
+    "domain-logic-agent"
+   ],
+   "accept": [
+    "payments-stripe",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "mob-02",
+   "type": "especialista",
+   "prompt": "Empieza a implementar la TASK-008: la app móvil con notificaciones push",
+   "expect": [
+    "mobile-agent"
+   ],
+   "accept": [],
+   "forbid": [
+    "frontend-agent",
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "ops-03",
+   "type": "especialista",
+   "prompt": "Continúa con la TASK-009: el pipeline de GitHub Actions",
+   "expect": [
+    "devops-cloud-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "ai-03",
+   "type": "especialista",
+   "prompt": "Sigue con la TASK-010: el resumen de pedidos con un LLM y salida JSON validada",
+   "expect": [
+    "ai-integrator-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "ai-04",
+   "type": "especialista",
+   "prompt": "Trabaja en la TASK-011: la búsqueda semántica con embeddings",
+   "expect": [
+    "ai-integrator-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "seo-web",
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "pay-03",
+   "type": "especialista",
+   "prompt": "Continúa con la TASK-012: las suscripciones mensuales con Stripe",
+   "expect": [
+    "payments-stripe"
+   ],
+   "accept": [
+    "backend-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "seo-03",
+   "type": "especialista",
+   "prompt": "Sigue con la TASK-013: sitemap.xml y robots.txt",
+   "expect": [
+    "seo-web"
+   ],
+   "accept": [
+    "frontend-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ]
+  },
+  {
+   "id": "i18n-03",
+   "type": "especialista",
+   "prompt": "Trabaja en la TASK-014: que la app esté en español e inglés",
+   "expect": [
+    "i18n"
+   ],
+   "accept": [
+    "frontend-agent",
+    "stack-angular-express-postgres"
+   ],
+   "forbid": [
+    "nueva-tarea"
+   ]
+  }
+ ],
+ "_seed_tasks": [
+  {
+   "desc": "Endpoint de login",
+   "agent": "backend-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "Pantalla de pedidos",
+   "agent": "frontend-agent",
+   "status": "IN_REVIEW_QA"
+  },
+  {
+   "desc": "Endpoint POST /api/v1/orders con validación y paginación",
+   "agent": "backend-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "Columna phone en users con migración Drizzle",
+   "agent": "database-architect-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "Cálculo de prorrateo al cambiar de plan",
+   "agent": "domain-logic-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "App móvil iOS y Android con notificaciones push",
+   "agent": "mobile-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "Pipeline de GitHub Actions con tests y build",
+   "agent": "devops-cloud-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "Resumen de pedidos con LLM y salida JSON validada",
+   "agent": "ai-integrator-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "Búsqueda semántica en artículos de ayuda con embeddings",
+   "agent": "ai-integrator-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "Suscripciones mensuales con Stripe",
+   "agent": "backend-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "sitemap.xml y robots.txt para la web pública",
+   "agent": "frontend-agent",
+   "status": "IN_PROGRESS"
+  },
+  {
+   "desc": "App disponible en español e inglés",
+   "agent": "frontend-agent",
+   "status": "IN_PROGRESS"
+  }
+ ]
+}

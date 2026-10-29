@@ -1,0 +1,4 @@
+# Resultados de ejecuciones contra Claude Code (locales, con coste)
+triggers/results/
+evals/results/
+__pycache__/

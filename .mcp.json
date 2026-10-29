@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "web-tester-playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    }
+  }
+}

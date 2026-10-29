@@ -1,0 +1,75 @@
+name: Multi-Agent Quality & Security Audit
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  agent-governance-audit:
+    name: Auditoría de Reglas de Agentes y Seguridad
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 1. Auditar Estado Global (validate-state.sh)
+        run: |
+          if [ -f "GLOBAL_STATE.md" ] && [ -f ".agents/scripts/validate-state.sh" ]; then
+            chmod +x .agents/scripts/validate-state.sh
+            ./.agents/scripts/validate-state.sh GLOBAL_STATE.md
+          else
+            echo "GLOBAL_STATE.md no presente o en setup inicial."
+          fi
+
+      - name: 2. Escaneo de Secretos Expuestos
+        run: bash .agents/scripts/scan-secrets.sh --all
+
+      - name: 3. Verificar Convención de Commits en Pull Request
+        if: github.event_name == 'pull_request'
+        run: |
+          COMMITS=$(git log --no-merges --pretty=format:"%s" origin/${{ github.base_ref }}..HEAD)
+          PATTERN="^(feat|fix|test|docs|refactor|perf|chore|style|build|ci)\(TASK-[0-9]+\): .+$"
+          FAILED=0
+          while IFS= read -r commit; do
+            if [ -n "$commit" ] && ! echo "$commit" | grep -qE "$PATTERN"; then
+              echo "❌ Commit no convencional: '$commit'"
+              FAILED=1
+            fi
+          done <<< "$COMMITS"
+          if [ $FAILED -eq 1 ]; then
+            echo "Usa el formato: tipo(TASK-XXX): descripción"
+            exit 1
+          else
+            echo "✅ Todos los commits siguen la convención de tareas."
+          fi
+
+  build-and-test:
+    name: Compilación y Pruebas Automatizadas
+    needs: agent-governance-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar Dependencias
+        if: hashFiles('package.json') != ''
+        run: npm ci || npm install
+
+      - name: Ejecutar Pruebas Automatizadas
+        if: hashFiles('package.json') != ''
+        run: npm test --if-present
+
+      - name: Compilar Proyecto
+        if: hashFiles('package.json') != ''
+        run: npm run build --if-present

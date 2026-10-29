@@ -1,0 +1,117 @@
+{
+  "_doc": "Evals de calidad de salida. Cada eval instala el sistema en un proyecto temporal, ejecuta 'setup' (bash), lanza el prompt en Claude Code con herramientas de escritura y comprueba el resultado con 'checks' (bash; exit 0 = cumple). En setup y checks están disponibles: $FIXTURES (tests/evals/fixtures), $T (task.sh) y col <TASK-ID> <n> (5=estado, 6=iteración, 4=agente, 7=criterios). El tag git 'eval-start' marca el estado justo después del setup.",
+  "evals": [
+    {
+      "id": "qa-reject-idor",
+      "skill": "qa-review",
+      "setup": "bash \"$FIXTURES/orders.sh\" idor",
+      "prompt": "/qa-review TASK-003",
+      "checks": [
+        [
+          "rechaza la entrega (vuelve a IN_PROGRESS, 1/3)",
+          "[ \"$(col TASK-003 5)\" = IN_PROGRESS ] && [ \"$(col TASK-003 6)\" = 1/3 ]"
+        ],
+        [
+          "el bug report menciona el acceso a pedidos ajenos",
+          "{ git diff eval-start -- GLOBAL_STATE.md | grep '^+'; cat docs/qa/* 2>/dev/null; } | grep -qiE 'idor|ajen|otro usuario|propietari|ownership|userId'"
+        ],
+        [
+          "QA no corrige el código del especialista",
+          "git diff --quiet eval-start -- src"
+        ]
+      ]
+    },
+    {
+      "id": "qa-approve-ok",
+      "skill": "qa-review",
+      "setup": "bash \"$FIXTURES/orders.sh\" ok",
+      "prompt": "/qa-review TASK-003",
+      "checks": [
+        [
+          "aprueba una entrega correcta (DONE)",
+          "[ \"$(col TASK-003 5)\" = DONE ]"
+        ],
+        [
+          "QA no modifica el código",
+          "git diff --quiet eval-start -- src"
+        ]
+      ]
+    },
+    {
+      "id": "bugfix-threshold",
+      "skill": "bugfix",
+      "setup": "bash \"$FIXTURES/discount.sh\"",
+      "prompt": "/bugfix El descuento del 10% no se aplica cuando el total es exactamente 100; según negocio se aplica desde 100 incluido. Haz el flujo completo hasta dejarla en QA sin pedirme confirmación.",
+      "checks": [
+        [
+          "la corrección funciona (applyDiscount(100) === 90)",
+          "node -e \"import('./src/discount.js').then(m => process.exit(m.applyDiscount(100) === 90 && m.applyDiscount(99) === 99 ? 0 : 1))\""
+        ],
+        [
+          "la suite pasa",
+          "node --test >/dev/null 2>&1"
+        ],
+        [
+          "hay un test de regresión para el umbral 100",
+          "git diff main --name-only | grep -q '^test/' && grep -rqE '\\b100\\b' test/"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "awk -F'|' '/^\\| *`?TASK-/ { s=$5; gsub(/[ `]/,\"\",s); if (s==\"IN_REVIEW_QA\") f=1 } END { exit !f }' GLOBAL_STATE.md"
+        ],
+        [
+          "se trabajó en una rama fix/",
+          "git branch --format='%(refname:short)' | grep -q '^fix/TASK-'"
+        ],
+        [
+          "commit con la convención fix(TASK-XXX)",
+          "git log --all --format=%s | grep -qE '^fix\\(TASK-[0-9]+\\): '"
+        ]
+      ]
+    },
+    {
+      "id": "nueva-tarea-reset-password",
+      "skill": "nueva-tarea",
+      "setup": "true",
+      "prompt": "/nueva-tarea Quiero que los usuarios puedan restablecer su contraseña por email con un enlace que caduque. Registra las tareas directamente, sin pedirme confirmación.",
+      "checks": [
+        [
+          "registra al menos 2 tareas nuevas",
+          "[ \"$(echo $($T list | grep -oE 'TASK-[0-9]+' | sort -u | awk -F- '$2+0>=3') | wc -w)\" -ge 2 ]"
+        ],
+        [
+          "todas las tareas nuevas van a una skill existente",
+          "for id in $($T list | grep -oE 'TASK-[0-9]+' | sort -u | awk -F- '$2+0>=3'); do a=$(col $id 4); [ -d \".agents/skills/$a\" ] || { echo \"$id -> $a\"; exit 1; }; done"
+        ],
+        [
+          "reparte backend y frontend",
+          "$T list | grep -q backend-agent && $T list | grep -q frontend-agent"
+        ],
+        [
+          "criterios no vacíos ni vagos",
+          "for id in $($T list | grep -oE 'TASK-[0-9]+' | sort -u | awk -F- '$2+0>=3'); do c=$(col $id 7); [ ${#c} -ge 20 ] || exit 1; echo \"$c\" | grep -qiE 'funciona bien|bonit' && exit 1; done; true"
+        ]
+      ]
+    },
+    {
+      "id": "aprender-stripe",
+      "skill": "aprender",
+      "setup": "true",
+      "prompt": "/aprender El webhook de Stripe devolvía siempre 'firma inválida' porque express.json() parseaba el body antes de verificar la firma; la regla es montar express.raw en la ruta del webhook antes de express.json().",
+      "checks": [
+        [
+          "registra una lección LL- en BRAIN.md",
+          "grep -qE '^\\| *`?LL-[0-9]+' BRAIN.md"
+        ],
+        [
+          "causa y solución documentadas (no 'Por documentar')",
+          "! grep -E '^\\| *`?LL-' BRAIN.md | grep -q 'Por documentar'"
+        ],
+        [
+          "la solución menciona express.raw",
+          "grep -E '^\\| *`?LL-' BRAIN.md | grep -q 'express.raw'"
+        ]
+      ]
+    }
+  ]
+}

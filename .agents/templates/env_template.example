@@ -1,0 +1,64 @@
+# ==============================================================================
+# Plantilla Maestra de Variables de Entorno (.env.example)
+# ==============================================================================
+# INSTRUCCIONES:
+#   1. Copia este archivo como '.env': cp .env.example .env
+#   2. Reemplaza los valores de ejemplo con tus credenciales reales.
+#   3. NUNCA subas el archivo '.env' a tu repositorio Git.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Configuración General del Servidor y Aplicación
+# ------------------------------------------------------------------------------
+NODE_ENV=development
+PORT=3000
+HOST=0.0.0.0
+APP_NAME="Mi Proyecto Multi-Agente"
+APP_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:5173,http://localhost:4200,http://localhost:3000
+
+# ------------------------------------------------------------------------------
+# 2. Seguridad y Autenticación (JWT & Criptografía)
+# ------------------------------------------------------------------------------
+# Genera claves seguras con: openssl rand -base64 32
+JWT_SECRET=reemplazar_con_un_secreto_aleatorio_muy_largo_y_seguro_min_32_chars
+JWT_EXPIRES_IN=1h
+REFRESH_TOKEN_SECRET=reemplazar_con_otro_secreto_aleatorio_diferente_min_32_chars
+REFRESH_TOKEN_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=12
+
+# ------------------------------------------------------------------------------
+# 3. Capa de Base de Datos y Persistencia
+# ------------------------------------------------------------------------------
+# Ejemplo SQLite:
+DATABASE_URL="file:./dev.db"
+# Ejemplo PostgreSQL:
+# DATABASE_URL="postgresql://usuario:password@localhost:5432/mi_base_de_datos?schema=public"
+# Ejemplo MySQL:
+# DATABASE_URL="mysql://usuario:password@localhost:3306/mi_base_de_datos"
+
+# Configuración de pool de conexiones (si aplica):
+DB_POOL_MIN=2
+DB_POOL_MAX=10
+
+# ------------------------------------------------------------------------------
+# 4. Integración de Inteligencia Artificial (LLMs y Embeddings)
+# ------------------------------------------------------------------------------
+# Modelo Local con Ollama (Costo cero y privado):
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_DEFAULT_MODEL=llama3.2
+
+# APIs en la Nube (Opcional según tu stack):
+GEMINI_API_KEY=tu_clave_de_gemini_aqui
+OPENAI_API_KEY=tu_clave_de_openai_aqui
+ANTHROPIC_API_KEY=tu_clave_de_anthropic_aqui
+
+# Base de Datos Vectorial (para RAG):
+VECTOR_DB_URL=http://localhost:8000
+VECTOR_COLLECTION_NAME=knowledge_base
+
+# ------------------------------------------------------------------------------
+# 5. Logging y Observabilidad
+# ------------------------------------------------------------------------------
+# Niveles: error, warn, info, http, verbose, debug, silly
+LOG_LEVEL=info

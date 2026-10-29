@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# Git Hook: commit-msg (Validador de Formato Convencional y TASK-ID)
+# ==============================================================================
+# Formato exigido:
+#   tipo(TASK-XXX): descripción en imperativo
+# Ejemplos válidos:
+#   feat(TASK-001): agregar endpoint de login con jwt
+#   fix(TASK-002): corregir redondeo en calculo de totales
+# ==============================================================================
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(head -n 1 "$COMMIT_MSG_FILE")
+
+# Permitir commits automáticos de merge o squash
+if echo "$COMMIT_MSG" | grep -qE "^(Merge |Revert |fixup! |squash! )"; then
+  exit 0
+fi
+
+# Patrón regex estricto
+PATTERN="^(feat|fix|test|docs|refactor|perf|chore|style|build|ci)\(TASK-[0-9]+\): .+$"
+
+if ! echo "$COMMIT_MSG" | grep -qE "$PATTERN"; then
+  echo ""
+  echo "❌ ERROR EN MENSAJE DE COMMIT:"
+  echo "   El mensaje: \"$COMMIT_MSG\""
+  echo "   no cumple la convención obligatoria del sistema multi-agente."
+  echo ""
+  echo "   Formato requerido:"
+  echo "     tipo(TASK-XXX): descripción breve"
+  echo ""
+  echo "   Tipos permitidos: feat, fix, test, docs, refactor, perf, chore, style, build, ci"
+  echo "   Ejemplo correcto:"
+  echo "     feat(TASK-001): implementar autenticacion jwt"
+  echo ""
+  exit 1
+fi
+
+exit 0

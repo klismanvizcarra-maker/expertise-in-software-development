@@ -1,0 +1,32 @@
+# CI de la librería SKILL MAESTRO (no se copia a los proyectos: su CI sale de .agents/templates/ci_workflow_template.yml)
+name: Librería
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Configurar identidad de git para los proyectos temporales
+        run: |
+          git config --global user.email ci@example.com
+          git config --global user.name ci
+      - name: Pruebas de scripts (task.sh, hooks, init-project, scan-secrets)
+        run: bash tests/test-scripts.sh
+      - name: Lint de descripciones de skills
+        run: python3 tests/triggers/lint_descriptions.py
+      - name: JSON válidos
+        run: |
+          for f in tests/triggers/cases.json tests/evals/evals.json .agents/templates/*.json .mcp.json; do
+            python3 -m json.tool "$f" >/dev/null || { echo "❌ $f"; exit 1; }
+          done

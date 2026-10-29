@@ -1,0 +1,25 @@
+{
+  "task_id": "TASK-XXX",
+  "source_agent": "backend-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-10T00:00:00Z",
+  "iteration": 1,
+  "summary": "Implementación del módulo y pruebas asociadas",
+  "deliverables": [
+    {
+      "type": "file",
+      "path": "src/controllers/example.controller.ts",
+      "description": "Controlador con endpoints y validación de esquemas"
+    },
+    {
+      "type": "test",
+      "path": "tests/example.test.ts",
+      "result": "PASSED (10/10 tests)"
+    }
+  ],
+  "verification_commands": [
+    "npm test",
+    "curl -s http://localhost:3000/api/v1/health"
+  ],
+  "known_limitations_or_notes": "Ninguna. Todos los criterios de aceptación fueron cubiertos."
+}
