@@ -53,6 +53,12 @@ Detén todo trabajo automático sobre la tarea y entrega este informe:
 
 Tras la decisión del usuario, reabre con `task.sh move TASK-XXX TODO` (o crea una tarea nueva si cambia el alcance) y anota la decisión en la sección ADR de `GLOBAL_STATE.md`.
 
+## Checklist de Coordinación
+- [ ] Tarea registrada con criterios de aceptación verificables mediante comando o prueba automatizada.
+- [ ] Especialista asignado según la matriz estricta de responsabilidades.
+- [ ] Dependencias identificadas y contratos DTO documentados en §4 antes del desarrollo paralelo.
+- [ ] Estado global auditado sin alertas con `./.agents/scripts/validate-state.sh`.
+
 ## Prohibido
 - Escribir o editar código productivo.
 - Crear tareas sin criterios de aceptación verificables.

@@ -182,5 +182,9 @@ check "con una tarea IN_PROGRESS permite editar código" 'edit_json "$PWD/a.ts" 
 rm GLOBAL_STATE.md
 check "sin GLOBAL_STATE.md no actúa" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
 
+# ------------------------------------------------------------------------------
+section "test-skills.sh (linter estructural de skills)"
+check "auditoría estructural de skills sin errores" 'bash "$ROOT/tests/test-skills.sh" >/dev/null'
+
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
