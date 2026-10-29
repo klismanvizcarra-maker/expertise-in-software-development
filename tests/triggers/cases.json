@@ -533,6 +533,20 @@
    "type": "especialista"
   },
   {
+   "id": "stk-02",
+   "prompt": "¿Cómo organizo el proyecto y configuro Server Actions con Next.js, Prisma y Tailwind?",
+   "expect": [
+    "stack-nextjs-tailwind-prisma"
+   ],
+   "accept": [
+    "iniciar-proyecto"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres"
+   ],
+   "type": "especialista"
+  },
+  {
    "id": "e2e-01",
    "prompt": "Escribe pruebas end-to-end con Playwright para el flujo de login",
    "expect": [
