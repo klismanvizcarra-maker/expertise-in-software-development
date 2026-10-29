@@ -70,6 +70,7 @@ Flujo típico: `/iniciar-proyecto` → `/nueva-tarea` → *(especialista trabaja
 | Skill | Qué aporta |
 | :--- | :--- |
 | [`stack-angular-express-postgres`](.agents/skills/stack-angular-express-postgres/SKILL.md) | Convenciones verificadas de Angular 22 + Node 24/Express 5 + PostgreSQL 18 con Drizzle, JWT propio y monorepo npm. Se carga junto a la skill del rol. |
+| [`stack-nextjs-tailwind-prisma`](.agents/skills/stack-nextjs-tailwind-prisma/SKILL.md) | Convenciones verificadas de React 19 + Next.js 15 (App Router, Server Components y Actions) + Tailwind CSS + PostgreSQL con Prisma ORM y Zod. |
 | [`e2e-testing`](.agents/skills/e2e-testing/SKILL.md) | Pruebas end-to-end con Playwright a partir de los escenarios Gherkin del PRD. |
 | [`payments-stripe`](.agents/skills/payments-stripe/SKILL.md) | Suscripciones y pagos con Stripe Checkout, portal de cliente y webhooks idempotentes (Stripe 23). |
 | [`seo-web`](.agents/skills/seo-web/SKILL.md) | SSR y prerender por ruta, metadatos, canonical/hreflang, JSON-LD, sitemap y hosts permitidos. |
