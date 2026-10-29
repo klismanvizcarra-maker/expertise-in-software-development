@@ -1,0 +1,22 @@
+{
+  "task_id": "TASK-001",
+  "summary": "Auditoría y diagnóstico de las skills actuales para identificar oportunidades de mejora",
+  "source_agent": "Orchestrator",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-29T21:46:38Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/bugfix/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/handoff/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/i18n/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/payments-stripe/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/product-manager-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/qa-review/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/qa-security-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/seo-web/SKILL.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}

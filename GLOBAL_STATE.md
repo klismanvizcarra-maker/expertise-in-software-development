@@ -54,7 +54,7 @@
 
 | ID Tarea | Descripción | Asignado a | Estado | Iteración QA | Criterios de Aceptación |
 | :--- | :--- | :--- | :--- | :---: | :--- |
-| `TASK-001` | Auditoría y diagnóstico de las skills actuales para identificar oportunidades de mejora | Orchestrator | `IN_PROGRESS` | `0/3` | Reporte de diagnóstico de las 26 skills completado y priorizado |
+| `TASK-001` | Auditoría y diagnóstico de las skills actuales para identificar oportunidades de mejora | Orchestrator | `DONE` | `0/3` | Reporte de diagnóstico de las 26 skills completado y priorizado |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -74,4 +74,5 @@
 | :--- | :--- | :--- | :--- | :--- |
 | `2026-10-29` | Orchestrator | Equipo | `TASK-001` | Inicialización de GLOBAL_STATE.md para el mantenimiento y mejora de skills |
 | `2026-10-29` | Orchestrator | qa-security-agent | `TASK-001` | Estandarización de 4 skills, soporte Antigravity (subagentes/artefactos), scan de secretos en handoff y validación de suite. Comandos: `bash tests/test-scripts.sh`, `python3 tests/triggers/lint_descriptions.py`, `./.agents/scripts/scan-secrets.sh` |
+| `2026-10-29` | qa-security-agent | orchestrator-agent | `TASK-001` | Aprobada por QA -> DONE |
 
