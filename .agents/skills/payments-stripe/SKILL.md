@@ -5,7 +5,19 @@ description: Integra cobros con Stripe en apps web (Express + Angular) - suscrip
 
 # Pagos con Stripe
 
-Stripe es la fuente de verdad del dinero; tu base de datos es un espejo que se actualiza **solo por webhooks**. Verificado con `stripe` 23 (API `2026-09-30.endive`) y Express 5.
+Stripe es la única fuente de verdad del dinero; tu base de datos es un espejo sincronizado **exclusivamente mediante webhooks**. Verificado con `stripe` 23 (API `2026-09-30.endive`) y Express 5.
+
+## Protocolo
+
+1. **Modelado y Persistencia**: verifica o crea las tablas `billing_customers`, `subscriptions` y `stripe_events` con `database-architect-agent`.
+2. **Definición de Precios en Servidor**: registra los IDs de precio (`price_...`) en variables de entorno seguras (`.env`). Asocia cada ID a una clave semántica interna (`"pro_monthly"`).
+3. **Endpoints de Sesión**: implementa `POST /api/v1/billing/checkout` (con clave de idempotencia) y `POST /api/v1/billing/portal` para autogestión de clientes.
+4. **Endpoint de Webhook Seguro**: monta `POST /api/v1/webhooks/stripe` con parser crudo (`express.raw`), validación estricta de firma criptográfica y registro idempotente en `stripe_events`.
+5. **Control de Acceso en Dominio**: define las reglas de acceso en `packages/shared/src/domain/entitlements.ts` y protege rutas en la API mediante middleware (`requirePlan`).
+6. **Pruebas y Simulación Local**: prueba los eventos con Stripe CLI (`stripe listen --forward-to`), valida tarjetas de prueba de error/3DS y ejecuta la suite de tests unitarios del webhook.
+7. **Checklist y Entrega**: completa el checklist antes de ejecutar `task.sh handoff TASK-XXX`.
+
+---
 
 ## Decisiones del Sistema
 - **Stripe Checkout alojado** para cobrar y **Customer Portal** para que el cliente gestione tarjeta, plan y cancelación. No se construyen formularios de tarjeta propios (alcance PCI mínimo).
@@ -42,37 +54,45 @@ const session = await stripe.checkout.sessions.create({
 ```
 
 ## Webhook: Reglas que No se Negocian
-1. **Body crudo antes que `express.json()`**: monta el router del webhook con `express.raw({ type: 'application/json' })` **antes** de `app.use(express.json())`. Si el JSON se parsea primero, la firma siempre falla (comprobado).
+1. **Body crudo antes que `express.json()`**: monta el router del webhook con `express.raw({ type: 'application/json' })` **antes** de `app.use(express.json())`. Si el JSON se parsea primero, la firma siempre falla.
 2. **Verificar la firma**: `stripe.webhooks.constructEvent(req.body, req.header('stripe-signature'), env.STRIPE_WEBHOOK_SECRET)`; si lanza → 400.
 3. **Idempotencia**: inserta `event.id` en `stripe_events` dentro de la misma transacción que aplica el cambio; si ya existía, responde 200 sin reprocesar.
 4. **Orden no garantizado**: para suscripciones, vuelve a leer el objeto actual (`stripe.subscriptions.retrieve(id)`) en lugar de confiar en el orden de llegada.
-5. **Responder rápido** (2xx en < 10 s); el trabajo pesado (emails, etc.) va después o en cola.
+5. **Responder rápido** (2xx en < 10 s); el trabajo pesado (emails, notificaciones) se despacha de forma asíncrona.
 
-Eventos mínimos: `checkout.session.completed` (vincular customer/suscripción al `client_reference_id`), `customer.subscription.created|updated|deleted` (sincronizar estado), `invoice.paid` e `invoice.payment_failed` (avisar al usuario).
+Eventos mínimos obligatorios: `checkout.session.completed`, `customer.subscription.created|updated|deleted`, `invoice.paid`, `invoice.payment_failed`.
 
-> En la API actual, `current_period_end` está en los **items** de la suscripción: `subscription.items.data[0].current_period_end`.
+> En la API actual de Stripe, `current_period_end` se encuentra en los items de la suscripción: `subscription.items.data[0].current_period_end`.
 
-## Acceso por Plan
-- Las reglas de qué incluye cada plan son lógica de dominio (`packages/shared/src/domain/entitlements.ts`, `domain-logic-agent`) a partir de `subscriptions.status` (`active` o `trialing` = con acceso; `past_due` = periodo de gracia definido en el PRD).
-- API: middleware `requirePlan('pro')`. Angular: `GET /me` incluye el plan; `planGuard` y la UI muestran el paywall. La seguridad está en la API.
-- Angular redirige a Stripe con `window.location.href = url` tras llamar a `/billing/checkout`.
+## Control de Acceso por Plan
+- Lógica de dominio en `packages/shared/src/domain/entitlements.ts` (`domain-logic-agent`) a partir de `subscriptions.status` (`active` o `trialing` = con acceso; `past_due` = periodo de gracia definido en el PRD).
+- API: middleware `requirePlan('pro')`. Angular: `GET /me` incluye el estado de suscripción; `planGuard` y componentes UI controlan la navegación. La autorización estricta reside en la API.
+- Angular redirige al checkout con `window.location.href = url` tras recibir la respuesta de `/billing/checkout`.
 
 ## Variables de Entorno
-`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY` (uno por plan), `APP_URL`. Claves de test (`sk_test_…`) en desarrollo y staging; las `sk_live_…` solo en la plataforma de producción. El escáner de secretos bloquea ambas en commits.
+`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_PRO_MONTHLY` (uno por plan), `APP_URL`. Claves de test (`sk_test_…`) en desarrollo y staging; claves de producción (`sk_live_…`) solo en la plataforma de producción.
 
-## Pruebas
-- **Unitarias del webhook** sin red: firma con `stripe.webhooks.generateTestHeaderString({ payload, secret })` y envía con supertest (firma válida → 200, inválida → 400, evento repetido → idempotente).
-- **Local con Stripe CLI**:
+## Pruebas y Simulación
+- **Unitarias del webhook** sin red: genera firmas simuladas con `stripe.webhooks.generateTestHeaderString({ payload, secret })` y prueba firma válida (200), firma inválida (400) y evento repetido (idempotente).
+- **Simulación local con Stripe CLI**:
   ```bash
   stripe listen --forward-to localhost:3000/api/v1/webhooks/stripe   # imprime el whsec_ para .env
   stripe trigger checkout.session.completed
   ```
-- **Tarjetas de prueba** (solo modo test): `4242 4242 4242 4242` (éxito), `4000 0025 0000 3155` (requiere 3D Secure), `4000 0000 0000 0002` (rechazada).
-- **E2E** (`e2e-testing`): el flujo hasta la redirección a Stripe y el estado "procesando"; la activación del plan se prueba disparando el webhook.
+- **Tarjetas de prueba** (modo test): `4242 4242 4242 4242` (éxito), `4000 0025 0000 3155` (3DS requerido), `4000 0000 0000 0002` (declinada).
 
 ## Checklist antes de `task.sh handoff`
-- [ ] Webhook montado antes de `express.json()` y con firma verificada.
-- [ ] `stripe_events` evita el doble procesamiento.
-- [ ] Ningún importe ni `price_id` viene del cliente.
-- [ ] Ningún plan se activa desde `success_url`.
-- [ ] Probado con Stripe CLI: alta, renovación, fallo de pago y cancelación.
+- [ ] Endpoint de webhook montado antes de `express.json()` con lectura de payload en crudo (`express.raw`).
+- [ ] Firma criptográfica de Stripe verificada obligatoriamente en cada llamada al webhook.
+- [ ] Tabla `stripe_events` previene el procesamiento duplicado (idempotencia verificada con test).
+- [ ] Ningún importe, divisa ni `price_id` recibido directamente desde el cliente web o móvil.
+- [ ] Ningún plan o permiso otorgado desde `success_url` (solo webhooks activan privilegios).
+- [ ] Simulación completa ejecutada con Stripe CLI: checkout, cobro exitoso, fallo de pago y cancelación.
+- [ ] Secretos de Stripe (`sk_...`, `whsec_...`) excluidos del frontend y no versionados en Git.
+
+## Prohibido
+- Recibir o almacenar números de tarjeta de crédito, CVV o fechas de expiración en base de datos propia.
+- Procesar payloads de webhook sin validar la cabecera `stripe-signature`.
+- Activar planes o cambiar estados de cuenta basándose en la redirección de frontend (`success_url`).
+- Omitir claves de idempotencia en peticiones de mutación a Stripe.
+- Exponer credenciales secretas de Stripe en el cliente web, móvil o repositorios de código.
