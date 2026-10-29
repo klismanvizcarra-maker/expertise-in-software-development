@@ -1,0 +1,20 @@
+{
+  "task_id": "TASK-003",
+  "summary": "Crear plantilla de stack tecnológico y skill stack-nextjs-tailwind-prisma",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-29T22:01:53Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/references/nextjs-app-router.md" },
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/references/prisma-postgres.md" },
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/references/tailwind-design.md" },
+    { "type": "file", "path": ".agents/templates/stack_template.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
