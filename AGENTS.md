@@ -115,7 +115,16 @@ Para prevenir colisiones o sobreescrituras accidentales entre especialistas, cad
 | **`ai-integrator-agent`** | `src/ai/`, prompts, clientes Ollama/Cloud, pipelines RAG/embeddings | Tablas de base de datos no vectoriales sin aprobación |
 | **`docs-architecture-agent`** | `README.md`, `docs/`, diagramas Mermaid, OpenAPI specs | Modificación de código fuente funcional |
 
-> **Rutas según el stack**: las rutas de la tabla son genéricas. Si el proyecto tiene una skill `stack-*`, sus rutas mandan (ej. en el monorepo Angular + Express: `apps/web/` = frontend, `apps/api/` = backend, `apps/api/drizzle/` y `apps/api/src/db/` = base de datos, `packages/shared/src/domain/` = dominio, `e2e/` = QA).
+> **Rutas según el stack**: las rutas de la tabla son genéricas. Si el proyecto tiene una skill `stack-*`, sus rutas mandan:
+> - **Monorepo Angular + Express (`stack-angular-express-postgres`)**: `apps/web/` = frontend, `apps/api/` = backend, `apps/api/drizzle/` y `apps/api/src/db/` = base de datos, `packages/shared/src/domain/` = dominio, `e2e/` = QA.
+> - **Next.js + Prisma (`stack-nextjs-tailwind-prisma`)**:
+>   - **`frontend-agent`**: `app/(auth)/`, `app/(dashboard)/`, `app/page.tsx`, `app/layout.tsx`, `components/ui/`, `components/forms/`, `app/globals.css` (vistas, componentes interactivos y estado reactivo).
+>   - **`backend-agent`**: `app/api/` (Route Handlers), Server Actions en `app/actions/` o `lib/actions/`, `lib/auth.ts`, `lib/schemas/` (validaciones Zod).
+>   - **`database-architect-agent`**: `prisma/schema.prisma`, `prisma/migrations/`, `lib/prisma.ts` (singleton de PrismaClient), scripts de seed y fixtures.
+>   - **`ui-ux-agent`**: `app/globals.css`, directivas `@theme` de Tailwind 4 o `tailwind.config.ts`, variables CSS y temas visuales.
+>   - **`domain-logic-agent`**: `lib/domain/`, funciones puras de cálculo matemático, tipos compartidos y máquinas de estado en `lib/`.
+>   - **`qa-security-agent`**: `e2e/`, `*.test.ts`, `*.spec.tsx` (tests unitarios/integración con Vitest y E2E con Playwright).
+>   - **`devops-cloud-agent`**: `next.config.ts`, `docker-compose.yml`, `Dockerfile`, `.github/workflows/`, presupuestos de build y `.env.example`.
 
 > **Regla de Coordinación**: Si una tarea requiere cambios cruzados (ej. nuevo endpoint + nueva pantalla), el Orchestrator debe asignar subtareas independientes a cada especialista.
 

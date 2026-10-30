@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-018",
+  "summary": "Verificar el stack Next.js con un scaffold real y mapear sus rutas",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T03:25:33Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/SKILL.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
