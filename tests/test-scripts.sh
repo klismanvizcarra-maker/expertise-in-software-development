@@ -131,8 +131,13 @@ $T start TASK-003 >/dev/null
 check "move de IN_PROGRESS a DONE falla" '! $T move TASK-003 DONE >/dev/null 2>&1 && [ "$(col TASK-003 5)" = IN_PROGRESS ]'
 $T handoff TASK-003 >/dev/null
 check "move de IN_REVIEW_QA a DONE falla (solo close)" '! $T move TASK-003 DONE >/dev/null 2>&1 && [ "$(col TASK-003 5)" = IN_REVIEW_QA ]'
+check "close sin veredicto falla" '! $T close TASK-003 >/dev/null 2>&1'
+mkdir -p .agents/reviews
+echo "- **Revisor**: backend-agent" > .agents/reviews/qa_TASK-003.md
+check "close con autor como revisor falla" '! $T close TASK-003 >/dev/null 2>&1'
+echo "- **Revisor**: qa-security-agent" > .agents/reviews/qa_TASK-003.md
 $T close TASK-003 >/dev/null
-check "close tras revisión -> DONE" '[ "$(col TASK-003 5)" = DONE ]'
+check "close tras revisión con revisor independiente -> DONE" '[ "$(col TASK-003 5)" = DONE ]'
 
 # ------------------------------------------------------------------------------
 section "task.sh learn / debt"
