@@ -2,7 +2,7 @@
 # Fixture: TASK-003 "Endpoint GET /orders/:id" entregada a QA (IN_REVIEW_QA).
 # Uso: bash orders.sh idor   → la implementación no comprueba el propietario (debe rechazarse)
 #      bash orders.sh ok     → implementación correcta con test del caso ajeno (debe aprobarse)
-set -e
+set -euo pipefail
 VARIANT="${1:-idor}"
 T=./.agents/scripts/task.sh
 

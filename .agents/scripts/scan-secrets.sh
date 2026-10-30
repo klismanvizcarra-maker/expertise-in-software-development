@@ -14,6 +14,13 @@
 #
 # Para aceptar una línea concreta (ej. una clave de ejemplo en documentación),
 # añade el comentario `secret-scan:allow` en esa misma línea.
+#
+# Nota sobre flags de shell:
+# Este script no utiliza 'set -e' ni 'set -o pipefail' deliberadamente, ya que
+# ejecuta múltiples tuberías de diff, log y grep donde el código de retorno 1
+# es una condición esperada y no un error (ej. ausencia de líneas coincidentes o
+# diffs vacíos). El script gestiona su flujo y el código de salida de forma explícita
+# mediante la variable de control FOUND y validaciones dirigidas.
 # ==============================================================================
 
 MODE="${1:---staged}"

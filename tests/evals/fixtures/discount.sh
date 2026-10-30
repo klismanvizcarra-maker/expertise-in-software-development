@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fixture: función de descuento con un error de umbral (> en vez de >=) y tests que no lo cubren.
-set -e
+set -euo pipefail
 mkdir -p src test
 cat > package.json <<'EOF'
 { "name": "discount-demo", "type": "module", "scripts": { "test": "node --test" } }

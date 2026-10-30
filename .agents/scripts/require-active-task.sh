@@ -12,6 +12,11 @@
 #
 # Entrada: JSON del hook por stdin. Salida: exit 0 = permitir, exit 2 = bloquear
 # (el mensaje de stderr llega al modelo).
+#
+# Nota sobre flags de shell:
+# Como hook de pre-herramienta de Claude Code, no usa 'set -e' para asegurar que
+# fallos imprevistos no aborten el entorno del agente y para garantizar que cualquier
+# bloqueo emita un mensaje limpio por stderr con código de salida 2 (fail-closed).
 # ==============================================================================
 
 [ "${MAESTRO_ALLOW_UNTRACKED:-0}" = "1" ] && exit 0

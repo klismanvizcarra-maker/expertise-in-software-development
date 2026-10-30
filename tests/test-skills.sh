@@ -5,6 +5,8 @@
 # Audita metadatos YAML, integridad de enlaces relativos y secciones estándar.
 # ==============================================================================
 
+set -euo pipefail
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ERRORS=0
 TOTAL=0
@@ -27,13 +29,13 @@ for skill_file in "$ROOT"/.agents/skills/*/SKILL.md; do
     file_errors=$((file_errors + 1))
   fi
 
-  name_decl="$(grep -E "^name:[[:space:]]*" "$skill_file" | head -n 1 | sed 's/name:[[:space:]]*//' | tr -d '\r')"
+  name_decl="$(awk '/^name:[[:space:]]*/ { sub(/^name:[[:space:]]*/, ""); print; exit }' "$skill_file" | tr -d '\r')"
   if [ "$name_decl" != "$skill_name" ]; then
     red "  ❌ [$skill_name] Nombre en frontmatter ('$name_decl') no coincide con el directorio ('$skill_name')"
     file_errors=$((file_errors + 1))
   fi
 
-  desc="$(grep -E "^description:[[:space:]]*" "$skill_file" | head -n 1 | sed 's/description:[[:space:]]*//' | tr -d '\r')"
+  desc="$(awk '/^description:[[:space:]]*/ { sub(/^description:[[:space:]]*/, ""); print; exit }' "$skill_file" | tr -d '\r')"
   if [ ${#desc} -lt 25 ]; then
     red "  ❌ [$skill_name] Descripción en frontmatter demasiado corta o inexistente"
     file_errors=$((file_errors + 1))
@@ -63,7 +65,10 @@ for skill_file in "$ROOT"/.agents/skills/*/SKILL.md; do
 
   # 4. Verificación de enlaces relativos a plantillas o referencias
   # Extrae enlaces del tipo: ](references/...) o ](../../templates/...)
-  links="$(grep -oE '\]\(((\.\./|references/)[^)]+)\)' "$skill_file" | sed 's/^](\(.*\))$/\1/' || true)"
+  links="$(grep -oE '\]\(((\.\./|references/)[^)]+)\)' "$skill_file" 2>/dev/null || true)"
+  if [ -n "$links" ]; then
+    links="$(printf '%s\n' "$links" | sed 's/^](\(.*\))$/\1/')"
+  fi
   while IFS= read -r link; do
     [ -z "$link" ] && continue
     # Limpia posibles anclas (#seccion)
@@ -91,5 +96,8 @@ else
 fi
 echo "================================================================="
 
-exit $ERRORS
+if [ "$ERRORS" -gt 0 ]; then
+  exit 1
+fi
+exit 0
 
