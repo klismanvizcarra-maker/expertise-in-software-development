@@ -24,7 +24,7 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
        "Role": "QA Security Auditor",
        "TypeName": "research",
        "Model": "inherit",
-       "Prompt": "Audita de forma independiente la entrega de TASK-XXX en la rama actual. Criterios de aceptación: <criterios>. Ejecuta tests del proyecto, build y ./.agents/scripts/scan-secrets.sh. Audita seguridad (OWASP Top 10, IDOR, inyección). Devuelve únicamente la tabla de hallazgos clasificados por severidad y con evidencia."
+       "Prompt": "Audita de forma independiente la entrega de TASK-XXX en la rama actual. Criterios de aceptación: <criterios>. Ejecuta tests del proyecto, build y ./.agents/scripts/scan-secrets.sh --branch. Audita seguridad (OWASP Top 10, IDOR, inyección). Devuelve únicamente la tabla de hallazgos clasificados por severidad y con evidencia."
      }
      ```
      Aplica el veredicto con el reporte devuelto por el subagente.
@@ -33,7 +33,7 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
    - Ejecuta por tu cuenta los comandos de verificación, los tests automatizados (`npm test` o equivalente) y el build.
    - Ejecuta obligatoriamente el escáner de secretos:
      ```bash
-     ./.agents/scripts/scan-secrets.sh
+     ./.agents/scripts/scan-secrets.sh --branch
      ```
    - Revisa el diff de la rama (`git diff main...HEAD` o sobre los archivos entregados).
 4. **Auditoría de seguridad y casos límite**:
@@ -63,7 +63,7 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
 | Criterio / Control | Resultado | Evidencia |
 | :--- | :---: | :--- |
 | <criterio 1> | ✅ | `npm test` → 24/24 pasando |
-| Escaneo de secretos | ✅ | `scan-secrets.sh` → limpio |
+| Escaneo de secretos | ✅ | `scan-secrets.sh --branch` → limpio |
 | IDOR en `GET /orders/:id` | ❌ ALTA | Usuario B accede a recursos de Usuario A |
 
 **Bugs**: BUG-TASK-XXX-1 (ALTA) — Descripción y pasos de reproducción
@@ -72,7 +72,7 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
 
 ## Checklist antes de emitir veredicto
 - [ ] Tests automatizados del proyecto ejecutados de forma independiente.
-- [ ] Escáner `./.agents/scripts/scan-secrets.sh` ejecutado con resultado limpio.
+- [ ] Escáner `./.agents/scripts/scan-secrets.sh --branch` ejecutado con resultado limpio.
 - [ ] Diff de código inspeccionado en busca de inyecciones, IDOR o manejo inseguro de errores.
 - [ ] Cada criterio de aceptación de la tarea contrastado con evidencia verificable.
 - [ ] En caso de rechazo, motivo claro con pasos de reproducción registrado.

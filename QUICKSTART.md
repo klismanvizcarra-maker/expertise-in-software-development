@@ -159,7 +159,7 @@ Instala los hooks con un solo comando:
 ./.agents/scripts/install-hooks.sh
 ```
 * **`commit-msg`**: Bloquea cualquier commit que no siga `tipo(TASK-XXX): descripción` (se permiten `Merge`, `Revert`, `fixup!` y `squash!`).
-* **`pre-commit`**: Ejecuta [`scan-secrets.sh`](.agents/scripts/scan-secrets.sh) sobre las líneas añadidas (claves `sk-…`, tokens de GitHub, AWS, Google y Slack, claves privadas y archivos `.env`) y audita `GLOBAL_STATE.md` con `validate-state.sh`. Para un falso positivo, añade `secret-scan:allow` en esa línea.
+* **`pre-commit`**: Ejecuta [`scan-secrets.sh`](.agents/scripts/scan-secrets.sh) sobre las líneas añadidas (claves `sk-…`, tokens de GitHub, AWS, Google y Slack, claves privadas y archivos `.env`) y audita `GLOBAL_STATE.md` con `validate-state.sh`. Para un falso positivo, añade `secret-scan:allow` en esa línea. En handoff y QA se usa `scan-secrets.sh --branch`, que revisa todo lo que la rama añade respecto a `main` (commiteado o no, archivos nuevos y cada commit de la rama, porque un secreto borrado después sigue en el historial); `--all` revisa el repositorio completo (CI).
 * **CI**: el workflow de plantilla usa el mismo escáner en modo `--all`, así las reglas son idénticas en local y en GitHub.
 
 ### Pruebas de los scripts (solo en este repositorio de skills)

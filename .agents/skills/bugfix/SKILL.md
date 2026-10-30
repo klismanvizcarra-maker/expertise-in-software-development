@@ -22,7 +22,7 @@ description: Corrige un bug con método - lo registra como tarea, lo reproduce, 
    - El test de regresión nuevo pasa a verde.
    - La suite completa de pruebas del proyecto (`npm test` o similar) se mantiene en verde.
    - Rastrea con `grep` si el mismo antipatrón se repite en otros módulos del proyecto y corrígelo.
-   - Ejecuta `./.agents/scripts/scan-secrets.sh` para asegurar que no se introdujeron credenciales durante la depuración.
+   - Ejecuta `./.agents/scripts/scan-secrets.sh --branch` para asegurar que no se introdujeron credenciales durante la depuración.
 8. **Commit y entrega**: realiza el commit con `./.agents/scripts/task.sh commit TASK-XXX "<descripción del arreglo>" fix` y ejecuta `/handoff`.
 9. **Cierre de aprendizaje**: tras la aprobación en QA, si el defecto fue complejo, de concurrencia, seguridad o incompatibilidad de librerías, ejecuta `/aprender` para incorporar el antídoto en `BRAIN.md`.
 
@@ -31,7 +31,7 @@ description: Corrige un bug con método - lo registra como tarea, lo reproduce, 
 - [ ] Causa raíz técnica identificada y documentada en el mensaje de entrega.
 - [ ] Suite completa de pruebas ejecutada sin fallos ni regresiones secundarias.
 - [ ] Sin cambios de estilo o refactorizaciones fuera del alcance del bug.
-- [ ] Escaneo de secretos limpio (`./.agents/scripts/scan-secrets.sh`).
+- [ ] Escaneo de secretos limpio (`./.agents/scripts/scan-secrets.sh --branch`).
 
 ## Prohibido
 - Silenciar el error mediante bloques `try/catch` vacíos, encadenamiento opcional `?.` defensivo sin causa, o modificando la aserción del test para que pase.

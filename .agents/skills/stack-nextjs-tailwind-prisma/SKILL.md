@@ -105,7 +105,7 @@ Esta skill define el **cómo técnico concreto** para aplicaciones modernas cons
 - [ ] Migraciones de Prisma generadas con `prisma migrate dev` y versionadas en Git.
 - [ ] Variables sensibles sin prefijo `NEXT_PUBLIC_`.
 - [ ] `npm run typecheck` y `npm run build` pasan con 0 errores.
-- [ ] Escaneo de secretos limpio ejecutado con `./.agents/scripts/scan-secrets.sh`.
+- [ ] Escaneo de secretos limpio ejecutado con `./.agents/scripts/scan-secrets.sh --branch`.
 
 ## 8. Prohibido
 - Importar Prisma o acceder a la base de datos desde componentes declarados con `'use client'`.
