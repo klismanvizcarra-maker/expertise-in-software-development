@@ -376,8 +376,18 @@ EOF
     require_task "$TASK_ID"
     STATUS=$(task_field "$TASK_ID" 5)
     [ "$STATUS" = "IN_REVIEW_QA" ] || die "$TASK_ID está en $STATUS; solo QA cierra tareas en IN_REVIEW_QA (cero bypasses de QA)."
+
+    REVIEW_FILE="$PROJECT_ROOT/.agents/reviews/qa_$TASK_ID.md"
+    [ -f "$REVIEW_FILE" ] || die "Falta el archivo de veredicto .agents/reviews/qa_$TASK_ID.md. Ejecuta /qa-review antes de cerrar la tarea."
+
+    REVIEWER=$(grep -Ei '^\s*[-*]?[[:space:]]*\*{0,2}Revisor\*{0,2}:' "$REVIEW_FILE" 2>/dev/null | head -n1 | sed -E 's/.*:[[:space:]]*`?([a-zA-Z0-9_-]+)`?.*/\1/' | tr -d '[:space:]')
+    [ -n "$REVIEWER" ] || die "No se encontró el campo 'Revisor' en $REVIEW_FILE."
+
+    ASSIGNED=$(task_field "$TASK_ID" 4)
+    [ "$REVIEWER" != "$ASSIGNED" ] || die "El revisor ($REVIEWER) no puede ser el mismo agente asignado a la tarea ($ASSIGNED). Se requiere revisión por un agente independiente (cero auto-aprobación)."
+
     set_task "$TASK_ID" "DONE"
-    log_history "qa-security-agent" "orchestrator-agent" "$TASK_ID" "Aprobada por QA -> DONE"
+    log_history "$REVIEWER" "orchestrator-agent" "$TASK_ID" "Aprobada por QA -> DONE"
     say "${GREEN}✅ $TASK_ID aprobada y cerrada (DONE).${NC}"
     ;;
 

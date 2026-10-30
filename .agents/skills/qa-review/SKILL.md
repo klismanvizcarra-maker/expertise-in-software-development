@@ -41,9 +41,11 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
    - Auditoría OWASP: IDOR, inyección, sanitización y filtrado de trazas en errores 500.
 5. **Veredicto y transición**:
    - **Aprobado** (sin fallos o únicamente observaciones cosméticas BAJA):
+     Genera el archivo de veredicto `.agents/reviews/qa_TASK-XXX.md` a partir de [qa_review_template.md](../../templates/qa_review_template.md) documentando la evidencia y declarando el revisor (`- **Revisor**: qa-security-agent`, obligatorio que sea distinto del agente asignado a la tarea). Luego ejecuta:
      ```bash
      ./.agents/scripts/task.sh close TASK-XXX
      ```
+     `task.sh close` valida automáticamente que `.agents/reviews/qa_TASK-XXX.md` exista y que el revisor no coincida con el agente asignado.
      Si se acepta deuda técnica de severidad MEDIA sin riesgo de seguridad:
      `./.agents/scripts/task.sh debt "<descripción>" TASK-XXX "<acción definitiva>" MEDIA`
    - **Rechazado** (falla ≥ 1 criterio de aceptación, test roto, vulnerabilidad o secreto expuesto):
@@ -76,8 +78,11 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
 - [ ] Diff de código inspeccionado en busca de inyecciones, IDOR o manejo inseguro de errores.
 - [ ] Cada criterio de aceptación de la tarea contrastado con evidencia verificable.
 - [ ] En caso de rechazo, motivo claro con pasos de reproducción registrado.
+- [ ] Archivo de veredicto generado en `.agents/reviews/qa_TASK-XXX.md` con revisor independiente.
 
 ## Prohibido
 - Aprobar basándose exclusivamente en el reporte verbal del especialista.
+- Auto-aprobar una tarea (el revisor no puede ser el especialista asignado a la tarea).
+- Cerrar la tarea con `task.sh close` sin haber registrado el veredicto en `.agents/reviews/qa_TASK-XXX.md`.
 - Modificar o corregir el código del especialista desde el rol de QA.
 - Omitir el escaneo de secretos antes de emitir la aprobación.

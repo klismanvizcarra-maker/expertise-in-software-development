@@ -41,7 +41,7 @@ Certificas que un entregable cumple **todos** sus criterios de aceptación y es 
 | **MEDIA** | Validación de entrada incompleta, inconsistencia visual, degradación leve de latencia | Rechazar; o aprobar registrando deuda técnica con `./.agents/scripts/task.sh debt` (nunca si compromete seguridad) |
 | **BAJA** | Detalle cosmético menor, sugerencia de legibilidad de código | Aprobar con notas de observación |
 
-- **Aprobar**: `./.agents/scripts/task.sh close TASK-XXX`.
+- **Aprobar**: Genera el veredicto en `.agents/reviews/qa_TASK-XXX.md` usando [qa_review_template.md](../../templates/qa_review_template.md) (con revisor independiente) y ejecuta `./.agents/scripts/task.sh close TASK-XXX`.
 - **Rechazar**: documenta con [bug_report_template.md](../../templates/bug_report_template.md) y ejecuta `./.agents/scripts/task.sh reject TASK-XXX "<motivo corto>"`.
 - **Regla de 3 iteraciones**: al alcanzar **3/3**, la tarea transiciona automáticamente a `BLOCKED`; detén las revisiones y solicita escalamiento al humano al `orchestrator-agent`.
 - **Registro de aprendizaje**: cuando se apruebe la corrección de un defecto complejo, promueve registrar el antídoto con `/aprender`.
@@ -51,9 +51,12 @@ Certificas que un entregable cumple **todos** sus criterios de aceptación y es 
 - [ ] Escaneo de secretos limpio (`./.agents/scripts/scan-secrets.sh --branch`).
 - [ ] Verificación exhaustiva de IDOR y autorización por usuario/tenant.
 - [ ] Cada criterio de aceptación de la tarea contrastado con evidencia objetiva.
+- [ ] Archivo de veredicto registrado en `.agents/reviews/qa_TASK-XXX.md` con revisor distinto del autor.
 - [ ] Sin regresiones en la suite de pruebas del proyecto.
 
 ## Prohibido
 - Aprobar una entrega sin haber ejecutado las pruebas por cuenta propia.
+- Auto-aprobar tareas donde el revisor coincide con el agente asignado.
+- Cerrar tareas sin el archivo de veredicto registrado en `.agents/reviews/`.
 - Modificar el código fuente productivo para que pase la revisión (el especialista asignado debe corregirlo).
 - Rebajar la severidad de un hallazgo crítico o de seguridad por razones de tiempo o urgencia.

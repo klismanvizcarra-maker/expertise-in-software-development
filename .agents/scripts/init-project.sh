@@ -73,6 +73,7 @@ mkdir -p "$TARGET_DIR/.agents/scripts"
 mkdir -p "$TARGET_DIR/.agents/brain"
 mkdir -p "$TARGET_DIR/.agents/hooks"
 mkdir -p "$TARGET_DIR/.agents/plugins"
+mkdir -p "$TARGET_DIR/.agents/reviews"
 mkdir -p "$TARGET_DIR/docs/product"
 
 # Copiar skills, templates, brain, scripts, hooks y plugins
