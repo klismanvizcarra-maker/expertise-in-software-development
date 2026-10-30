@@ -5,19 +5,46 @@
 # (.claude/skills + CLAUDE.md + .mcp.json) desde una única fuente.
 # ==============================================================================
 # Uso:
-#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy]
+#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular]
 #   O simplemente: ./init-project.sh "Mi Proyecto"
 #
-#   --copy  Copia las skills en .claude/skills en vez de crear un enlace
-#           simbólico (útil en Windows o si el repositorio no admite symlinks).
+#   --copy               Copia las skills en .claude/skills en vez de crear un enlace
+#                        simbólico (útil en Windows o si el repositorio no admite symlinks).
+#   --stack <nombre>     Pre-configura el stack tecnológico en GLOBAL_STATE.md sin
+#                        placeholders (opciones: nextjs | angular).
 # ==============================================================================
 
 set -e
 
-PROJECT_NAME="${1:-Nuevo Proyecto}"
-TARGET_DIR="${2:-.}"
+PROJECT_NAME="Nuevo Proyecto"
+TARGET_DIR="."
 LINK_MODE="symlink"
-[ "$3" = "--copy" ] && LINK_MODE="copy"
+SELECTED_STACK=""
+
+positional=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --copy)
+      LINK_MODE="copy"
+      shift
+      ;;
+    --stack)
+      SELECTED_STACK="$2"
+      shift 2
+      ;;
+    --stack=*)
+      SELECTED_STACK="${1#*=}"
+      shift
+      ;;
+    *)
+      positional+=("$1")
+      shift
+      ;;
+  esac
+done
+
+[ -n "${positional[0]}" ] && PROJECT_NAME="${positional[0]}"
+[ -n "${positional[1]}" ] && TARGET_DIR="${positional[1]}"
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
 # Directorio donde se encuentra este script
@@ -36,6 +63,7 @@ copy_if_missing() {
 echo "================================================================="
 echo "  Inicializando Entorno Multi-Agente para: $PROJECT_NAME"
 echo "  Directorio de destino: $TARGET_DIR"
+[ -n "$SELECTED_STACK" ] && echo "  Stack tecnológico: $SELECTED_STACK"
 echo "================================================================="
 
 # Crear carpetas en el destino si no existen
@@ -112,6 +140,33 @@ else
   sed -e "s|\[NOMBRE_DEL_PROYECTO\]|$PROJECT_NAME|g" \
       -e "s|YYYY-MM-DD|$CURRENT_DATE|g" \
       "$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" > "$TARGET_DIR/GLOBAL_STATE.md"
+
+  # Configurar stack tecnológico predeterminado si se especificó
+  if [ "$SELECTED_STACK" = "nextjs" ]; then
+    sed -i.bak \
+      -e "s|- \*\*Frontend\*\*:.*|- **Frontend**: \`React 19 + Next.js 15 (App Router, Server Components y Tailwind CSS)\`|g" \
+      -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Next.js Server Actions y Route Handlers con validación Zod\`|g" \
+      -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL con Prisma ORM (migraciones versionadas)\`|g" \
+      -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Sesiones seguras con cookies HttpOnly / Auth.js\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura & Despliegue**: \`Docker multi-etapa / Vercel / Render\`|g" \
+      -e "s|Elección del stack base|Elección del stack React 19 + Next.js 15 + Prisma (stack-nextjs-tailwind-prisma)|g" \
+      -e "s|\[Breve descripción.*|Aplicación web construida con React 19, Next.js 15 App Router, Tailwind CSS y Prisma ORM.|g" \
+      "$TARGET_DIR/GLOBAL_STATE.md"
+    rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
+    echo "   (Stack Next.js configurado en GLOBAL_STATE.md)"
+  elif [ "$SELECTED_STACK" = "angular" ]; then
+    sed -i.bak \
+      -e "s|- \*\*Frontend\*\*:.*|- **Frontend**: \`Angular 22 (Standalone, Zoneless, OnPush, Signals)\`|g" \
+      -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Node 24 LTS con Express 5 y validación Zod\`|g" \
+      -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL 18 con Drizzle ORM\`|g" \
+      -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Tokens JWT propios con rotación de refresh\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura & Despliegue**: \`Docker multi-etapa / Nginx SSR / VPS\`|g" \
+      -e "s|Elección del stack base|Elección del stack Angular 22 + Express 5 + PostgreSQL (stack-angular-express-postgres)|g" \
+      -e "s|\[Breve descripción.*|Aplicación web en monorepo npm con Angular 22, Express 5 y PostgreSQL 18 con Drizzle.|g" \
+      "$TARGET_DIR/GLOBAL_STATE.md"
+    rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
+    echo "   (Stack Angular configurado en GLOBAL_STATE.md)"
+  fi
 fi
 
 # Crear BRAIN.md y los módulos de memoria sin sobrescribir lo que el proyecto ya aprendió.

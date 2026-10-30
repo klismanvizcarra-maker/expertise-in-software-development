@@ -48,6 +48,14 @@ $T learn "Leccion real" backend "causa" "solucion" >/dev/null
 bash "$ROOT/.agents/scripts/init-project.sh" "Proyecto init" . >/dev/null 2>&1
 check "reinstalar conserva lecciones del proyecto" 'grep -q "Leccion real" .agents/brain/lessons_learned.md && grep -q "Leccion real" BRAIN.md'
 
+mkdir -p "$WORK/nextjs-app" && git -C "$WORK/nextjs-app" init -q
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi Next App" "$WORK/nextjs-app" --stack nextjs >/dev/null 2>&1
+check "init-project con --stack nextjs pre-configura GLOBAL_STATE.md" 'grep -q "stack-nextjs-tailwind-prisma" "$WORK/nextjs-app/GLOBAL_STATE.md" && grep -q "Prisma" "$WORK/nextjs-app/GLOBAL_STATE.md"'
+
+mkdir -p "$WORK/angular-app" && git -C "$WORK/angular-app" init -q
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi Angular App" "$WORK/angular-app" --stack angular >/dev/null 2>&1
+check "init-project con --stack angular pre-configura GLOBAL_STATE.md" 'grep -q "stack-angular-express-postgres" "$WORK/angular-app/GLOBAL_STATE.md" && grep -q "Drizzle" "$WORK/angular-app/GLOBAL_STATE.md"'
+
 # ------------------------------------------------------------------------------
 section "task.sh add / move / list / metrics"
 new_project board

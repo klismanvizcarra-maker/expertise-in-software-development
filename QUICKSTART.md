@@ -19,10 +19,10 @@ El sistema funciona igual en **Claude Code** y en **Antigravity**: las skills vi
 ### Opción A: Usando el script automático
 En tu terminal, ejecuta:
 ```bash
-# Sintaxis: ./.agents/scripts/init-project.sh "Nombre de tu Proyecto" "/ruta/hacia/tu/proyecto" [--copy]
-./.agents/scripts/init-project.sh "Mi Plataforma SaaS" "../MI-NUEVO-PROYECTO"
+# Sintaxis: ./.agents/scripts/init-project.sh "Nombre de tu Proyecto" "/ruta/hacia/tu/proyecto" [--copy] [--stack nextjs|angular]
+./.agents/scripts/init-project.sh "Mi Plataforma SaaS" "../MI-NUEVO-PROYECTO" --stack nextjs
 ```
-El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json` ni `.gitignore` si ya existen. Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows).
+El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json` ni `.gitignore` si ya existen. Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows) y `--stack nextjs` o `--stack angular` para preconfigurar la arquitectura sin placeholders.
 
 ### Opción B: Copia manual
 1. Copia la carpeta [`.agents/`](.agents), [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) y [`.mcp.json`](.mcp.json) a la raíz de tu nuevo repositorio.
