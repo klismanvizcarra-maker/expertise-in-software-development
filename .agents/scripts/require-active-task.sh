@@ -20,6 +20,11 @@ ROOT="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 STATE_FILE="$ROOT/GLOBAL_STATE.md"
 [ -f "$STATE_FILE" ] || exit 0
 
+if ! command -v python3 >/dev/null 2>&1; then
+  printf 'Bloqueado por AGENTS.md §2.4 (Cero Código sin Tarea): se requiere python3 para validar la tarea activa.\nInstala python3 en tu entorno para permitir la edición de archivos.\n' >&2
+  exit 2
+fi
+
 FILE=$(python3 -c '
 import json, sys
 try:
