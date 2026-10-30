@@ -11,6 +11,12 @@
 
 set -e
 
+# Nota sobre flags de shell:
+# Se utiliza 'set -e' para abortar inmediatamente ante comandos fallidos imprevistos.
+# No se activan '-u' ni '-o pipefail' deliberadamente para permitir la evaluación
+# natural de argumentos posicionales opcionales ($2, $3...) y tuberías de inspección
+# donde comandos como grep o diff devuelven código 1 en ausencia de coincidencias.
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PARENT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 

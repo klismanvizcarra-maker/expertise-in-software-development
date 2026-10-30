@@ -14,7 +14,7 @@
 #                        placeholders (opciones: nextjs | angular).
 # ==============================================================================
 
-set -e
+set -euo pipefail
 
 PROJECT_NAME="Nuevo Proyecto"
 TARGET_DIR="."

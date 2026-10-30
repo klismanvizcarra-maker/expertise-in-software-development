@@ -3,7 +3,7 @@
 # Instalador de Git Hooks del Sistema Multi-Agente
 # ==============================================================================
 
-set -e
+set -euo pipefail
 
 if [ ! -d ".git" ]; then
   echo "⚠️ Advertencia: No se detectó un repositorio Git activo (.git) en este directorio."

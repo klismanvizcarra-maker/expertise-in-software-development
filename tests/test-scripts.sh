@@ -3,6 +3,11 @@
 # Pruebas de regresión de los scripts del sistema (task.sh, hooks, init-project)
 # Uso: bash tests/test-scripts.sh
 # Cada prueba trabaja en un proyecto temporal instalado con init-project.sh.
+#
+# Nota sobre flags de shell:
+# Como ejecutor de suite de pruebas, no utiliza 'set -e' para que las pruebas
+# que fallan no aborten la ejecución completa del conjunto; cada fallo incrementa
+# FAIL y al concluir se sale con código 1 si FAIL > 0.
 # ==============================================================================
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -295,6 +300,14 @@ check "el proyecto sembrado queda en main" '[ "$(git -C "$SEEDED" branch --show-
 # ------------------------------------------------------------------------------
 section "test-skills.sh (linter estructural de skills)"
 check "auditoría estructural de skills sin errores" 'bash "$ROOT/tests/test-skills.sh" >/dev/null'
+check "test-skills.sh sale con exit 1 ante errores" 'bash -c "FAKE=\$(mktemp -d); cp -r \"$ROOT/tests\" \"\$FAKE/\"; mkdir -p \"\$FAKE/.agents/skills/broken-agent\"; cat > \"\$FAKE/.agents/skills/broken-agent/SKILL.md\" <<\"EOF\"
+---
+name: broken-agent
+description: corta
+---
+# broken
+EOF
+bash \"\$FAKE/tests/test-skills.sh\" >/dev/null 2>&1; ret=\$?; rm -rf \"\$FAKE\"; exit \$ret"; [ $? -eq 1 ]'
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

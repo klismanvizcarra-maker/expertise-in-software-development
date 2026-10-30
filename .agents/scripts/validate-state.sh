@@ -6,6 +6,8 @@
 # Sale con código 1 si hay filas mal formadas (estado o iteración inválidos).
 # ==============================================================================
 
+set -euo pipefail
+
 STATE_FILE="${1:-GLOBAL_STATE.md}"
 
 echo "=== Auditando: $STATE_FILE ==="
@@ -53,7 +55,7 @@ else
 fi
 
 # 3. Resumen
-DONE_TASKS=$(printf '%s\n' "$ROWS" | awk -F'|' '$2 == "DONE"' | grep -c . || true)
+DONE_TASKS=$(printf '%s\n' "$ROWS" | awk -F'|' '$2 == "DONE" { n++ } END { print n+0 }')
 echo "   [INFO] Tareas completadas (DONE): $DONE_TASKS"
 
 # 4. Placeholders sin rellenar en metadatos
