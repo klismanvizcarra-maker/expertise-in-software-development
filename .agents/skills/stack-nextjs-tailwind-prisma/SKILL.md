@@ -9,15 +9,15 @@ Esta skill define el **cómo técnico concreto** para aplicaciones modernas cons
 
 ---
 
-## 1. Versiones de Referencia (verificadas 2026-10)
+## 1. Versiones de Referencia (verificadas 2026-10-29 con scaffold create-next-app, prisma migrate y next build)
 
 | Pieza | Versión | Notas |
 | :--- | :--- | :--- |
 | **Node.js** | 22 / 24 LTS | Runtime de ejecución y scripts |
-| **Next.js** | 15.x | App Router con React Server Components (RSC) y Server Actions nativas |
+| **Next.js** | 15.5.x / 15.x | App Router con React Server Components (RSC) y Server Actions nativas |
 | **React** | 19.x | `useActionState`, `useOptimistic` y transiciones asíncronas |
 | **Tailwind CSS** | 4.x / 3.4+ | Utility-first CSS con tokens semánticos y soporte para modo oscuro |
-| **Prisma ORM** | 6.x | Cliente singleton tipado y migraciones SQL versionadas |
+| **Prisma ORM** | 6.19.x / 6.x | Cliente singleton tipado y migraciones SQL versionadas |
 | **PostgreSQL** | 16+ | Base de datos relacional; IDs con `uuid` o `cuid` |
 | **Zod** | 3.x / 4.x | Validación de esquemas en Server Actions, APIs y DTOs |
 | **Testing** | Vitest + Playwright | Pruebas unitarias/integración y flujos E2E completos |
