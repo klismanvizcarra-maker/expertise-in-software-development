@@ -131,6 +131,7 @@ J=.agents/handoffs/handoff_TASK-003.json
 check "handoff pasa a IN_REVIEW_QA" '[ "$(col TASK-003 5)" = IN_REVIEW_QA ]'
 check "handoff genera JSON válido con comillas escapadas" 'python3 -c "import json,sys; d=json.load(open(\"$J\")); sys.exit(0 if d[\"summary\"]==\"Endpoint \\\"login\\\" v1\" else 1)"'
 check "handoff registra iteración 1 y el archivo entregado" 'python3 -c "import json,sys; d=json.load(open(\"$J\")); sys.exit(0 if d[\"iteration\"]==1 and any(x[\"path\"]==\"a.ts\" for x in d[\"deliverables\"]) else 1)"'
+check "handoff añade fila en historial de GLOBAL_STATE.md" 'grep -q "| \`TASK-003\` |.*Comandos: \`./.agents/scripts/validate-state.sh\`" GLOBAL_STATE.md'
 check "reject sin motivo falla" '! $T reject TASK-003 >/dev/null 2>&1'
 check "reject de tarea inexistente falla" '! $T reject TASK-999 "x" >/dev/null 2>&1'
 $T reject TASK-003 "falta 401" >/dev/null
@@ -160,6 +161,13 @@ echo "- **Revisor**: qa-security-agent" > .agents/reviews/qa_TASK-003.md
 CLOSE_OUT=$($T close TASK-003)
 check "close tras revisión con revisor independiente -> DONE" '[ "$(col TASK-003 5)" = DONE ]'
 check "close muestra comando de fusión a main" 'echo "$CLOSE_OUT" | grep -q "git merge --no-ff"'
+
+$T add "Tarea con verificación" "backend-agent" "criterios" >/dev/null
+$T start TASK-007 >/dev/null
+$T handoff TASK-007 qa-security-agent --verify "npm test" --verify "npm run build" --summary "Entrega con pruebas" >/dev/null
+J7=.agents/handoffs/handoff_TASK-007.json
+check "handoff con --verify guarda comandos en JSON" 'python3 -c "import json,sys; d=json.load(open(\"$J7\")); sys.exit(0 if d[\"verification_commands\"]==[\"npm test\", \"npm run build\"] else 1)"'
+check "handoff con --verify y --summary registra fila en historial de GLOBAL_STATE.md" 'grep -q "Entrega con pruebas. Comandos: \`npm test\`, \`npm run build\`" GLOBAL_STATE.md'
 
 # ------------------------------------------------------------------------------
 section "task.sh learn / debt"

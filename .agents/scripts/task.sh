@@ -329,12 +329,46 @@ case "$COMMAND" in
 
   handoff)
     require_state
-    [ -n "$2" ] || die "Uso: ./task.sh handoff TASK-001 [agente-destino]"
+    [ -n "$2" ] || die "Uso: ./task.sh handoff TASK-001 [agente-destino] [--verify \"<comando>\"]... [--summary \"<resumen>\"]"
     TASK_ID=$(normalize_id "$2")
-    TARGET_AGENT="${3:-qa-security-agent}"
     require_task "$TASK_ID"
     STATUS=$(task_field "$TASK_ID" 5)
     [ "$STATUS" = "IN_PROGRESS" ] || die "$TASK_ID está en $STATUS; solo se entrega desde IN_PROGRESS (usa 'task.sh start' primero)."
+
+    shift 2
+    TARGET_AGENT=""
+    SUMMARY_ARG=""
+    VERIFY_CMDS=()
+
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --verify)
+          [ -n "${2:-}" ] || die "--verify requiere un comando de verificación."
+          VERIFY_CMDS+=("$2")
+          shift 2
+          ;;
+        --verify=*)
+          VERIFY_CMDS+=("${1#--verify=}")
+          shift
+          ;;
+        --summary)
+          [ -n "${2:-}" ] || die "--summary requiere un texto de resumen."
+          SUMMARY_ARG="$2"
+          shift 2
+          ;;
+        --summary=*)
+          SUMMARY_ARG="${1#--summary=}"
+          shift
+          ;;
+        *)
+          if [ -z "$TARGET_AGENT" ]; then
+            TARGET_AGENT="$1"
+          fi
+          shift
+          ;;
+      esac
+    done
+    TARGET_AGENT="${TARGET_AGENT:-qa-security-agent}"
 
     SOURCE_AGENT=$(task_field "$TASK_ID" 4)
     DESC=$(task_field "$TASK_ID" 3)
@@ -364,6 +398,23 @@ case "$COMMAND" in
     done <<< "$FILES"
     DELIVERABLES=$(printf '%s' "$DELIVERABLES" | sed '$ s/,$//')
 
+    if [ ${#VERIFY_CMDS[@]} -eq 0 ]; then
+      VERIFY_CMDS=("./.agents/scripts/validate-state.sh")
+    fi
+
+    VERIFY_JSON=""
+    CMDS_FMT=""
+    for cmd in "${VERIFY_CMDS[@]}"; do
+      VERIFY_JSON="$VERIFY_JSON    \"$(json_escape "$cmd")\",
+"
+      if [ -n "$CMDS_FMT" ]; then
+        CMDS_FMT="$CMDS_FMT, \`$cmd\`"
+      else
+        CMDS_FMT="\`$cmd\`"
+      fi
+    done
+    VERIFY_JSON=$(printf '%s' "$VERIFY_JSON" | sed '$ s/,$//')
+
     mkdir -p "$HANDOFF_DIR"
     HANDOFF_FILE="$HANDOFF_DIR/handoff_${TASK_ID}.json"
     cat > "$HANDOFF_FILE" <<EOF
@@ -378,12 +429,18 @@ case "$COMMAND" in
 $DELIVERABLES
   ],
   "verification_commands": [
-    "./.agents/scripts/validate-state.sh"
+$VERIFY_JSON
   ]
 }
 EOF
 
     set_task "$TASK_ID" "IN_REVIEW_QA"
+    HIST_SUMMARY="${SUMMARY_ARG:-$DESC}"
+    if [ -n "$CMDS_FMT" ]; then
+      HIST_SUMMARY="$HIST_SUMMARY. Comandos: $CMDS_FMT"
+    fi
+    log_history "$SOURCE_AGENT" "$TARGET_AGENT" "$TASK_ID" "$HIST_SUMMARY"
+
     say "${GREEN}📦 Handoff generado:${NC} ${HANDOFF_FILE#$PROJECT_ROOT/}"
     say "   $TASK_ID -> ${BOLD}IN_REVIEW_QA${NC} (iteración $ITERATION/$MAX_ITERATIONS), revisa: ${CYAN}$TARGET_AGENT${NC}"
     ;;
@@ -541,7 +598,7 @@ EOF
   metrics                                Progreso y salud de QA
   add "<desc>" "<agente>" "<criterios>"  Crear tarea (TODO)
   start TASK-ID                          TODO/rechazada -> IN_PROGRESS + rama Git
-  handoff TASK-ID [agente]               IN_PROGRESS -> IN_REVIEW_QA + JSON de entrega
+  handoff TASK-ID [agente] [--verify "cmd"]...   IN_PROGRESS -> IN_REVIEW_QA + JSON + historial
   reject TASK-ID "<motivo>"              QA rechaza (+1); a 3/3 -> BLOCKED
   close TASK-ID                          QA aprueba: IN_REVIEW_QA -> DONE
   move TASK-ID <TODO|BACKLOG>            Replanificar o desbloquear (BLOCKED también -> IN_PROGRESS)

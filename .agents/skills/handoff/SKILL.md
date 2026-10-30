@@ -22,24 +22,24 @@ Este flujo lo ejecuta exclusivamente el especialista responsable de la tarea, nu
      ./.agents/scripts/scan-secrets.sh --branch
      ```
    - *Si alguna prueba falla, el build se rompe o se detecta un secreto expuesto, **ABORTA el handoff de inmediato**, corrige el fallo y no continúes.*
-4. **Actualizar el registro en `GLOBAL_STATE.md`**:
-   - Añade una fila al registro cronológico (§7):
-     ```markdown
-     | `YYYY-MM-DD` | <agente> | qa-security-agent | `TASK-XXX` | <resumen de entregables>. Comandos: `<comando 1>`, `<comando 2>` |
-     ```
+4. **Confirmar contratos y preparar comandos de verificación**:
    - Si la tarea modificó endpoints o payloads, confirma que los contratos DTO en §4 estén sincronizados.
+   - Identifica los comandos reproducibles de verificación empleados durante la tarea (tests, builds, escaneo de secretos).
 5. **Commit convencional de los cambios**:
    - Asegúrate de haber agregado los archivos nuevos con `git add`.
    - Realiza el commit con el formato del sistema:
      ```bash
      ./.agents/scripts/task.sh commit TASK-XXX "<descripción en imperativo>" [feat|fix|test|refactor|docs]
      ```
-6. **Transición formal a QA**:
-   - Ejecuta el comando de traspaso:
+6. **Transición formal a QA con comandos de verificación**:
+   - Ejecuta el comando de traspaso indicando los comandos de verificación (`--verify` repetible) y opcionalmente un resumen personalizado (`--summary`):
      ```bash
-     ./.agents/scripts/task.sh handoff TASK-XXX
+     ./.agents/scripts/task.sh handoff TASK-XXX qa-security-agent \
+       --verify "npm test" \
+       --verify "npm run build" \
+       --verify "./.agents/scripts/scan-secrets.sh --branch"
      ```
-   - Este comando cambia el estado a `IN_REVIEW_QA` y genera el manifiesto `.agents/handoffs/handoff_TASK-XXX.json` con la lista de archivos modificados y el número de iteración.
+   - Este comando cambia el estado a `IN_REVIEW_QA`, genera el manifiesto `.agents/handoffs/handoff_TASK-XXX.json` con `verification_commands` y **registra automáticamente** la entrega en el historial cronológico (§7) de `GLOBAL_STATE.md`.
 7. **Notificación de entrega**:
    - Informa al usuario emitiendo el resumen estructurado.
 
@@ -62,7 +62,7 @@ Este flujo lo ejecuta exclusivamente el especialista responsable de la tarea, nu
 - [ ] Build del proyecto exitoso y sin errores de tipado o compilación.
 - [ ] Escaneo de secretos limpio ejecutado con `./.agents/scripts/scan-secrets.sh --branch`.
 - [ ] Cambios confirmados con commit convencional referenciando a `TASK-XXX`.
-- [ ] Manifiesto de handoff generado con `task.sh handoff TASK-XXX`.
+- [ ] Manifiesto de handoff y registro en historial generados con `task.sh handoff TASK-XXX --verify "<cmd>"`.
 
 ## Prohibido
 - Ejecutar `task.sh handoff` con pruebas fallidas o builds con errores.
