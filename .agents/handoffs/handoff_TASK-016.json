@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-016",
+  "summary": "Fix: el control de tarea activa se puede esquivar",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T03:16:57Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/hooks/commit-msg" },
+    { "type": "file", "path": ".agents/scripts/require-active-task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
