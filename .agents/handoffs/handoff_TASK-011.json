@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-011",
+  "summary": "Activar en la propia librería el hook de Claude Code y los git hooks",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T02:54:59Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".claude/settings.json" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
