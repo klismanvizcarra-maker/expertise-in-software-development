@@ -188,9 +188,11 @@ install_brain_file() {
   fi
 }
 install_brain_file "$SKILL_ROOT/.agents/templates/BRAIN_TEMPLATE.md" "$TARGET_DIR/BRAIN.md"
-for f in "$SKILL_ROOT/.agents/brain/"*.md; do
-  install_brain_file "$f" "$TARGET_DIR/.agents/brain/$(basename "$f")"
-done
+install_brain_file "$SKILL_ROOT/.agents/templates/lessons_learned_template.md" "$TARGET_DIR/.agents/brain/lessons_learned.md"
+install_brain_file "$SKILL_ROOT/.agents/templates/system_map_template.md" "$TARGET_DIR/.agents/brain/system_map.md"
+install_brain_file "$SKILL_ROOT/.agents/templates/preferences_template.md" "$TARGET_DIR/.agents/brain/preferences.md"
+install_brain_file "$SKILL_ROOT/.agents/templates/domain_glossary_template.md" "$TARGET_DIR/.agents/brain/domain_glossary.md"
+install_brain_file "$SKILL_ROOT/.agents/templates/tech_debt_template.md" "$TARGET_DIR/.agents/brain/tech_debt.md"
 
 # Generar README.md si no existe en el destino
 if [ ! -f "$TARGET_DIR/README.md" ]; then
