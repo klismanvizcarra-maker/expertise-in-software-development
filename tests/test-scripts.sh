@@ -42,11 +42,16 @@ new_project init
 check "enlace .claude/skills -> .agents/skills" '[ -L .claude/skills ] && [ -f .claude/skills/qa-security-agent/SKILL.md ]'
 check "CLAUDE.md importa AGENTS.md" 'grep -q "^@AGENTS.md" CLAUDE.md'
 check ".mcp.json y plugin MCP de Antigravity instalados" '[ -f .mcp.json ] && [ -f .agents/plugins/maestro-mcp/mcp_config.json ]'
+check "existe .agents/VERSION" '[ -f .agents/VERSION ] && [ -n "$(cat .agents/VERSION)" ]'
 check "cerebro sin lecciones de ejemplo" '! grep -qE "^\| *\`?LL-" BRAIN.md .agents/brain/lessons_learned.md'
 check "deuda técnica sin filas de ejemplo" '! grep -qE "^\| *\`?TD-" .agents/brain/tech_debt.md'
 $T learn "Leccion real" backend "causa" "solucion" >/dev/null
 bash "$ROOT/.agents/scripts/init-project.sh" "Proyecto init" . >/dev/null 2>&1
 check "reinstalar conserva lecciones del proyecto" 'grep -q "Leccion real" .agents/brain/lessons_learned.md && grep -q "Leccion real" BRAIN.md'
+
+mkdir -p .agents/skills/dummy-retirada
+bash "$ROOT/.agents/scripts/init-project.sh" --update . >/dev/null 2>&1
+check "init-project --update sincroniza y elimina skills retiradas" '! [ -d .agents/skills/dummy-retirada ] && grep -q "Leccion real" BRAIN.md'
 
 mkdir -p "$WORK/nextjs-app" && git -C "$WORK/nextjs-app" init -q
 bash "$ROOT/.agents/scripts/init-project.sh" "Mi Next App" "$WORK/nextjs-app" --stack nextjs >/dev/null 2>&1
@@ -55,6 +60,14 @@ check "init-project con --stack nextjs pre-configura GLOBAL_STATE.md" 'grep -q "
 mkdir -p "$WORK/angular-app" && git -C "$WORK/angular-app" init -q
 bash "$ROOT/.agents/scripts/init-project.sh" "Mi Angular App" "$WORK/angular-app" --stack angular >/dev/null 2>&1
 check "init-project con --stack angular pre-configura GLOBAL_STATE.md" 'grep -q "stack-angular-express-postgres" "$WORK/angular-app/GLOBAL_STATE.md" && grep -q "Drizzle" "$WORK/angular-app/GLOBAL_STATE.md"'
+
+check "--stack con valor desconocido sale con exit 1" '! bash "$ROOT/.agents/scripts/init-project.sh" "App" . --stack desconocido >/dev/null 2>&1'
+
+mkdir -p "$WORK/escaped-app" && git -C "$WORK/escaped-app" init -q
+bash "$ROOT/.agents/scripts/init-project.sh" "I&D / Innovation & SaaS" "$WORK/escaped-app" >/dev/null 2>&1
+check "nombres de proyecto con & o / se sustituyen literalmente" 'grep -q "I&D / Innovation & SaaS" "$WORK/escaped-app/GLOBAL_STATE.md" && grep -q "I&D / Innovation & SaaS" "$WORK/escaped-app/README.md"'
+
+check "tareas de ejemplo de la plantilla usan nombres de skill" 'grep -q "orchestrator-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" && grep -q "backend-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md"'
 
 # ------------------------------------------------------------------------------
 section "task.sh add / move / list / metrics"

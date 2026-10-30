@@ -74,8 +74,8 @@
 
 | ID Tarea | Descripción | Asignado a | Estado | Iteración QA | Criterios de Aceptación |
 | :--- | :--- | :--- | :--- | :---: | :--- |
-| `TASK-001` | Inicialización de arquitectura y esquema base | Orchestrator | `TODO` | `0/3` | Repositorio estructurado y builds pasando |
-| `TASK-002` | Implementación de autenticación y endpoints core | Backend Agent | `BACKLOG` | `0/3` | Login funcional con JWT y tests al 100% |
+| `TASK-001` | Inicialización de arquitectura y esquema base | `orchestrator-agent` | `TODO` | `0/3` | Repositorio estructurado y builds pasando |
+| `TASK-002` | Implementación de autenticación y endpoints core | `backend-agent` | `BACKLOG` | `0/3` | Login funcional con JWT y tests al 100% |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -93,4 +93,4 @@
 
 | Fecha | Agente Emisor | Agente Receptor | Tarea | Resumen del Hito |
 | :--- | :--- | :--- | :--- | :--- |
-| `YYYY-MM-DD` | Orchestrator | Equipo | `TASK-001` | Creación de tablero y asignación inicial |
+| `YYYY-MM-DD` | `orchestrator-agent` | `backend-agent` | `TASK-001` | Creación de tablero y asignación inicial |
