@@ -1,0 +1,27 @@
+{
+  "task_id": "TASK-022",
+  "summary": "Fix: robustez de los scripts de pruebas y automatización",
+  "source_agent": "qa-security-agent",
+  "target_agent": "orchestrator-agent",
+  "timestamp": "2026-10-30T03:47:37Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/scripts/install-hooks.sh" },
+    { "type": "file", "path": ".agents/scripts/require-active-task.sh" },
+    { "type": "file", "path": ".agents/scripts/scan-secrets.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": ".agents/scripts/validate-state.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/evals/fixtures/discount.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/orders.sh" },
+    { "type": "file", "path": "tests/test-scripts.sh" },
+    { "type": "file", "path": "tests/test-skills.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
