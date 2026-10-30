@@ -72,6 +72,13 @@ mkdir -p "$WORK/escaped-app" && git -C "$WORK/escaped-app" init -q
 bash "$ROOT/.agents/scripts/init-project.sh" "I&D / Innovation & SaaS" "$WORK/escaped-app" >/dev/null 2>&1
 check "nombres de proyecto con & o / se sustituyen literalmente" 'grep -q "I&D / Innovation & SaaS" "$WORK/escaped-app/GLOBAL_STATE.md" && grep -q "I&D / Innovation & SaaS" "$WORK/escaped-app/README.md"'
 
+mkdir -p "$WORK/ci-app" && git -C "$WORK/ci-app" init -q
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi App CI" "$WORK/ci-app" --ci >/dev/null 2>&1
+check "init-project --ci instala .github/workflows/audit.yml" '[ -f "$WORK/ci-app/.github/workflows/audit.yml" ] && grep -q "Audit" "$WORK/ci-app/.github/workflows/audit.yml"'
+echo "# personalizado" > "$WORK/ci-app/.github/workflows/audit.yml"
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi App CI" "$WORK/ci-app" --ci >/dev/null 2>&1
+check "init-project --ci no sobrescribe workflow existente" 'grep -q "# personalizado" "$WORK/ci-app/.github/workflows/audit.yml"'
+
 check "tareas de ejemplo de la plantilla usan nombres de skill" 'grep -q "orchestrator-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" && grep -q "backend-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md"'
 
 # ------------------------------------------------------------------------------
