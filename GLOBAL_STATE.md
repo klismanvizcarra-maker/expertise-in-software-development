@@ -58,7 +58,7 @@
 | `TASK-002` | Implementar linter automatizado de calidad estructural de skills | qa-security-agent | `DONE` | `0/3` | Script tests/test-skills.sh audita los 5 pilares en todas las skills; integrado en test-scripts.sh pasando al 100% |
 | `TASK-003` | Crear plantilla de stack tecnológico y skill stack-nextjs-tailwind-prisma | docs-architecture-agent | `DONE` | `0/3` | Plantilla .agents/templates/stack_template.md creada; skill stack-nextjs-tailwind-prisma con referencias de Next.js, Prisma, Tailwind y Auth; triggers validados |
 | `TASK-004` | Incorporar gotchas de stacks y seguridad al Cerebro del proyecto | docs-architecture-agent | `DONE` | `0/3` | BRAIN.md actualizado con gotchas de Next.js/Prisma, Express 5, Angular SSR y Stripe; suites pasando al 100% |
-| `TASK-005` | Estandarizar skills de flujo: nueva-tarea, aprender, release y web-performance | orchestrator-agent | `IN_PROGRESS` | `0/3` | Checklists y secciones Prohibido agregadas; linter estructural pasando al 100% |
+| `TASK-005` | Estandarizar skills de flujo: nueva-tarea, aprender, release y web-performance | orchestrator-agent | `DONE` | `0/3` | Checklists y secciones Prohibido agregadas; linter estructural pasando al 100% |
 | `TASK-006` | Elevar resiliencia en base de datos y DevOps (Expand/Contract, non-root, healthchecks) | database-architect-agent | `TODO` | `0/3` | Patron Expand/Contract e indices FK en database-architect; Docker non-root, healthchecks y graceful shutdown en devops; tests pasando |
 | `TASK-007` | Soporte de selector de stack (--stack nextjs/angular) en init-project.sh | devops-cloud-agent | `TODO` | `0/3` | init-project.sh admite --stack nextjs y --stack angular configurando GLOBAL_STATE.md sin placeholders; test pasando |
 
@@ -88,4 +88,5 @@
 | `2026-10-29` | docs-architecture-agent | qa-security-agent | `TASK-004` | 4 gotchas criticos incorporados a BRAIN.md (Next.js/Prisma, Express 5, Angular SSR, Stripe). Comandos: `bash tests/test-scripts.sh`, `./.agents/scripts/validate-state.sh` |
 | `2026-10-29` | qa-security-agent | orchestrator-agent | `TASK-004` | Aprobada por QA -> DONE |
 | `2026-10-29` | orchestrator-agent | qa-security-agent | `TASK-005` | Estandarizacion de nueva-tarea, aprender, release y web-performance con checklists y prohibiciones. Comandos: `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py` |
+| `2026-10-29` | qa-security-agent | orchestrator-agent | `TASK-005` | Aprobada por QA -> DONE |
 
