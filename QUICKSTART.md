@@ -21,14 +21,16 @@ En tu terminal, ejecuta:
 ```bash
 # Sintaxis: ./.agents/scripts/init-project.sh "Nombre de tu Proyecto" "/ruta/hacia/tu/proyecto" [--copy] [--stack nextjs|angular]
 ./.agents/scripts/init-project.sh "Mi Plataforma SaaS" "../MI-NUEVO-PROYECTO" --stack nextjs
+cd ../MI-NUEVO-PROYECTO && ./.agents/scripts/install-hooks.sh
 ```
-El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json` ni `.gitignore` si ya existen. Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows) y `--stack nextjs` o `--stack angular` para preconfigurar la arquitectura sin placeholders.
+El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json` ni `.gitignore` si ya existen. Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows) y `--stack nextjs` o `--stack angular` para preconfigurar la arquitectura sin placeholders. Luego ejecuta `install-hooks.sh` para activar la validación de commits y escaneo de secretos.
 
 ### Opción B: Copia manual
 1. Copia la carpeta [`.agents/`](.agents), [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) y [`.mcp.json`](.mcp.json) a la raíz de tu nuevo repositorio.
-2. Crea el enlace para Claude Code: `mkdir -p .claude && ln -s ../.agents/skills .claude/skills`
-3. Copia [`.agents/templates/GLOBAL_STATE_TEMPLATE.md`](.agents/templates/GLOBAL_STATE_TEMPLATE.md) como `GLOBAL_STATE.md` en la raíz de tu proyecto.
-4. Abre el proyecto en tu editor y dile a la IA:
+2. Crea la configuración de Claude Code: `mkdir -p .claude && ln -s ../.agents/skills .claude/skills && cp .agents/templates/claude_settings_template.json .claude/settings.json`.
+3. Instala los Git hooks para blindar commits y secretos: `./.agents/scripts/install-hooks.sh`.
+4. Copia [`.agents/templates/GLOBAL_STATE_TEMPLATE.md`](.agents/templates/GLOBAL_STATE_TEMPLATE.md) como `GLOBAL_STATE.md` en la raíz de tu proyecto.
+5. Abre el proyecto en tu editor y dile a la IA:
    > *"Inicia el proyecto configurando el stack en GLOBAL_STATE.md y planifica las primeras tareas."*
 
 ---
