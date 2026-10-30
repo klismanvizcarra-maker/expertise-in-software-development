@@ -547,6 +547,21 @@
    "type": "especialista"
   },
   {
+   "id": "stk-03",
+   "prompt": "Tengo un problema de fuga de conexiones en Next.js 15 con Prisma ORM en desarrollo con hot-reload",
+   "expect": [
+    "stack-nextjs-tailwind-prisma"
+   ],
+   "accept": [
+    "backend-agent",
+    "bugfix"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres"
+   ],
+   "type": "especialista"
+  },
+  {
    "id": "e2e-01",
    "prompt": "Escribe pruebas end-to-end con Playwright para el flujo de login",
    "expect": [
