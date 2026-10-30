@@ -230,8 +230,16 @@ case "$COMMAND" in
         bug[:\ ]*|fix[:\ ]*|hotfix[:\ ]*) PREFIX="fix";      DESC="${DESC#*[: ]}" ;;
         refactor[:\ ]*)                   PREFIX="refactor"; DESC="${DESC#*[: ]}" ;;
       esac
-      SLUG=$(printf '%s' "$DESC" | tr '[:upper:]' '[:lower:]' | iconv -f utf-8 -t ascii//TRANSLIT 2>/dev/null \
-        | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c 1-30 | sed 's/-$//')
+      if command -v python3 >/dev/null 2>&1; then
+        SLUG=$(python3 -c 'import unicodedata, sys; s = "".join(c for c in unicodedata.normalize("NFKD", sys.argv[1]) if not unicodedata.combining(c)); print(s)' "$DESC" 2>/dev/null \
+          | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c 1-30 | sed 's/-$//')
+      else
+        SLUG=$(printf '%s' "$DESC" \
+          | sed 'y/áàäâãéèëêíìïîóòöôõúùüûñçÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÑÇ/aaaaaeeeeiiiiooooouuuuncaaaaaeeeeiiiiooooouuuunc/' 2>/dev/null \
+          | tr '[:upper:]' '[:lower:]' \
+          | iconv -c -f utf-8 -t ascii 2>/dev/null \
+          | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c 1-30 | sed 's/-$//')
+      fi
       BRANCH="$PREFIX/$TASK_ID-${SLUG:-tarea}"
       if git -C "$PROJECT_ROOT" show-ref --verify --quiet "refs/heads/$BRANCH"; then
         git -C "$PROJECT_ROOT" checkout "$BRANCH" >/dev/null 2>&1 \
