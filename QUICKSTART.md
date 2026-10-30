@@ -19,11 +19,16 @@ El sistema funciona igual en **Claude Code** y en **Antigravity**: las skills vi
 ### Opción A: Usando el script automático
 En tu terminal, ejecuta:
 ```bash
-# Sintaxis: ./.agents/scripts/init-project.sh "Nombre de tu Proyecto" "/ruta/hacia/tu/proyecto" [--copy] [--stack nextjs|angular]
-./.agents/scripts/init-project.sh "Mi Plataforma SaaS" "../MI-NUEVO-PROYECTO" --stack nextjs
+# Sintaxis: ./.agents/scripts/init-project.sh "Nombre" "/ruta/al/proyecto" [--copy] [--stack nextjs|angular] [--ci]
+./.agents/scripts/init-project.sh "Mi Plataforma SaaS" "../MI-NUEVO-PROYECTO" --stack nextjs --ci
 cd ../MI-NUEVO-PROYECTO && ./.agents/scripts/install-hooks.sh
 ```
-El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json` ni `.gitignore` si ya existen. Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows) y `--stack nextjs` o `--stack angular` para preconfigurar la arquitectura sin placeholders. Luego ejecuta `install-hooks.sh` para activar la validación de commits y escaneo de secretos.
+El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json`, `.gitignore` ni workflows existentes si ya existen.
+- Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows).
+- Usa `--stack nextjs` o `--stack angular` para preconfigurar la arquitectura sin placeholders.
+- Usa `--ci` para instalar automáticamente el pipeline de GitHub Actions (`.github/workflows/audit.yml`) desde la plantilla.
+- Usa `--update` (o `-u`) en proyectos existentes para sincronizar scripts, plantillas, hooks y skills retirando obsoletas, sin tocar `GLOBAL_STATE.md`, `BRAIN.md` ni `.agents/brain/`.
+Luego ejecuta `install-hooks.sh` para activar la validación de commits y escaneo de secretos.
 
 ### Opción B: Copia manual
 1. Copia la carpeta [`.agents/`](.agents), [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) y [`.mcp.json`](.mcp.json) a la raíz de tu nuevo repositorio.
@@ -132,10 +137,12 @@ Manipula el tablero de `GLOBAL_STATE.md`, crea ramas Git y genera traspasos desd
 | :--- | :--- | :--- |
 | `task.sh add "<desc>" "<agente>" "<criterios>"` | → `TODO` | Orchestrator |
 | `task.sh start TASK-001` | `TODO`/rechazada → `IN_PROGRESS` + rama `feature/` (o `fix/`, `refactor/` según la descripción) | Especialista |
-| `task.sh handoff TASK-001` | `IN_PROGRESS` → `IN_REVIEW_QA` + `.agents/handoffs/handoff_TASK-001.json` | Especialista |
+| `task.sh handoff TASK-001 [--verify "<cmd>"]...` | `IN_PROGRESS` → `IN_REVIEW_QA` + `.agents/handoffs/handoff_TASK-001.json` + registro automático en §7 | Especialista |
 | `task.sh reject TASK-001 "<motivo>"` | `IN_REVIEW_QA` → `IN_PROGRESS` (n/3); a 3/3 → `BLOCKED` | QA |
 | `task.sh close TASK-001` | `IN_REVIEW_QA` → `DONE` | QA |
 | `task.sh move TASK-001 TODO` | Desbloqueo tras decisión humana (reinicia el contador a 0/3) o replanificar a `TODO`/`BACKLOG`. Nunca lleva a `DONE`, `IN_REVIEW_QA` ni `BLOCKED` | Orchestrator |
+
+Todas las operaciones de escritura emplean bloqueo atómico (`mkdir .agents/.task_lock`) con liberación garantizada por `trap`, previniendo colisiones de concurrencia.
 
 ```bash
 ./.agents/scripts/task.sh list       # Tablero
@@ -168,7 +175,7 @@ Instala los hooks con un solo comando:
 ```bash
 bash tests/test-scripts.sh
 ```
-Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks y la instalación (49 comprobaciones).
+Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (112 comprobaciones).
 
 ---
 
@@ -178,7 +185,7 @@ Instala el sistema en proyectos temporales y verifica el ciclo completo de `task
   - `web-tester-playwright` (`npx @playwright/mcp`): Frontend y QA interactúan con la UI en un navegador real.
   - Base de datos, HTTP y Git se usan desde la terminal (`psql`/`sqlite3`, `curl`/supertest, `git`/`gh`): no requieren servidores MCP ni `uvx`. Si quieres uno más, añádelo a la plantilla y vuelve a copiarla a los dos destinos.
 * **Pipeline GitHub Actions ([`.agents/templates/ci_workflow_template.yml`](.agents/templates/ci_workflow_template.yml))**:
-  Copia este archivo a `.github/workflows/audit.yml` para validar automáticamente commits, secretos y tareas en cada Pull Request.
+  Se instala automáticamente indicando la opción `--ci` en `init-project.sh` como `.github/workflows/audit.yml` (o copiando manualmente la plantilla) para validar commits convencionales, escaneo de secretos y consistencia del estado en cada Pull Request.
 
 ---
 

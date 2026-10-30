@@ -5,13 +5,17 @@
 # (.claude/skills + CLAUDE.md + .mcp.json) desde una única fuente.
 # ==============================================================================
 # Uso:
-#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular]
+#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular] [--ci]
 #   O simplemente: ./init-project.sh "Mi Proyecto"
 #
 #   --copy               Copia las skills en .claude/skills en vez de crear un enlace
 #                        simbólico (útil en Windows o si el repositorio no admite symlinks).
 #   --stack <nombre>     Pre-configura el stack tecnológico en GLOBAL_STATE.md sin
 #                        placeholders (opciones: nextjs | angular).
+#   --ci                 Instala el pipeline de GitHub Actions (.github/workflows/audit.yml)
+#                        a partir de ci_workflow_template.yml sin sobrescribir si ya existe.
+#   --update, -u         Sincroniza scripts, plantillas, hooks y skills existentes sin tocar
+#                        GLOBAL_STATE.md, BRAIN.md ni .agents/brain/.
 # ==============================================================================
 
 set -euo pipefail
@@ -21,6 +25,7 @@ TARGET_DIR="."
 LINK_MODE="symlink"
 SELECTED_STACK=""
 IS_UPDATE=0
+INSTALL_CI=0
 
 positional=()
 while [ $# -gt 0 ]; do
@@ -31,6 +36,10 @@ while [ $# -gt 0 ]; do
       ;;
     --update|-u)
       IS_UPDATE=1
+      shift
+      ;;
+    --ci)
+      INSTALL_CI=1
       shift
       ;;
     --stack)
@@ -141,6 +150,12 @@ if [ "$IS_UPDATE" -eq 1 ]; then
   if [ -d "$TARGET_DIR/.git" ]; then
     echo "-> Actualizando Git Hooks en repositorio..."
     (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh) || true
+  fi
+
+  if [ "$INSTALL_CI" -eq 1 ]; then
+    echo "-> Configurando pipeline CI (.github/workflows/audit.yml)..."
+    mkdir -p "$TARGET_DIR/.github/workflows"
+    copy_if_missing "$SKILL_ROOT/.agents/templates/ci_workflow_template.yml" "$TARGET_DIR/.github/workflows/audit.yml"
   fi
 
   echo "================================================================="
@@ -313,6 +328,13 @@ if [ -d "$TARGET_DIR/.git" ]; then
   (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh) || true
 fi
 
+# Configurar pipeline CI si se especificó --ci
+if [ "$INSTALL_CI" -eq 1 ]; then
+  echo "-> Configurando pipeline CI (.github/workflows/audit.yml)..."
+  mkdir -p "$TARGET_DIR/.github/workflows"
+  copy_if_missing "$SKILL_ROOT/.agents/templates/ci_workflow_template.yml" "$TARGET_DIR/.github/workflows/audit.yml"
+fi
+
 echo "================================================================="
 echo "  [OK] Inicializacion completada exitosamente!"
 echo ""
@@ -326,6 +348,7 @@ echo "    - $TARGET_DIR/.agents/plugins/maestro-mcp/ (Servidores MCP; Antigravit
 echo "    - $TARGET_DIR/GLOBAL_STATE.md (Unica Fuente de Verdad SSOT)"
 echo "    - $TARGET_DIR/BRAIN.md (Cerebro y Memoria Persistente)"
 echo "    - $TARGET_DIR/.agents/scripts/task.sh (CLI de gestion de tareas)"
+[ "$INSTALL_CI" -eq 1 ] && echo "    - $TARGET_DIR/.github/workflows/audit.yml (Pipeline CI)"
 echo ""
 command -v npx >/dev/null 2>&1 || {
   echo "  [AVISO] 'npx' no esta instalado: el MCP web-tester-playwright no arrancara."
