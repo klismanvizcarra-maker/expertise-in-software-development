@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-010",
+  "summary": "Fix: slug de rama con tildes roto en macOS (iconv)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T02:52:01Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
