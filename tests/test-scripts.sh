@@ -185,6 +185,7 @@ check "pre-commit acepta 'task-', 'disk-' y líneas con secret-scan:allow" 'git 
 
 echo "x" >> ok.js; git add ok.js
 check "commit-msg rechaza mensajes sin TASK-ID" '! git commit -qm "arreglos varios" >/dev/null 2>&1'
+check "commit-msg rechaza TASK-ID inexistente en el tablero" '! git commit -qm "fix(TASK-999): arreglos" >/dev/null 2>&1'
 check "commit-msg acepta tipo(TASK-XXX): mensaje" 'git commit -qm "fix(TASK-001): ajustar ok" >/dev/null 2>&1'
 
 echo "y" >> ok.js; echo "nuevo" > nuevo.txt
@@ -249,6 +250,7 @@ $T add "Bug: login 500 IN_PROGRESS" "backend-agent" "test" >/dev/null
 check "'IN_PROGRESS' en la descripción no cuenta como tarea activa" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ]'
 $T start TASK-003 >/dev/null
 check "con una tarea IN_PROGRESS permite editar código" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
+check "require-active-task.sh bloquea con exit 2 si falta python3" 'bash -c "NO_PY=\$(mktemp -d); ln -s \$(which bash) \"\$NO_PY/bash\"; PATH=\"\$NO_PY\" \"\$NO_PY/bash\" '$H' 2>/dev/null; ret=\$?; rm -rf \"\$NO_PY\"; exit \$ret"; [ $? -eq 2 ]'
 rm GLOBAL_STATE.md
 check "sin GLOBAL_STATE.md no actúa" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
 
