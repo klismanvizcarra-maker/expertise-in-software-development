@@ -1,0 +1,15 @@
+{
+  "task_id": "TASK-015",
+  "summary": "Ampliar y volver a ejecutar la batería real de activación de skills",
+  "source_agent": "qa-security-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T03:12:20Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
