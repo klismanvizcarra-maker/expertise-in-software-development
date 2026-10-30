@@ -45,7 +45,10 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
      ```bash
      ./.agents/scripts/task.sh close TASK-XXX
      ```
-     `task.sh close` valida automáticamente que `.agents/reviews/qa_TASK-XXX.md` exista y que el revisor no coincida con el agente asignado.
+     `task.sh close` valida automáticamente que `.agents/reviews/qa_TASK-XXX.md` exista, que el revisor no coincida con el agente asignado, y muestra el comando exacto para fusionar a `main` y limpiar la rama:
+     ```bash
+     git checkout main && git merge --no-ff <rama> && git branch -d <rama>
+     ```
      Si se acepta deuda técnica de severidad MEDIA sin riesgo de seguridad:
      `./.agents/scripts/task.sh debt "<descripción>" TASK-XXX "<acción definitiva>" MEDIA`
    - **Rechazado** (falla ≥ 1 criterio de aceptación, test roto, vulnerabilidad o secreto expuesto):

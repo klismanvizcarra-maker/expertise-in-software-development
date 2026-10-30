@@ -10,6 +10,7 @@ Coordinas `devops-cloud-agent` (build y despliegue), `docs-architecture-agent` (
 ## Pasos
 
 1. **Auditoría de Alcance**:
+   - Comprueba que todas las ramas de tareas en estado `DONE` hayan sido fusionadas a `main` (`git merge --no-ff`) y sus ramas locales eliminadas (`git branch --merged main`).
    - Lista las tareas terminadas desde el último tag (`git log <último-tag>..HEAD --oneline` + tablero de `GLOBAL_STATE.md`).
    - *Si existen tareas incluidas en `IN_PROGRESS`, `IN_REVIEW_QA` o `BLOCKED`, detén el proceso y solicita decisión al usuario.*
    - Registra e inicia la tarea del release en el tablero:
@@ -53,6 +54,7 @@ Documenta siempre el plan de reversión antes de desplegar: re-despliegue del ta
 
 ## Checklist antes de desplegar
 - [ ] Todas las tareas contempladas en el release en estado `DONE`.
+- [ ] Ramas de tareas completadas fusionadas a `main` con `--no-ff` y ramas locales eliminadas.
 - [ ] Batería completa en verde (`npm test`, `npm run build`, `scan-secrets.sh --all`, `validate-state.sh`).
 - [ ] Versión SemVer calculada y `CHANGELOG.md` actualizado con notas estructuradas.
 - [ ] Plan y comandos de rollback documentados y comprobados.

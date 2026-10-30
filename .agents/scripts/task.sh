@@ -389,6 +389,13 @@ EOF
     set_task "$TASK_ID" "DONE"
     log_history "$REVIEWER" "orchestrator-agent" "$TASK_ID" "Aprobada por QA -> DONE"
     say "${GREEN}✅ $TASK_ID aprobada y cerrada (DONE).${NC}"
+    if in_git; then
+      BRANCH=$(git -C "$PROJECT_ROOT" branch --list "*$TASK_ID*" 2>/dev/null | tr -d '* ' | head -n1)
+      if [ -n "$BRANCH" ]; then
+        say "${CYAN}💡 Comando de fusión y limpieza:${NC}"
+        say "   git checkout main && git merge --no-ff $BRANCH && git branch -d $BRANCH"
+      fi
+    fi
     ;;
 
   metrics)

@@ -136,8 +136,9 @@ mkdir -p .agents/reviews
 echo "- **Revisor**: backend-agent" > .agents/reviews/qa_TASK-003.md
 check "close con autor como revisor falla" '! $T close TASK-003 >/dev/null 2>&1'
 echo "- **Revisor**: qa-security-agent" > .agents/reviews/qa_TASK-003.md
-$T close TASK-003 >/dev/null
+CLOSE_OUT=$($T close TASK-003)
 check "close tras revisión con revisor independiente -> DONE" '[ "$(col TASK-003 5)" = DONE ]'
+check "close muestra comando de fusión a main" 'echo "$CLOSE_OUT" | grep -q "git merge --no-ff"'
 
 # ------------------------------------------------------------------------------
 section "task.sh learn / debt"
