@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-006",
+  "summary": "Elevar resiliencia en base de datos y DevOps (Expand/Contract, non-root, healthchecks)",
+  "source_agent": "database-architect-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T01:57:29Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/database-architect-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/devops-cloud-agent/SKILL.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
