@@ -53,6 +53,43 @@ fi
 say()  { printf "%b\n" "$*"; }
 die()  { printf "%b\n" "${RED}❌ Error: $*${NC}" >&2; exit 1; }
 
+LOCK_DIR="$PROJECT_ROOT/.agents/.task_lock"
+LOCK_ACQUIRED=0
+LOCK_OWNER_PID=0
+
+release_lock() {
+  if [ "$LOCK_ACQUIRED" -eq 1 ] && [ "${BASHPID:-$$}" -eq "$LOCK_OWNER_PID" ]; then
+    rm -rf "$LOCK_DIR" 2>/dev/null || true
+    LOCK_ACQUIRED=0
+  fi
+}
+
+acquire_lock() {
+  local timeout=200 # 200 * 0.05s = 10s
+  local waited=0
+  local my_pid="${BASHPID:-$$}"
+  mkdir -p "$PROJECT_ROOT/.agents" 2>/dev/null || true
+  while ! mkdir "$LOCK_DIR" 2>/dev/null; do
+    if [ -f "$LOCK_DIR/pid" ]; then
+      local lock_pid
+      lock_pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || true)
+      if [ -n "$lock_pid" ] && ! kill -0 "$lock_pid" 2>/dev/null; then
+        rm -rf "$LOCK_DIR" 2>/dev/null || true
+        continue
+      fi
+    fi
+    waited=$((waited + 1))
+    if [ "$waited" -ge "$timeout" ]; then
+      die "Tiempo de espera agotado al intentar adquirir el bloqueo de concurrencia ($LOCK_DIR)."
+    fi
+    sleep 0.05 2>/dev/null || sleep 1
+  done
+  printf "%s" "$my_pid" > "$LOCK_DIR/pid" 2>/dev/null || true
+  LOCK_ACQUIRED=1
+  LOCK_OWNER_PID="$my_pid"
+  trap 'release_lock' EXIT INT TERM
+}
+
 require_file() {
   [ -f "$1" ] || die "No existe $1.\n   $2"
 }
@@ -178,6 +215,12 @@ in_git() {
 # ------------------------------------------------------------------------------
 # Comandos
 # ------------------------------------------------------------------------------
+
+case "$COMMAND" in
+  add|start|move|handoff|reject|close|learn|debt)
+    acquire_lock
+    ;;
+esac
 
 case "$COMMAND" in
   list)
