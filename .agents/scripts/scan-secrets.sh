@@ -8,8 +8,9 @@
 #   scan-secrets.sh --branch [base]
 #                              Revisa la entrega de la rama: líneas añadidas desde el
 #                              punto de divergencia con la base (main/master por defecto),
-#                              commiteadas o no, y los archivos nuevos sin versionar
-#                              (handoff y QA)
+#                              commiteadas o no, los archivos nuevos sin versionar y
+#                              cada commit de la rama (un secreto borrado después sigue
+#                              en el historial) (handoff y QA)
 #
 # Para aceptar una línea concreta (ej. una clave de ejemplo en documentación),
 # añade el comentario `secret-scan:allow` en esa misma línea.
@@ -17,6 +18,10 @@
 
 MODE="${1:---staged}"
 BASE_REF="${2:-}"
+
+# Rutas sin escapar: con core.quotePath (por defecto) git devuelve "configuraci\303\263n.ts"
+# entre comillas y esos archivos no se revisarían
+git() { command git -c core.quotePath=false "$@"; }
 
 # Patrones de credenciales reales (exigen longitud mínima para evitar falsos positivos como "task-")
 PATTERNS='sk-(ant-|proj-|live_|test_)?[A-Za-z0-9_-]{20,}'
@@ -51,6 +56,9 @@ case "$MODE" in
         if git show-ref --verify --quiet "refs/heads/$b"; then BASE_REF="$b"; break; fi
       done
     fi
+    case "$BASE_REF" in
+      -*) echo "❌ Rama base inválida: '$BASE_REF'."; exit 2 ;;
+    esac
     [ -n "$BASE_REF" ] || { echo "❌ No se encontró la rama base (main/master); indícala: $0 --branch <base>"; exit 2; }
     MERGE_BASE=$(git merge-base HEAD "$BASE_REF" 2>/dev/null) \
       || { echo "❌ No se pudo calcular el punto de divergencia con '$BASE_REF'."; exit 2; }
@@ -91,8 +99,40 @@ while IFS= read -r f; do
   fi
 done <<< "$FILES"
 
+# --branch: líneas añadidas en cada commit de la rama, aunque un commit posterior las borrase
+HISTORY_FOUND=0
+if [ "$MODE" = "--branch" ]; then
+  ADDED=$(git log -p -U0 --no-color --format='@@commit %h' "$MERGE_BASE"..HEAD | awk '
+    /^@@commit / { c = $2; next }
+    /^\+\+\+ /  { f = substr($0, 7); next }
+    /^\+/        { print c " " f "\t" substr($0, 2) }
+  ')
+  HITS=$(printf '%s\n' "$ADDED" | grep -E -- "$PATTERNS" | grep -v 'secret-scan:allow' || true)
+  ENV_ADDED=$(git log --format='@@commit %h' --name-only --diff-filter=A "$MERGE_BASE"..HEAD | awk '
+    /^@@commit / { c = $2; next }
+    NF           { print c " " $0 }
+  ' | while IFS= read -r line; do
+        f="${line#* }"
+        if printf '%s' "$f" | grep -qE "$ENV_FILE_RX" && ! printf '%s' "$f" | grep -qE "$ENV_ALLOWED_RX"; then
+          printf '%s\n' "$line"
+        fi
+      done)
+  if [ -n "$HITS" ] || [ -n "$ENV_ADDED" ]; then
+    report "Secretos en el historial de la rama (commit y archivo):"
+    printf '%s\n' "$HITS" | grep -v '^$' | while IFS= read -r h; do
+      printf '     -> %s: %s…\n' "${h%%$'\t'*}" "$(printf '%s' "$h" | grep -oE -- "$PATTERNS" | head -1 | cut -c1-12)"
+    done
+    [ -n "$ENV_ADDED" ] && printf '%s\n' "$ENV_ADDED" | sed 's/^/     -> /; s/$/ (archivo de entorno)/'
+    HISTORY_FOUND=1
+  fi
+fi
+
 if [ $FOUND -ne 0 ]; then
   echo ""
+  if [ $HISTORY_FOUND -ne 0 ]; then
+    echo "   Un secreto que llegó a un commit está comprometido aunque se borre después:"
+    echo "   rótalo en el proveedor y reescribe el historial de la rama antes de publicarla."
+  fi
   echo "   Mueve las credenciales a .env (ignorado por git) y referencia variables de entorno."
   echo "   Si es un falso positivo, añade 'secret-scan:allow' en esa línea."
   exit 1
