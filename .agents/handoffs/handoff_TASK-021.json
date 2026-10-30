@@ -1,0 +1,19 @@
+{
+  "task_id": "TASK-021",
+  "summary": "Handoff con comandos de verificación y registro automático en el historial",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T03:41:07Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": ".agents/skills/handoff/SKILL.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "bash tests/test-skills.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
