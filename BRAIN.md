@@ -37,6 +37,10 @@ graph TD
 | **SQLite (Nativo/Prisma)** | Todas | Claves foráneas desactivadas por defecto | Ejecutar `PRAGMA foreign_keys = ON;` al abrir la conexión |
 | **Node.js (Fetch API)** | >= 20.x | Cabecera `Host` es gestionada automáticamente | No forzar cabecera `Host` manual en peticiones locales para evitar fallos |
 | **CSS / Token System** | Modern | Colores en línea rompen temas oscuros | Usar siempre variables semánticas (`--bg-primary`, `--text-primary`) |
+| **Next.js + Prisma** | 15.x / 6.x | Hot-reload en desarrollo reinstancia el cliente y satura el pool de conexiones | Instanciar PrismaClient como singleton global en `globalThis` (`lib/prisma.ts`) |
+| **Express 5** | >= 5.x | `req.query` es un getter de solo lectura; reasignarlo lanza excepción | Parsear a una variable o constante nueva con esquema Zod (`const q = Query.parse(req.query)`) |
+| **Angular SSR** | 22.x | Peticiones con cabecera `Host` arbitraria abren vectores de ataque SSRF | Configurar dominios en `build.options.security.allowedHosts` o variable `NG_ALLOWED_HOSTS` |
+| **Stripe Webhooks** | Express 5 | `express.json()` altera el stream de bytes original y rompe la verificación de firma | Montar la ruta del webhook con `express.raw({ type: 'application/json' })` antes de `express.json()` |
 
 ---
 

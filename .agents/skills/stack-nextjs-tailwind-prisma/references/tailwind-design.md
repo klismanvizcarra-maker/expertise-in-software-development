@@ -68,3 +68,4 @@ Button.displayName = 'Button';
 - Respetar foco visible con `focus-visible:ring-2`.
 - Contrastes mínimos WCAG 2.1 AA (4.5:1 en texto normal).
 - Superficies oscuras con tonos pizarra/carbón (`bg-slate-900`, `bg-zinc-900`), evitando negro puro `#000000` en áreas amplias.
+

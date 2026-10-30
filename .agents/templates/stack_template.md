@@ -81,3 +81,4 @@ Esta skill fija el **cómo concreto de la implementación**; las skills de los r
 - [ ] Contratos DTO tipados e importados en frontend y backend.
 - [ ] `typecheck` y build de producción finalizan con cero errores o warnings.
 - [ ] Suites de pruebas pasando limpiamente en verde.
+

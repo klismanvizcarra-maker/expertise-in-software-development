@@ -51,3 +51,4 @@ Para endpoints REST públicos, webhooks o consumo externo:
 - Usa `NextResponse.json(...)`.
 - Maneja errores con códigos HTTP adecuados (400, 401, 403, 404, 500).
 - Procesa webhooks (Stripe, etc.) leyendo el cuerpo en crudo con `req.text()`.
+

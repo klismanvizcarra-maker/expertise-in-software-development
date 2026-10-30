@@ -36,3 +36,4 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 - Claves primarias: `String @id @default(uuid())` o `cuid()`.
 - Claves foráneas: incluir siempre índice explícito (`@@index([userId])`).
 - Marcas temporales: `createdAt DateTime @default(now()) @map("created_at")`, `updatedAt DateTime @updatedAt @map("updated_at")`.
+
