@@ -100,6 +100,9 @@ $T start TASK-004 >/dev/null
 check "start usa fix/ para tareas 'Bug:'" '[ "$(git branch --show-current)" = "fix/TASK-004-login-da-500" ]'
 $T start TASK-005 >/dev/null
 check "start usa refactor/ para tareas 'Refactor:'" '[ "$(git branch --show-current)" = "refactor/TASK-005-servicio-de-pedidos" ]'
+$T add "Auditoría de diagnóstico" "orchestrator-agent" "criterios" >/dev/null
+$T start TASK-006 >/dev/null
+check "start normaliza tildes en el nombre de rama" '[ "$(git branch --show-current)" = "feature/TASK-006-auditoria-de-diagnostico" ]'
 git checkout -q "feature/TASK-003-endpoint-login-v1"
 echo "export const a = 1" > a.ts
 $T handoff TASK-003 >/dev/null
