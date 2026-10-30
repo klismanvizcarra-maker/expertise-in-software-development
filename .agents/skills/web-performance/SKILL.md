@@ -53,3 +53,9 @@ description: Mide y mejora el rendimiento de apps web Angular + Express - Core W
 - [ ] Build dentro de presupuesto sin warnings nuevos.
 - [ ] Imagen LCP con `priority`; todas las imágenes con dimensiones.
 - [ ] Sin regresiones funcionales (tests y E2E en verde).
+
+## Prohibido
+- Entregar una optimización sin mediciones numéricas verificadas de antes y después.
+- Relajar los presupuestos de bundle en configuraciones de build para ocultar excesos de peso sin un ADR aprobado.
+- Sacrificar accesibilidad, tests funcionales o cobertura de pruebas para ganar microsegundos.
+- Emplear librerías pesadas para operaciones triviales que puedan resolverse de forma nativa en la plataforma.

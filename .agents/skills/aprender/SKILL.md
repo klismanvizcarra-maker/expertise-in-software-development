@@ -7,25 +7,35 @@ description: Registra una lección aprendida en la memoria permanente del proyec
 
 ## Pasos
 
-1. **Extraer la lección** de la conversación o de lo que diga el usuario. Debe tener tres partes concretas:
-   - **Problema**: el síntoma observable (`Login devolvía 500 con email vacío`).
-   - **Causa raíz**: por qué ocurría, no el síntoma otra vez.
-   - **Solución**: la regla preventiva aplicable a futuro (`Validar con Zod en el middleware antes del servicio`).
-   Si falta alguna, pregúntala. No registres lecciones genéricas que cualquier desarrollador ya sabe.
+1. **Extraer la lección**: obtén de la conversación o de la indicación del usuario los tres componentes esenciales:
+   - **Problema observable**: el síntoma o fallo exacto (`Login devolvía 500 con cuerpo JSON vacío`).
+   - **Causa raíz técnica**: el mecanismo de fallo a nivel de código o arquitectura, **nunca** una repetición del síntoma (`El parser de Express 5 no inicializa body si el content-type no es exacto`).
+   - **Solución preventiva (Antídoto)**: la regla aplicable a futuro para evitar el error (`Middleware de validación Zod obligatorio antes de invocar la capa de servicio`).
+   *Si falta alguno de los tres elementos o la causa es tautológica, solicítala antes de guardar.*
 2. **Elegir categoría**: `frontend`, `backend`, `database`, `security`, `devops`, `mobile`, `ai`, `ui/ux` o `domain`.
-3. **Evitar duplicados**: busca en `BRAIN.md` una lección equivalente; si existe, actualízala en lugar de crear otra.
-4. **Registrar**:
+3. **Control de duplicados**: busca en `BRAIN.md` lecciones similares; si ya existe, actualiza su antídoto en lugar de crear una fila redundante.
+4. **Registro automático**:
    ```bash
    ./.agents/scripts/task.sh learn "<problema>" <categoría> "<causa raíz>" "<solución>"
    ```
-   Evita el carácter `|` en los textos.
-5. **Si es una trampa de una librería o versión concreta**, añade además una fila en la tabla *Quirks y Trampas Conocidas* de `BRAIN.md` (tecnología, versión, comportamiento, regla de prevención).
-6. **Si es una preferencia del usuario** (estilo, convenciones), regístrala en `.agents/brain/preferences.md` en lugar de como lección.
-7. **Confirmar** al usuario el ID asignado (`LL-XXX`).
+   *Evita el carácter `|` en los textos.*
+5. **Trampas y Quirks de Librerías**: si el error proviene de una incompatibilidad de versión de una librería o framework, añade además una fila en la tabla *Quirks y Trampas Conocidas* de `BRAIN.md` §3.
+6. **Preferencias de Estilo**: si se trata de una directriz de estilo o convención personal del usuario, regístrala en `.agents/brain/preferences.md`.
+7. **Confirmación**: informa al usuario el ID asignado (`LL-XXX`).
 
-## Deuda Técnica
-Si en lugar de una lección se trata de un atajo aceptado temporalmente:
+## Gestión de Deuda Técnica
+Si en lugar de un aprendizaje se trata de una solución provisional aceptada para no bloquear la entrega:
 ```bash
 ./.agents/scripts/task.sh debt "<descripción>" TASK-XXX "<acción definitiva>" [ALTA|MEDIA|BAJA]
 ```
-Nunca se acepta como deuda algo que comprometa seguridad, privacidad o estabilidad.
+
+## Checklist antes de registrar lección
+- [ ] Lección con las 3 partes obligatorias: Problema observable, Causa raíz técnica y Solución preventiva aplicable.
+- [ ] Categoría seleccionada según el ámbito (`backend`, `frontend`, `database`, `security`, etc.).
+- [ ] Búsqueda previa en `BRAIN.md` para evitar lecciones duplicadas o contradictorias.
+- [ ] Si es deuda técnica, vinculada a una `TASK-XXX` formal y con severidad no crítica.
+
+## Prohibido
+- Registrar lecciones tautológicas o vacías (ej. "el código falló porque tenía un bug", "hay que probar mejor").
+- Omitir la causa raíz técnica o registrar el síntoma como si fuera la causa.
+- Aceptar deuda técnica de prioridad CRÍTICA o que vulnere la seguridad (OWASP) o la integridad de datos.
