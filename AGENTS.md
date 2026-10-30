@@ -39,13 +39,16 @@ Toda transición de estado se hace **exclusivamente** con `./.agents/scripts/tas
 | `IN_REVIEW_QA` → `IN_PROGRESS` (rechazo, +1 iteración) | `task.sh reject TASK-XXX "<motivo>"` | `qa-security-agent` |
 | Retomar tras rechazo (vuelve a su rama) | `task.sh start TASK-XXX` | Especialista asignado |
 | `IN_REVIEW_QA` → `DONE` | `task.sh close TASK-XXX` | `qa-security-agent` (solo tras aprobar) |
-| Salir de `BLOCKED` | `task.sh move TASK-XXX <ESTADO>` | `orchestrator-agent` (solo tras decisión humana) |
+| Salir de `BLOCKED` (→ `TODO`, `BACKLOG` o `IN_PROGRESS`, reinicia a 0/3) | `task.sh move TASK-XXX <ESTADO>` | `orchestrator-agent` (solo tras decisión humana) |
+| Replanificar (→ `TODO` o `BACKLOG`) | `task.sh move TASK-XXX <ESTADO>` | `orchestrator-agent` |
 
 ```text
 TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──close──> DONE
                      ▲                        │
                      └────── reject (n/3) ────┘   reject a 3/3 ──> BLOCKED ──> ESCALAMIENTO AL HUMANO
 ```
+
+`move` nunca lleva a `DONE`, `IN_REVIEW_QA` ni `BLOCKED`, ni a `IN_PROGRESS` salvo desde `BLOCKED`: esas transiciones solo existen con `close`, `handoff`, `reject` y `start`, que aplican sus controles.
 
 **Traspaso formal (*hand-off*)**: el especialista nunca marca su propia tarea como terminada. Antes de `task.sh handoff` debe cumplir el checklist de su skill y dejar en el historial de `GLOBAL_STATE.md` los entregables y los comandos exactos para verificarlos (formato: `.agents/templates/handoff_template.json`).
 

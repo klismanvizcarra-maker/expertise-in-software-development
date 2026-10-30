@@ -133,7 +133,7 @@ Manipula el tablero de `GLOBAL_STATE.md`, crea ramas Git y genera traspasos desd
 | `task.sh handoff TASK-001` | `IN_PROGRESS` → `IN_REVIEW_QA` + `.agents/handoffs/handoff_TASK-001.json` | Especialista |
 | `task.sh reject TASK-001 "<motivo>"` | `IN_REVIEW_QA` → `IN_PROGRESS` (n/3); a 3/3 → `BLOCKED` | QA |
 | `task.sh close TASK-001` | `IN_REVIEW_QA` → `DONE` | QA |
-| `task.sh move TASK-001 TODO` | Desbloqueo tras decisión humana (reinicia el contador a 0/3) | Orchestrator |
+| `task.sh move TASK-001 TODO` | Desbloqueo tras decisión humana (reinicia el contador a 0/3) o replanificar a `TODO`/`BACKLOG`. Nunca lleva a `DONE`, `IN_REVIEW_QA` ni `BLOCKED` | Orchestrator |
 
 ```bash
 ./.agents/scripts/task.sh list       # Tablero

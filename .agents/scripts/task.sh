@@ -246,12 +246,23 @@ case "$COMMAND" in
 
   move)
     require_state
-    [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh move TASK-001 [$VALID_STATUSES]"
+    [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh move TASK-001 <TODO|BACKLOG> (o IN_PROGRESS al desbloquear una tarea BLOCKED)"
     TASK_ID=$(normalize_id "$2")
     NEW_STATUS="$3"
     [[ "$NEW_STATUS" =~ ^($VALID_STATUSES)$ ]] || die "Estado inválido '$NEW_STATUS'. Válidos: $VALID_STATUSES"
     require_task "$TASK_ID"
-    if [ "$(task_field "$TASK_ID" 5)" = "BLOCKED" ] && [ "$NEW_STATUS" != "BLOCKED" ]; then
+    CURRENT=$(task_field "$TASK_ID" 5)
+    # move no sustituye a las transiciones con control (AGENTS.md §3): DONE solo con close
+    # tras QA, IN_REVIEW_QA solo con handoff y BLOCKED solo con el tercer reject
+    case "$NEW_STATUS" in
+      DONE)         die "$TASK_ID no puede pasar a DONE con move: solo QA la cierra con 'task.sh close' tras revisarla." ;;
+      IN_REVIEW_QA) die "$TASK_ID no puede pasar a IN_REVIEW_QA con move: entrégala con 'task.sh handoff $TASK_ID'." ;;
+      BLOCKED)      die "$TASK_ID no puede pasar a BLOCKED con move: solo el tercer rechazo de QA ('task.sh reject') la bloquea." ;;
+      IN_PROGRESS)
+        [ "$CURRENT" = "BLOCKED" ] \
+          || die "$TASK_ID no puede pasar de $CURRENT a IN_PROGRESS con move: usa 'task.sh start $TASK_ID' (crea o cambia a su rama)." ;;
+    esac
+    if [ "$CURRENT" = "BLOCKED" ]; then
       # Salir de BLOCKED implica una decisión humana: se reinicia el contador de QA
       set_task "$TASK_ID" "$NEW_STATUS" "0/$MAX_ITERATIONS"
       log_history "orchestrator-agent" "Equipo" "$TASK_ID" "Desbloqueada tras decisión humana -> $NEW_STATUS"
@@ -461,7 +472,7 @@ EOF
   handoff TASK-ID [agente]               IN_PROGRESS -> IN_REVIEW_QA + JSON de entrega
   reject TASK-ID "<motivo>"              QA rechaza (+1); a 3/3 -> BLOCKED
   close TASK-ID                          QA aprueba: IN_REVIEW_QA -> DONE
-  move TASK-ID <ESTADO>                  Cambio manual (desbloqueo tras decisión humana)
+  move TASK-ID <TODO|BACKLOG>            Replanificar o desbloquear (BLOCKED también -> IN_PROGRESS)
   commit TASK-ID "<msg>" [tipo]          Commit con formato tipo(TASK-ID): msg
   learn "<problema>" [cat] ["<causa>"] ["<solución>"]   Lección en BRAIN.md
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica

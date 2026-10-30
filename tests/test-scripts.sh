@@ -64,12 +64,23 @@ check "add inserta la fila en el tablero" '[ "$(col TASK-003 5)" = TODO ] && [ "
 check "add sanea la barra vertical" 'grep -q "Login con / barra" GLOBAL_STATE.md'
 check "add no escribe en la tabla de historial" '[ "$(sed -n "/Registro Cronológico/,\$p" GLOBAL_STATE.md | grep -c TASK-003)" = 0 ]'
 check "add sin criterios falla" '! $T add "Sin criterios" backend-agent >/dev/null 2>&1'
-$T move TASK-003 IN_PROGRESS >/dev/null
-check "move cambia solo la columna de estado" '[ "$(col TASK-003 5)" = IN_PROGRESS ] && grep -q "barra y TODO DONE" GLOBAL_STATE.md'
+$T move TASK-003 BACKLOG >/dev/null
+check "move cambia solo la columna de estado" '[ "$(col TASK-003 5)" = BACKLOG ] && grep -q "barra y TODO DONE" GLOBAL_STATE.md'
+$T move TASK-003 TODO >/dev/null
+check "move de BACKLOG a TODO permitido" '[ "$(col TASK-003 5)" = TODO ]'
+check "move a DONE falla con exit 1 (no salta el veto de QA)" '$T move TASK-003 DONE >/dev/null 2>&1; [ $? -eq 1 ] && [ "$(col TASK-003 5)" = TODO ]'
+check "move a IN_REVIEW_QA falla (se entrega con handoff)" '! $T move TASK-003 IN_REVIEW_QA >/dev/null 2>&1 && [ "$(col TASK-003 5)" = TODO ]'
+check "move a BLOCKED falla (solo el tercer reject bloquea)" '! $T move TASK-003 BLOCKED >/dev/null 2>&1 && [ "$(col TASK-003 5)" = TODO ]'
+check "move a IN_PROGRESS fuera de BLOCKED falla (se usa start)" '! $T move TASK-003 IN_PROGRESS >/dev/null 2>&1 && [ "$(col TASK-003 5)" = TODO ]'
+check "el error de move a DONE indica task.sh close" '$T move TASK-003 DONE 2>&1 | grep -q "task.sh close"'
+$T add "Tarea bloqueada" "backend-agent" "x" >/dev/null
+perl -pi -e 's/^(\| `TASK-004` .*)\| `TODO` \| `0\/3` \|/$1| `BLOCKED` | `3\/3` |/' GLOBAL_STATE.md
+$T move TASK-004 IN_PROGRESS >/dev/null
+check "move de BLOCKED a IN_PROGRESS permitido y reinicia a 0/3" '[ "$(col TASK-004 5)" = IN_PROGRESS ] && [ "$(col TASK-004 6)" = 0/3 ]'
 check "move con estado inválido falla" '! $T move TASK-003 HECHO >/dev/null 2>&1'
 check "move de tarea inexistente falla" '! $T move TASK-999 DONE >/dev/null 2>&1'
 check "metrics no cuenta 'DONE' de la descripción" '$T metrics | grep -q "DONE:.* 0"'
-check "list muestra solo filas del tablero" '[ "$($T list | grep -c "^|")" = 3 ]'
+check "list muestra solo filas del tablero" '[ "$($T list | grep -c "^|")" = 4 ]'
 
 # ------------------------------------------------------------------------------
 section "task.sh ciclo de vida: start / handoff / reject / close"
@@ -105,10 +116,16 @@ $T reject TASK-003 "x" >/dev/null; $T start TASK-003 >/dev/null; $T handoff TASK
 check "tercer rechazo -> BLOCKED 3/3" '[ "$(col TASK-003 5)" = BLOCKED ] && [ "$(col TASK-003 6)" = 3/3 ]'
 check "start sobre BLOCKED falla" '! $T start TASK-003 >/dev/null 2>&1'
 check "validate-state detecta el deadlock" './.agents/scripts/validate-state.sh | grep -q "DEADLOCK"'
+check "move de BLOCKED a DONE falla" '! $T move TASK-003 DONE >/dev/null 2>&1 && [ "$(col TASK-003 5)" = BLOCKED ]'
+check "move de BLOCKED a IN_REVIEW_QA falla" '! $T move TASK-003 IN_REVIEW_QA >/dev/null 2>&1 && [ "$(col TASK-003 5)" = BLOCKED ]'
 $T move TASK-003 TODO >/dev/null
 check "desbloquear reinicia el contador a 0/3" '[ "$(col TASK-003 5)" = TODO ] && [ "$(col TASK-003 6)" = 0/3 ]'
 check "close fuera de IN_REVIEW_QA falla" '! $T close TASK-003 >/dev/null 2>&1'
-$T start TASK-003 >/dev/null; $T handoff TASK-003 >/dev/null; $T close TASK-003 >/dev/null
+$T start TASK-003 >/dev/null
+check "move de IN_PROGRESS a DONE falla" '! $T move TASK-003 DONE >/dev/null 2>&1 && [ "$(col TASK-003 5)" = IN_PROGRESS ]'
+$T handoff TASK-003 >/dev/null
+check "move de IN_REVIEW_QA a DONE falla (solo close)" '! $T move TASK-003 DONE >/dev/null 2>&1 && [ "$(col TASK-003 5)" = IN_REVIEW_QA ]'
+$T close TASK-003 >/dev/null
 check "close tras revisión -> DONE" '[ "$(col TASK-003 5)" = DONE ]'
 
 # ------------------------------------------------------------------------------
