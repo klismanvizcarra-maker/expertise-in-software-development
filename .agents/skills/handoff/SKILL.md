@@ -19,7 +19,7 @@ Este flujo lo ejecuta exclusivamente el especialista responsable de la tarea, nu
    - Ejecuta la compilación o build del proyecto (`npm run build`).
    - Ejecuta de forma obligatoria el escáner de secretos:
      ```bash
-     ./.agents/scripts/scan-secrets.sh
+     ./.agents/scripts/scan-secrets.sh --branch
      ```
    - *Si alguna prueba falla, el build se rompe o se detecta un secreto expuesto, **ABORTA el handoff de inmediato**, corrige el fallo y no continúes.*
 4. **Actualizar el registro en `GLOBAL_STATE.md`**:
@@ -49,7 +49,7 @@ Este flujo lo ejecuta exclusivamente el especialista responsable de la tarea, nu
 - **Especialista**: <tu-rol>
 - **Entregables**: <archivos principales modificados/creados>
 - **Tests**: `<comando de prueba>` → <ej. 28/28 pasando>
-- **Secretos**: `./.agents/scripts/scan-secrets.sh` → ✅ Limpio
+- **Secretos**: `./.agents/scripts/scan-secrets.sh --branch` → ✅ Limpio
 - **Criterios validados**:
   - [x] <criterio 1 de aceptación>
   - [x] <criterio 2 de aceptación>
@@ -60,12 +60,12 @@ Este flujo lo ejecuta exclusivamente el especialista responsable de la tarea, nu
 - [ ] Checklist específico de la skill del especialista completado al 100%.
 - [ ] Tests automatizados pasando sin fallos.
 - [ ] Build del proyecto exitoso y sin errores de tipado o compilación.
-- [ ] Escaneo de secretos limpio ejecutado con `./.agents/scripts/scan-secrets.sh`.
+- [ ] Escaneo de secretos limpio ejecutado con `./.agents/scripts/scan-secrets.sh --branch`.
 - [ ] Cambios confirmados con commit convencional referenciando a `TASK-XXX`.
 - [ ] Manifiesto de handoff generado con `task.sh handoff TASK-XXX`.
 
 ## Prohibido
 - Ejecutar `task.sh handoff` con pruebas fallidas o builds con errores.
-- Realizar handoff con credenciales, tokens o archivos `.env` detectados por `scan-secrets.sh`.
+- Realizar handoff con credenciales, tokens o archivos `.env` detectados por `scan-secrets.sh --branch`.
 - Marcar la propia tarea como `DONE` (únicamente `qa-security-agent` puede cerrar tareas tras revisión).
 - Omitir los comandos reproducibles de verificación en el registro de `GLOBAL_STATE.md`.

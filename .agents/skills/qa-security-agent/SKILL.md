@@ -17,7 +17,7 @@ Certificas que un entregable cumple **todos** sus criterios de aceptación y es 
    - Ejecuta por tu cuenta los tests unitarios, de integración o E2E.
    - Ejecuta obligatoriamente el escaneo de secretos:
      ```bash
-     ./.agents/scripts/scan-secrets.sh
+     ./.agents/scripts/scan-secrets.sh --branch
      ```
    - Nunca apruebes basándote únicamente en el reporte verbal o resumen del especialista.
 3. **Validación de criterios de aceptación y casos límite**:
@@ -48,7 +48,7 @@ Certificas que un entregable cumple **todos** sus criterios de aceptación y es 
 
 ## Checklist de Revisión
 - [ ] Pruebas automatizadas y builds ejecutados de forma directa e independiente.
-- [ ] Escaneo de secretos limpio (`./.agents/scripts/scan-secrets.sh`).
+- [ ] Escaneo de secretos limpio (`./.agents/scripts/scan-secrets.sh --branch`).
 - [ ] Verificación exhaustiva de IDOR y autorización por usuario/tenant.
 - [ ] Cada criterio de aceptación de la tarea contrastado con evidencia objetiva.
 - [ ] Sin regresiones en la suite de pruebas del proyecto.

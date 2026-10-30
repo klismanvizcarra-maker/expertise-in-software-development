@@ -173,6 +173,25 @@ echo "token = \"$FAKE_KEY\"" > "$WORK/library/config.js" && git -C "$WORK/librar
 check "scan-secrets --all detecta una clave versionada" '! (cd "$WORK/library" && bash .agents/scripts/scan-secrets.sh --all >/dev/null)'
 
 # ------------------------------------------------------------------------------
+section "scan-secrets.sh --branch (handoff y QA)"
+new_project branchscan
+S=./.agents/scripts/scan-secrets.sh
+git checkout -qb fix/TASK-001-x
+echo "const limpio = 1" > clean.ts && git add clean.ts && git commit -qm "fix(TASK-001): limpio" --no-verify
+check "--branch sin secretos en la rama sale limpio" 'bash $S --branch >/dev/null'
+echo "token = \"$FAKE_KEY\"" > leak.ts && git add leak.ts && git commit -qm "fix(TASK-001): fuga" --no-verify
+check "--staged no ve la clave ya commiteada (por eso QA no lo usa)" 'bash $S --staged >/dev/null'
+check "--branch detecta una clave commiteada en la rama" '! bash $S --branch >/dev/null'
+git rm -q leak.ts && git commit -qm "fix(TASK-001): quitar fuga" --no-verify
+echo "token = \"$FAKE_KEY\"" >> clean.ts
+check "--branch detecta una clave sin commitear en un archivo versionado" '! bash $S --branch >/dev/null'
+git checkout -q clean.ts && echo "token = \"$FAKE_KEY\"" > nuevo.ts
+check "--branch detecta una clave en un archivo nuevo sin versionar" '! bash $S --branch >/dev/null'
+rm nuevo.ts
+check "--branch con base inexistente falla con exit 2" 'bash $S --branch no-existe >/dev/null 2>&1; [ $? -eq 2 ]'
+cd "$WORK" || exit 1
+
+# ------------------------------------------------------------------------------
 section "hook de Claude Code: require-active-task.sh"
 new_project hook
 H=./.agents/scripts/require-active-task.sh
