@@ -268,6 +268,10 @@ case "$COMMAND" in
       log_history "orchestrator-agent" "Equipo" "$TASK_ID" "Desbloqueada tras decisión humana -> $NEW_STATUS"
     else
       set_task "$TASK_ID" "$NEW_STATUS"
+      # Replanificar (incluido reabrir una tarea DONE) también deja rastro en el historial
+      if [ "$CURRENT" != "$NEW_STATUS" ]; then
+        log_history "orchestrator-agent" "Equipo" "$TASK_ID" "Replanificada $CURRENT -> $NEW_STATUS"
+      fi
     fi
     say "${GREEN}✅ Estado actualizado:${NC} $TASK_ID ahora está en $NEW_STATUS"
     ;;

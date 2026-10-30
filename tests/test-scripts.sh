@@ -68,6 +68,9 @@ $T move TASK-003 BACKLOG >/dev/null
 check "move cambia solo la columna de estado" '[ "$(col TASK-003 5)" = BACKLOG ] && grep -q "barra y TODO DONE" GLOBAL_STATE.md'
 $T move TASK-003 TODO >/dev/null
 check "move de BACKLOG a TODO permitido" '[ "$(col TASK-003 5)" = TODO ]'
+check "replanificar queda en el historial" 'grep -q "Replanificada BACKLOG -> TODO" GLOBAL_STATE.md'
+$T move TASK-003 TODO >/dev/null
+check "move al mismo estado no ensucia el historial" '[ "$(grep -c "Replanificada .* -> TODO" GLOBAL_STATE.md)" = 1 ]'
 check "move a DONE falla con exit 1 (no salta el veto de QA)" '$T move TASK-003 DONE >/dev/null 2>&1; [ $? -eq 1 ] && [ "$(col TASK-003 5)" = TODO ]'
 check "move a IN_REVIEW_QA falla (se entrega con handoff)" '! $T move TASK-003 IN_REVIEW_QA >/dev/null 2>&1 && [ "$(col TASK-003 5)" = TODO ]'
 check "move a BLOCKED falla (solo el tercer reject bloquea)" '! $T move TASK-003 BLOCKED >/dev/null 2>&1 && [ "$(col TASK-003 5)" = TODO ]'
@@ -239,6 +242,15 @@ $T start TASK-003 >/dev/null
 check "con una tarea IN_PROGRESS permite editar código" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
 rm GLOBAL_STATE.md
 check "sin GLOBAL_STATE.md no actúa" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
+
+# ------------------------------------------------------------------------------
+section "tests/triggers/run_claude.py: proyecto sembrado (sin llamar a Claude)"
+# Si task.sh cambia sus transiciones, el arnés de triggers debe seguir pudiendo sembrar el tablero
+SEEDED=$(cd "$ROOT" && python3 -c "import sys; sys.path.insert(0, 'tests/triggers'); import run_claude; print(run_claude.make_project())" 2>/dev/null)
+check "make_project() crea el proyecto sembrado" '[ -n "$SEEDED" ] && [ -f "$SEEDED/GLOBAL_STATE.md" ]'
+check "las tareas sembradas tienen el estado de cases.json" '(cd "$SEEDED" && [ "$(col TASK-003 5)" = IN_PROGRESS ] && [ "$(col TASK-004 5)" = IN_REVIEW_QA ])'
+check "el proyecto sembrado queda en main" '[ "$(git -C "$SEEDED" branch --show-current)" = main ]'
+[ -n "$SEEDED" ] && rm -rf "$SEEDED"
 
 # ------------------------------------------------------------------------------
 section "test-skills.sh (linter estructural de skills)"

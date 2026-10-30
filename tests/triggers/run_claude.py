@@ -66,15 +66,25 @@ def make_project() -> Path:
     s = s.replace("`[Runtime / Framework: ej. Node.js + Express / Fastify / Python FastAPI / Go]`", "`Node 24 + Express 5`")
     s = s.replace("`[Base de datos: ej. PostgreSQL / SQLite / MongoDB / Redis]`", "`PostgreSQL 18 + Drizzle`")
     state.write_text(s)
-    # Tareas sembradas (TASK-003 en adelante) para los casos de tipo 'especialista'
+    # Commit inicial para que start pueda crear ramas por tarea y volver a main al final
+    git = ["git", "-c", "user.name=triggers", "-c", "user.email=triggers@example.com"]
+    subprocess.run(["git", "add", "-A"], cwd=tmp, check=True)
+    subprocess.run(git + ["commit", "-qm", "chore(TASK-000): instalar sistema", "--no-verify"], cwd=tmp, check=True)
+    # Tareas sembradas (TASK-003 en adelante) para los casos de tipo 'especialista'.
+    # Los estados se alcanzan con las transiciones reales (move no lleva a IN_PROGRESS ni a IN_REVIEW_QA)
     task = ["bash", str(tmp / ".agents/scripts/task.sh")]
+    steps = {"TODO": [], "IN_PROGRESS": ["start"], "IN_REVIEW_QA": ["start", "handoff"]}
     seeds = json.loads(CASES.read_text()).get("_seed_tasks", [])
     for i, seed in enumerate(seeds, start=3):
         tid = f"TASK-{i:03d}"
+        status = seed.get("status", "TODO")
+        if status not in steps:
+            sys.exit(f"_seed_tasks: estado no sembrable '{status}' en {tid} (válidos: {', '.join(steps)})")
         subprocess.run(task + ["add", seed["desc"], seed["agent"], "Criterios definidos en el PRD"],
                        cwd=tmp, check=True, stdout=subprocess.DEVNULL)
-        if seed.get("status", "TODO") != "TODO":
-            subprocess.run(task + ["move", tid, seed["status"]], cwd=tmp, check=True, stdout=subprocess.DEVNULL)
+        for step in steps[status]:
+            subprocess.run(task + [step, tid], cwd=tmp, check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["git", "checkout", "-q", "main"], cwd=tmp, check=True)
     return tmp
 
 
