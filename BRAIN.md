@@ -7,26 +7,29 @@
 ## 1. Mapa Mental del Sistema (*System Mental Model*)
 
 ```mermaid
-graph TD
-    Client[Cliente Web / Móvil] -->|HTTP / REST| Gateway[Middleware & Routing]
-    Gateway -->|Payload Validado| Controller[Controlador de Entrada]
-    Controller -->|Llamada DTO| DomainService[Servicio de Dominio]
-    DomainService -->|Consulta / Mutación| Repo[Repositorio / ORM]
-    Repo -->|SQL / NoSQL| Database[(Base de Datos)]
-    DomainService -.->|Eventos Asíncronos| EventQueue[Cola / Segundo Plano]
+flowchart TD
+    User([Usuario / Desarrollador]) -->|Instrucción o Slash Command| Agent[Asistente IA: Claude Code / Antigravity]
+    Agent -->|Gobierno y SSOT| Governance["AGENTS.md / GLOBAL_STATE.md"]
+    Agent -->|Carga de Roles| Skills["Catálogo de Skills (.agents/skills/ 27 skills)"]
+    Agent -->|Operaciones del Ciclo de Vida| TaskCLI["CLI de Tareas (./.agents/scripts/task.sh)"]
+    TaskCLI -->|start / handoff / reject / close| Branches["Ramas Git (feature/ / fix/ / refactor/)"]
+    TaskCLI -->|Validación| Hooks["Git Hooks (commit-msg / pre-commit)"]
+    Agent -->|Auditoría y Seguridad| Security["scan-secrets.sh / validate-state.sh"]
+    Agent -->|Pruebas y Verificación| Tests["tests/test-scripts.sh / test-skills.sh / tests/triggers/"]
+    TaskCLI -->|Memoria Permanente| Brain["BRAIN.md / .agents/brain/"]
 ```
 
 ---
 
 ## 2. Lecciones Aprendidas Categorizadas (*Scoped Lessons Learned*)
 
-> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto aquí con `./task.sh learn`.
+> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto aquí con `./.agents/scripts/task.sh learn`.
 
 | ID | Fecha | Categoría | Problema Detectado | Causa Raíz | Solución Definitiva (Antídoto) | Estado |
 | :---: | :---: | :---: | :--- | :--- | :--- | :---: |
-| `LL-001` | 2026-10-10 | `[DATABASE]` | Bloqueos de concurrencia en SQLite | Modo journal DELETE bloquea lecturas | Configurar `PRAGMA journal_mode = WAL;` y `busy_timeout = 5000` | `ACTIVO` |
-| `LL-002` | 2026-10-10 | `[FRONTEND]` | Fugas de memoria en componentes | Suscripciones abiertas sin destruir | Prohibido suscribirse sin `takeUntilDestroyed` o usar Signals puros | `ACTIVO` |
-| `LL-003` | 2026-10-10 | `[SECURITY]` | Fuga de detalles internos en errores 500 | Respuestas crudas de base de datos | Middleware centralizado de errores que anonimiza trazas en producción | `ACTIVO` |
+| `LL-001` | 2026-10-29 | `[SCRIPTS]` | awk en macOS/BSD no reconoce la secuencia de escape `\s` para espacios en blanco | `\s` es una extensión de GNU awk; el awk BSD de macOS lo interpreta literalmente como el carácter 's' | Usar clases POSIX `[[:space:]]` o conjuntos explícitos `[ \t]` en scripts para compatibilidad portátil entre macOS y Linux | `ACTIVO` |
+| `LL-002` | 2026-10-29 | `[GIT]` | `git diff -S` omitía commits donde el recuento total de apariciones de la cadena no cambiaba | `-S` (pickaxe) detecta únicamente adiciones o eliminaciones netas en el conteo de ocurrencias exactas de una cadena, no sustituciones o regex | Usar `-G` para evaluar expresiones regulares o recorrer los diffs individuales de cada commit con `git log -p -U0 merge-base..HEAD` | `ACTIVO` |
+| `LL-003` | 2026-10-29 | `[DEVOPS]` | `task.sh start` generaba slugs de rama con apóstrofes o guiones (`auditor-ia`) ante títulos con tildes en macOS | `iconv -t ascii//TRANSLIT` en macOS BSD translitera tildes agregando apóstrofes (`'i`) en lugar de letras planas | Normalizar vía `python3 unicodedata.normalize('NFKD')` o mapeo explícito de caracteres con `sed 'y/.../.../'` | `ACTIVO` |
 | `LL-004` | 2026-10-29 | `[SECURITY]` | scan-secrets no revisaba archivos con tildes, comillas o barras invertidas en el nombre (configuración.ts salía limpio con una clave dentro) | Con core.quotePath activo git devuelve las rutas no ASCII entre comillas y con escapes octales; core.quotePath=false solo arregla los no ASCII, porque git sigue entrecomillando rutas con comilla doble o barra invertida; [ -f ] y git diff -- con esa ruta no encuentran el archivo | En scripts que leen rutas de git usar siempre salida -z (git diff --name-only -z, ls-files -z) con while IFS= read -r -d ''; como mínimo git -c core.quotePath=false; añadir un test con un nombre no ASCII | `ACTIVO` |
 | `LL-005` | 2026-10-29 | `[SECURITY]` | Un secreto commiteado en la rama y borrado en un commit posterior pasaba el escáner de QA | El escáner comparaba solo el merge-base con el árbol de trabajo (diff neto), y el secreto sigue en el historial y se publica con push o merge sin squash | Revisar las líneas añadidas de cada commit de la rama con git log -p -U0 merge-base..HEAD; si aparece, rotar la clave y reescribir el historial antes de publicar | `ACTIVO` |
 
@@ -71,4 +74,4 @@ graph TD
 
 | ID | Tarea Vinculada | Descripción de la Deuda | Solución Temporal Aplicada | Acción Definitiva Pendiente | Prioridad |
 | :---: | :---: | :--- | :--- | :--- | :---: |
-| `TD-001` | `TASK-001` | Paginación en memoria en endpoint de listado | Retorna array completo acotado a 100 registros | Implementar paginación SQL con `LIMIT / OFFSET` y cursor | `MEDIA` |
+| `TD-001` | `TASK-008` | scan-secrets.sh: rutas con comilla doble o barra invertida escapan a --staged y --all; .env creado por rename escapa al historial | Workaround con `core.quotePath=false` y filtro básico | Listar y leer rutas con `-z` (diff/ls-files/log `-z`) y detectar `.env` con `--diff-filter=AR`; añadir tests dedicados | `MEDIA` |
