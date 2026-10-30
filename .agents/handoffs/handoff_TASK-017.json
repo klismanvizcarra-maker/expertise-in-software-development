@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-017",
+  "summary": "Modo --update y versión en init-project.sh",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T03:22:44Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/VERSION" },
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/templates/GLOBAL_STATE_TEMPLATE.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}

@@ -20,12 +20,17 @@ PROJECT_NAME="Nuevo Proyecto"
 TARGET_DIR="."
 LINK_MODE="symlink"
 SELECTED_STACK=""
+IS_UPDATE=0
 
 positional=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --copy)
       LINK_MODE="copy"
+      shift
+      ;;
+    --update|-u)
+      IS_UPDATE=1
       shift
       ;;
     --stack)
@@ -43,8 +48,25 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-[ -n "${positional[0]}" ] && PROJECT_NAME="${positional[0]}"
-[ -n "${positional[1]}" ] && TARGET_DIR="${positional[1]}"
+if [ -n "$SELECTED_STACK" ]; then
+  case "$SELECTED_STACK" in
+    nextjs|angular) ;;
+    *)
+      echo "❌ ERROR: Stack desconocido: '$SELECTED_STACK'." >&2
+      echo "   Valores permitidos: nextjs, angular." >&2
+      exit 1
+      ;;
+  esac
+fi
+
+if [ "$IS_UPDATE" -eq 1 ]; then
+  if [ -n "${positional[0]}" ]; then
+    TARGET_DIR="${positional[0]}"
+  fi
+else
+  [ -n "${positional[0]}" ] && PROJECT_NAME="${positional[0]}"
+  [ -n "${positional[1]}" ] && TARGET_DIR="${positional[1]}"
+fi
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
 # Directorio donde se encuentra este script
@@ -59,6 +81,74 @@ copy_if_missing() {
     cp "$1" "$2"
   fi
 }
+
+if [ "$IS_UPDATE" -eq 1 ]; then
+  [ -d "$TARGET_DIR" ] || {
+    echo "❌ ERROR: El directorio de destino '$TARGET_DIR' no existe." >&2
+    exit 1
+  }
+  echo "================================================================="
+  echo "  Actualizando Entorno Multi-Agente en: $TARGET_DIR"
+  echo "================================================================="
+
+  mkdir -p "$TARGET_DIR/.agents/skills"
+  mkdir -p "$TARGET_DIR/.agents/templates"
+  mkdir -p "$TARGET_DIR/.agents/scripts"
+  mkdir -p "$TARGET_DIR/.agents/hooks"
+  mkdir -p "$TARGET_DIR/.agents/plugins"
+  mkdir -p "$TARGET_DIR/.agents/reviews"
+
+  echo "-> Sincronizando catálogo de skills..."
+  cp -R "$SKILL_ROOT/.agents/skills/"* "$TARGET_DIR/.agents/skills/"
+
+  # Eliminar skills retiradas
+  for sdir in "$TARGET_DIR/.agents/skills/"*; do
+    if [ -d "$sdir" ]; then
+      sname=$(basename "$sdir")
+      if [ ! -d "$SKILL_ROOT/.agents/skills/$sname" ]; then
+        echo "   (eliminando skill retirada: $sname)"
+        rm -rf "$sdir"
+      fi
+    fi
+  done
+
+  echo "-> Sincronizando scripts, plantillas, hooks y plugins..."
+  cp -R "$SKILL_ROOT/.agents/scripts/"* "$TARGET_DIR/.agents/scripts/"
+  chmod +x "$TARGET_DIR/.agents/scripts/"*.sh 2>/dev/null || true
+  cp -R "$SKILL_ROOT/.agents/templates/"* "$TARGET_DIR/.agents/templates/"
+  cp -R "$SKILL_ROOT/.agents/hooks/"* "$TARGET_DIR/.agents/hooks/"
+  chmod +x "$TARGET_DIR/.agents/hooks/"* 2>/dev/null || true
+  cp -R "$SKILL_ROOT/.agents/plugins/"* "$TARGET_DIR/.agents/plugins/"
+
+  if [ -f "$SKILL_ROOT/.agents/VERSION" ]; then
+    cp "$SKILL_ROOT/.agents/VERSION" "$TARGET_DIR/.agents/VERSION"
+  fi
+
+  if [ -d "$TARGET_DIR/.claude" ]; then
+    if [ -d "$TARGET_DIR/.claude/skills" ] && [ ! -L "$TARGET_DIR/.claude/skills" ]; then
+      cp -R "$TARGET_DIR/.agents/skills/"* "$TARGET_DIR/.claude/skills/"
+      for sdir in "$TARGET_DIR/.claude/skills/"*; do
+        if [ -d "$sdir" ]; then
+          sname=$(basename "$sdir")
+          if [ ! -d "$SKILL_ROOT/.agents/skills/$sname" ]; then
+            rm -rf "$sdir"
+          fi
+        fi
+      done
+    fi
+  fi
+
+  if [ -d "$TARGET_DIR/.git" ]; then
+    echo "-> Actualizando Git Hooks en repositorio..."
+    (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh) || true
+  fi
+
+  echo "================================================================="
+  echo "  [OK] Actualización completada exitosamente!"
+  echo "       GLOBAL_STATE.md, BRAIN.md y .agents/brain/ se conservaron intactos."
+  echo "================================================================="
+  exit 0
+fi
 
 echo "================================================================="
 echo "  Inicializando Entorno Multi-Agente para: $PROJECT_NAME"
@@ -83,6 +173,9 @@ cp -R "$SKILL_ROOT/.agents/templates/"* "$TARGET_DIR/.agents/templates/"
 cp -R "$SKILL_ROOT/.agents/scripts/"* "$TARGET_DIR/.agents/scripts/"
 cp -R "$SKILL_ROOT/.agents/hooks/"* "$TARGET_DIR/.agents/hooks/"
 cp -R "$SKILL_ROOT/.agents/plugins/"* "$TARGET_DIR/.agents/plugins/"
+if [ -f "$SKILL_ROOT/.agents/VERSION" ]; then
+  cp "$SKILL_ROOT/.agents/VERSION" "$TARGET_DIR/.agents/VERSION"
+fi
 
 # Dar permisos de ejecución
 chmod +x "$TARGET_DIR/.agents/scripts/"*.sh 2>/dev/null || true
@@ -138,9 +231,15 @@ if [ -f "$TARGET_DIR/GLOBAL_STATE.md" ]; then
   echo "-> GLOBAL_STATE.md ya existe; se conserva."
 else
   echo "-> Generando GLOBAL_STATE.md configurado..."
-  sed -e "s|\[NOMBRE_DEL_PROYECTO\]|$PROJECT_NAME|g" \
-      -e "s|YYYY-MM-DD|$CURRENT_DATE|g" \
-      "$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" > "$TARGET_DIR/GLOBAL_STATE.md"
+  python3 -c "
+import sys
+pname, date, src, dst = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+with open(src, 'r', encoding='utf-8') as f:
+    c = f.read()
+c = c.replace('[NOMBRE_DEL_PROYECTO]', pname).replace('YYYY-MM-DD', date)
+with open(dst, 'w', encoding='utf-8') as f:
+    f.write(c)
+" "$PROJECT_NAME" "$CURRENT_DATE" "$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" "$TARGET_DIR/GLOBAL_STATE.md"
 
   # Configurar stack tecnológico predeterminado si se especificó
   if [ "$SELECTED_STACK" = "nextjs" ]; then
@@ -197,8 +296,15 @@ install_brain_file "$SKILL_ROOT/.agents/templates/tech_debt_template.md" "$TARGE
 # Generar README.md si no existe en el destino
 if [ ! -f "$TARGET_DIR/README.md" ]; then
   echo "-> Generando README.md del proyecto..."
-  sed -e "s|\[NOMBRE_DEL_PROYECTO\]|$PROJECT_NAME|g" \
-      "$SKILL_ROOT/.agents/templates/README_TEMPLATE.md" > "$TARGET_DIR/README.md"
+  python3 -c "
+import sys
+pname, src, dst = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(src, 'r', encoding='utf-8') as f:
+    c = f.read()
+c = c.replace('[NOMBRE_DEL_PROYECTO]', pname)
+with open(dst, 'w', encoding='utf-8') as f:
+    f.write(c)
+" "$PROJECT_NAME" "$SKILL_ROOT/.agents/templates/README_TEMPLATE.md" "$TARGET_DIR/README.md"
 fi
 
 # Instalar Git hooks si existe .git
