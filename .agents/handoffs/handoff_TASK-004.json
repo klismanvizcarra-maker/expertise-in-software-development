@@ -1,0 +1,20 @@
+{
+  "task_id": "TASK-004",
+  "summary": "Incorporar gotchas de stacks y seguridad al Cerebro del proyecto",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-10-30T01:47:53Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/references/nextjs-app-router.md" },
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/references/prisma-postgres.md" },
+    { "type": "file", "path": ".agents/skills/stack-nextjs-tailwind-prisma/references/tailwind-design.md" },
+    { "type": "file", "path": ".agents/templates/stack_template.md" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-skills.sh" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/validate-state.sh"
+  ]
+}
