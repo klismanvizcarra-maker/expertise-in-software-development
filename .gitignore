@@ -84,6 +84,7 @@ temp/
 *.tmp
 coverage/
 .nyc_output/
+.agents/.task_lock/
 
 # Reportes de prueba y capturas temporales
 /test-results/

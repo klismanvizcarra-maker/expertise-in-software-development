@@ -98,6 +98,14 @@ check "move de tarea inexistente falla" '! $T move TASK-999 DONE >/dev/null 2>&1
 check "metrics no cuenta 'DONE' de la descripción" '$T metrics | grep -q "DONE:.* 0"'
 check "list muestra solo filas del tablero" '[ "$($T list | grep -c "^|")" = 4 ]'
 
+new_project concurrency
+for i in $(seq 1 10); do
+  $T add "Tarea concurrente $i" "devops-cloud-agent" "Criterio $i" >/dev/null 2>&1 &
+done
+wait
+check "concurrencia: 10 add en paralelo dejan 10 tareas con IDs únicos" '[ "$(awk -F"|" "/^\|/ { id=\$2; gsub(/[ \t\`]/,\"\",id); if (id ~ /^TASK-[0-9]+$/) print id }" GLOBAL_STATE.md | wc -l | tr -d " ")" = 12 ] && [ "$(awk -F"|" "/^\|/ { id=\$2; gsub(/[ \t\`]/,\"\",id); if (id ~ /^TASK-[0-9]+$/) print id }" GLOBAL_STATE.md | sort | uniq -d | wc -l | tr -d " ")" = 0 ]'
+check "concurrencia: formato de GLOBAL_STATE.md íntegro tras add paralelos" 'bash "$ROOT/.agents/scripts/validate-state.sh" >/dev/null'
+
 # ------------------------------------------------------------------------------
 section "task.sh ciclo de vida: start / handoff / reject / close"
 new_project cycle
