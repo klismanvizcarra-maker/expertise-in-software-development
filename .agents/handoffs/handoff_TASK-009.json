@@ -3,14 +3,15 @@
   "summary": "Fix: task.sh move permite saltarse el veto de QA",
   "source_agent": "devops-cloud-agent",
   "target_agent": "qa-security-agent",
-  "timestamp": "2026-10-30T02:34:29Z",
-  "iteration": 1,
+  "timestamp": "2026-10-30T02:42:31Z",
+  "iteration": 2,
   "deliverables": [
     { "type": "file", "path": ".agents/scripts/task.sh" },
     { "type": "file", "path": "AGENTS.md" },
     { "type": "file", "path": "GLOBAL_STATE.md" },
     { "type": "file", "path": "QUICKSTART.md" },
-    { "type": "file", "path": "tests/test-scripts.sh" }
+    { "type": "file", "path": "tests/test-scripts.sh" },
+    { "type": "file", "path": "tests/triggers/run_claude.py" }
   ],
   "verification_commands": [
     "./.agents/scripts/validate-state.sh"
