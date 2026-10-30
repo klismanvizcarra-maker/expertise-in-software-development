@@ -52,6 +52,8 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
 
 **Traspaso formal (*hand-off*)**: el especialista nunca marca su propia tarea como terminada. Antes de `task.sh handoff` debe cumplir el checklist de su skill y dejar en el historial de `GLOBAL_STATE.md` los entregables y los comandos exactos para verificarlos (formato: `.agents/templates/handoff_template.json`).
 
+**Fusión a `main` y Limpieza de Ramas**: Tras la aprobación de QA (`task.sh close TASK-XXX`), el especialista asignado o el `orchestrator-agent` fusiona la rama a `main` ejecutando `git checkout main && git merge --no-ff <rama>` para preservar el historial completo de commits de la tarea, seguido inmediatamente de `git branch -d <rama>` para eliminar la rama local y mantener el repositorio limpio. Ninguna tarea se considera completamente integrada sin esta fusión.
+
 ---
 
 ## 4. Poder de Veto de QA y Regla Anti-Deadlocks (Límite de 3 Iteraciones)
@@ -72,6 +74,9 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
      - `feat(TASK-001): implementar autenticacion jwt y middleware rbac`
      - `test(TASK-002): anadir pruebas de integracion para endpoints de usuario`
      - `fix(TASK-003): corregir calculo de prorrateo en servicio de facturacion`
+3. **Fusión y Limpieza de Ramas**:
+   - Toda tarea aprobada por QA se fusiona a `main` con `--no-ff` (`git merge --no-ff <rama>`), nunca con fast-forward directo, asegurando trazabilidad por tarea.
+   - Tras la fusión a `main`, se elimina la rama local (`git branch -d <rama>`) para prevenir ramas huérfanas o acumuladas.
 
 ---
 
