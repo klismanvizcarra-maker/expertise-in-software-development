@@ -198,6 +198,25 @@ check "learn: 7 columnas en BRAIN.md y 6 en lessons_learned.md" '[ "$(grep "Prob
 $T debt "Paginacion en memoria" TASK-001 "Paginar en SQL" baja >/dev/null
 check "debt registra TD-001 con prioridad normalizada" 'grep -q "TD-001.*\`BAJA\`" .agents/brain/tech_debt.md'
 check "debt con prioridad inválida falla" '! $T debt "x" TASK-001 "y" URGENTE >/dev/null 2>&1'
+check "learn rechaza una lección casi idéntica a una activa" '$T learn "Fallo de paginacion en listado de usuarios" backend "c" "s" >/dev/null; ! $T learn "Fallo de paginacion en el listado de usuarios" backend "c2" "s2" >/dev/null 2>&1'
+check "learn --force registra aunque exista una parecida" '$T learn "Fallo de paginacion en el listado de usuarios" backend "c2" "s2" --force >/dev/null && [ "$(grep -c "Fallo de paginacion" BRAIN.md)" = 2 ]'
+check "learn acepta una lección distinta sin --force" '$T learn "Timeout en webhook de pagos" backend "c" "s" >/dev/null'
+LL_RET=$(grep "Timeout en webhook" BRAIN.md | grep -oE "LL-[0-9]+" | head -1)
+$T lesson-retire "$LL_RET" >/dev/null
+check "lesson-retire marca OBSOLETA en BRAIN.md y en lessons_learned.md" 'grep "$LL_RET" BRAIN.md | grep -q "OBSOLETA" && ! grep "$LL_RET" BRAIN.md | grep -q "ACTIVO" && grep "$LL_RET" .agents/brain/lessons_learned.md | grep -q "\[OBSOLETA\]"'
+check "lesson-retire conserva las 7 columnas de la fila" '[ "$(grep "$LL_RET" BRAIN.md | awk -F"|" "{print NF-2}")" = 7 ]'
+check "una lección OBSOLETA ya no bloquea registrar otra parecida" '$T learn "Timeout en webhook de pagos" backend "c" "s" >/dev/null'
+check "lesson-retire con ID inexistente falla" '! $T lesson-retire LL-999 >/dev/null 2>&1'
+printf '%s\n' "| \`TD-001\` | \`TASK-001\` | Paginacion en memoria | Workaround | Paginar en SQL | \`BAJA\` |" >> BRAIN.md
+$T debt "Segunda deuda" TASK-001 "Accion" media >/dev/null
+$T debt-resolve TD-001 >/dev/null
+check "debt-resolve elimina la deuda de tech_debt.md y de BRAIN.md" '! grep -q "TD-001" .agents/brain/tech_debt.md && ! grep -q "TD-001" BRAIN.md && grep -q "TD-002" .agents/brain/tech_debt.md'
+check "debt-resolve con ID inexistente falla" '! $T debt-resolve TD-999 >/dev/null 2>&1'
+check "tras debt-resolve el siguiente ID no reutiliza uno vivo" '$T debt "Tercera" TASK-001 "x" baja >/dev/null && grep -q "TD-003" .agents/brain/tech_debt.md'
+$T add "Tarea con cerebro" "backend-agent" "criterio" >/dev/null
+START_OUT=$($T start "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" 2>&1)
+check "start recuerda las lecciones activas de BRAIN.md" 'printf "%s" "$START_OUT" | grep -q "Lecciones activas" && printf "%s" "$START_OUT" | grep -q "Problema A"'
+check "start no lista lecciones OBSOLETAS" '! printf "%s" "$START_OUT" | grep -q "$LL_RET "'
 TEMPLATE_SUM=$(cksum < .agents/templates/BRAIN_TEMPLATE.md)
 mv BRAIN.md "$WORK/brain.bak"
 check "learn sin BRAIN.md falla sin tocar plantillas" '! $T learn "x" >/dev/null 2>&1 && [ "$(cksum < .agents/templates/BRAIN_TEMPLATE.md)" = "$TEMPLATE_SUM" ]'
@@ -248,6 +267,7 @@ MAESTRO_COMMIT_TRAILER="Co-Authored-By: Env <env@example.com>" $T commit TASK-00
 check "MAESTRO_COMMIT_TRAILER añade el trailer y el tipo por defecto es feat" '[ "$(git log -1 --pretty=%s)" = "feat(TASK-001): con autoria por entorno" ] && git log -1 --pretty=%b | grep -q "Env <env@example.com>"'
 echo "v" >> ok.js
 check "task.sh commit rechaza un trailer sin formato Clave: valor" '! $T commit TASK-001 "malo" fix --trailer "sin formato" >/dev/null 2>&1'
+check "task.sh commit rechaza un trailer con salto de línea" '! $T commit TASK-001 "malo" fix --trailer "$(printf "Co-Authored-By: A <a@example.com>\nfix(TASK-999): inyectado")" >/dev/null 2>&1'
 git checkout -q ok.js 2>/dev/null; git reset -q 2>/dev/null
 
 # ------------------------------------------------------------------------------

@@ -13,7 +13,7 @@ description: Registra una lección aprendida en la memoria permanente del proyec
    - **Solución preventiva (Antídoto)**: la regla aplicable a futuro para evitar el error (`Middleware de validación Zod obligatorio antes de invocar la capa de servicio`).
    *Si falta alguno de los tres elementos o la causa es tautológica, solicítala antes de guardar.*
 2. **Elegir categoría**: `frontend`, `backend`, `database`, `security`, `devops`, `mobile`, `ai`, `ui/ux` o `domain`.
-3. **Control de duplicados**: busca en `BRAIN.md` lecciones similares; si ya existe, actualiza su antídoto en lugar de crear una fila redundante.
+3. **Control de duplicados**: busca en `BRAIN.md` lecciones similares; si ya existe, actualiza su antídoto en lugar de crear una fila redundante. `task.sh learn` rechaza por sí mismo una lección cuyo problema comparte la mayoría de palabras con una activa; usa `--force` solo si de verdad es distinta.
 4. **Registro automático**:
    ```bash
    ./.agents/scripts/task.sh learn "<problema>" <categoría> "<causa raíz>" "<solución>"
@@ -28,6 +28,11 @@ Si en lugar de un aprendizaje se trata de una solución provisional aceptada par
 ```bash
 ./.agents/scripts/task.sh debt "<descripción>" TASK-XXX "<acción definitiva>" [ALTA|MEDIA|BAJA]
 ```
+
+## Mantenimiento del Cerebro
+- **Deuda saldada**: cuando la tarea que la corrige queda `DONE`, elimínala con `./.agents/scripts/task.sh debt-resolve TD-XXX` (la quita de `tech_debt.md` y de `BRAIN.md`; el historial queda en git).
+- **Lección que ya no aplica** (se cambió de librería, se eliminó el módulo): retírala con `./.agents/scripts/task.sh lesson-retire LL-XXX`. Queda marcada `OBSOLETA`, deja de mostrarse en `task.sh start` y no bloquea lecciones nuevas parecidas.
+- `task.sh start` muestra las últimas lecciones activas como recordatorio antes de empezar una tarea.
 
 ## Checklist antes de registrar lección
 - [ ] Lección con las 3 partes obligatorias: Problema observable, Causa raíz técnica y Solución preventiva aplicable.

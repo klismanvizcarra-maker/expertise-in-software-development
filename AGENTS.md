@@ -69,7 +69,7 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
 1. **Ramas por Tarea**:
    - Cada tarea debe trabajarse en su propia rama: `feature/TASK-XXX-descripcion-corta`, `fix/TASK-XXX-...` o `refactor/TASK-XXX-...`. `task.sh start` elige el prefijo según la descripción: `Bug:`/`Fix:`/`Hotfix:` → `fix/`, `Refactor:` → `refactor/`, el resto → `feature/`.
 2. **Mensajes de Commit Convencionales**:
-   - Formato obligatorio: `tipo(TASK-XXX): descripción en imperativo`. Usa `./.agents/scripts/task.sh commit TASK-XXX "<descripción>" [tipo]`, que lo aplica (el hook `commit-msg` rechaza el resto).
+   - Formato obligatorio: `tipo(TASK-XXX): descripción en imperativo`. Usa `./.agents/scripts/task.sh commit TASK-XXX "<descripción>" [tipo]`, que lo aplica (el hook `commit-msg` rechaza el resto). Las líneas de autoría (ej. `Co-Authored-By: ...`) se añaden con `--trailer "<línea>"` o con la variable `MAESTRO_COMMIT_TRAILER`.
    - Ejemplos:
      - `feat(TASK-001): implementar autenticacion jwt y middleware rbac`
      - `test(TASK-002): anadir pruebas de integracion para endpoints de usuario`
