@@ -66,6 +66,10 @@ mkdir -p "$WORK/angular-app" && git -C "$WORK/angular-app" init -q
 bash "$ROOT/.agents/scripts/init-project.sh" "Mi Angular App" "$WORK/angular-app" --stack angular >/dev/null 2>&1
 check "init-project con --stack angular pre-configura GLOBAL_STATE.md" 'grep -q "stack-angular-express-postgres" "$WORK/angular-app/GLOBAL_STATE.md" && grep -q "Drizzle" "$WORK/angular-app/GLOBAL_STATE.md"'
 
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi API" "$WORK/fastapi-app" --stack fastapi >/dev/null 2>&1
+check "init-project con --stack fastapi pre-configura GLOBAL_STATE.md" 'grep -q "stack-fastapi-postgres" "$WORK/fastapi-app/GLOBAL_STATE.md" && grep -q "SQLAlchemy" "$WORK/fastapi-app/GLOBAL_STATE.md"'
+check "--stack fastapi no deja placeholders del stack" '! grep -qE "\[Breve descripci|Elección del stack base" "$WORK/fastapi-app/GLOBAL_STATE.md"'
+check "--stack fastapi instala la skill del stack" '[ -f "$WORK/fastapi-app/.agents/skills/stack-fastapi-postgres/SKILL.md" ]'
 check "--stack con valor desconocido sale con exit 1" '! bash "$ROOT/.agents/scripts/init-project.sh" "App" . --stack desconocido >/dev/null 2>&1'
 
 mkdir -p "$WORK/escaped-app" && git -C "$WORK/escaped-app" init -q

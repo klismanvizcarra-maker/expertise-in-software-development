@@ -880,6 +880,38 @@
    "forbid": [
     "nueva-tarea"
    ]
+  },
+  {
+   "id": "stk-04",
+   "prompt": "¿Cómo estructuro una API con FastAPI, SQLAlchemy y Alembic sobre PostgreSQL?",
+   "expect": [
+    "stack-fastapi-postgres"
+   ],
+   "accept": [
+    "iniciar-proyecto",
+    "backend-agent"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres",
+    "stack-nextjs-tailwind-prisma"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "stk-05",
+   "prompt": "Me sale MissingGreenlet al leer una relación con SQLAlchemy async en mi endpoint de FastAPI",
+   "expect": [
+    "stack-fastapi-postgres"
+   ],
+   "accept": [
+    "backend-agent",
+    "bugfix"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres",
+    "stack-nextjs-tailwind-prisma"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [

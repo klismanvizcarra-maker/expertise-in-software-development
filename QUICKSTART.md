@@ -32,13 +32,13 @@ En WSL instala las dependencias una vez: `sudo apt update && sudo apt install -y
 ### Opción A: Usando el script automático
 En tu terminal, ejecuta:
 ```bash
-# Sintaxis: ./.agents/scripts/init-project.sh "Nombre" "/ruta/al/proyecto" [--copy] [--stack nextjs|angular] [--ci]
+# Sintaxis: ./.agents/scripts/init-project.sh "Nombre" "/ruta/al/proyecto" [--copy] [--stack nextjs|angular|fastapi] [--ci]
 ./.agents/scripts/init-project.sh "Mi Plataforma SaaS" "../MI-NUEVO-PROYECTO" --stack nextjs --ci
 cd ../MI-NUEVO-PROYECTO && ./.agents/scripts/install-hooks.sh
 ```
 El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json`, `.gitignore` ni workflows existentes si ya existen.
 - Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows).
-- Usa `--stack nextjs` o `--stack angular` para preconfigurar la arquitectura sin placeholders.
+- Usa `--stack nextjs`, `--stack angular` o `--stack fastapi` para preconfigurar la arquitectura sin placeholders.
 - Usa `--ci` para instalar automáticamente el pipeline de GitHub Actions (`.github/workflows/audit.yml`) desde la plantilla.
 - Usa `--update` (o `-u`) en proyectos existentes para sincronizar scripts, plantillas, hooks y skills retirando obsoletas, sin tocar `GLOBAL_STATE.md`, `BRAIN.md` ni `.agents/brain/`.
 Luego ejecuta `install-hooks.sh` para activar la validación de commits y escaneo de secretos.
@@ -188,7 +188,7 @@ Instala los hooks con un solo comando:
 ```bash
 bash tests/test-scripts.sh
 ```
-Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (112 comprobaciones).
+Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (123 comprobaciones).
 
 ---
 
