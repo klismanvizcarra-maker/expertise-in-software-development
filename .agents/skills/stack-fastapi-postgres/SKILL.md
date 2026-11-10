@@ -19,7 +19,7 @@ Esta skill define el **cómo técnico concreto** de una API en Python; las skill
 | **SQLAlchemy** | 2.1.x | Estilo 2.0 (`select()`, `Mapped[]`, `AsyncSession`); prohibido el estilo `Query` heredado |
 | **Alembic** | 1.20.x | Migraciones versionadas |
 | **Driver PostgreSQL** | `psycopg` 3.3.x (async) | URL `postgresql+psycopg://` |
-| **PostgreSQL** | 16+ | IDs `uuid`; fechas en `timestamptz` |
+| **PostgreSQL** | 16+ | IDs enteros, o `uuid` si no deben ser enumerables; fechas en `timestamptz` |
 | **Testing** | pytest 9 + `httpx` 0.28 | `httpx.AsyncClient` con `ASGITransport`; E2E con Playwright si hay UI |
 | **Calidad** | ruff 0.17 + mypy | Lint, formato y tipos |
 
