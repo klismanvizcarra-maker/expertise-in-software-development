@@ -235,6 +235,39 @@ check "learn sin BRAIN.md falla sin tocar plantillas" '! $T learn "x" >/dev/null
 mv "$WORK/brain.bak" BRAIN.md
 
 # ------------------------------------------------------------------------------
+section "robustez de task.sh (locale, permisos, escapes, sin python3)"
+new_project robusto
+chmod 644 GLOBAL_STATE.md BRAIN.md .agents/brain/tech_debt.md .agents/brain/lessons_learned.md
+$T add "Tarea de permisos" "backend-agent" "criterio" >/dev/null
+$T learn "Leccion para permisos del archivo" backend "c" "s" >/dev/null
+$T debt "Deuda con la palabra SALDADA en el texto" TASK-001 "accion" baja >/dev/null
+perm() { ls -l "$1" | cut -c1-10; }
+check "task.sh conserva los permisos de GLOBAL_STATE.md, BRAIN.md y el cerebro" '[ "$(perm GLOBAL_STATE.md)" = "-rw-r--r--" ] && [ "$(perm BRAIN.md)" = "-rw-r--r--" ] && [ "$(perm .agents/brain/tech_debt.md)" = "-rw-r--r--" ] && [ "$(perm .agents/brain/lessons_learned.md)" = "-rw-r--r--" ]'
+check "debt-resolve salda una deuda cuyo texto contiene la palabra SALDADA" '$T debt-resolve TD-001 >/dev/null && ! $T debt-resolve TD-001 >/dev/null 2>&1'
+check "los mensajes no interpretan secuencias de escape del usuario" '$T learn "Ruta C:\\nuevo\\tabla rota" devops "c" "s" | grep -qF "C:\\nuevo\\tabla"'
+check "die conserva el salto de línea propio del mensaje de uso" '[ "$($T add 2>&1 | wc -l | tr -d " ")" -ge 2 ]'
+# PATH sin python3: enlaces a todas las herramientas del sistema salvo python*
+NOPY="$WORK/nopy-bin"; mkdir -p "$NOPY"
+for d in /bin /usr/bin "$(dirname "$(command -v git)")"; do
+  for f in "$d"/*; do
+    b=$(basename "$f"); case "$b" in python*) continue ;; esac
+    [ -e "$NOPY/$b" ] || ln -s "$f" "$NOPY/$b" 2>/dev/null
+  done
+done
+check "el PATH de prueba no tiene python3" '! env PATH="$NOPY" bash -c "command -v python3" >/dev/null 2>&1'
+PATH="$NOPY" LC_ALL=C $T learn "Paginación incorrecta en migración automática" database "c" "s" >/dev/null 2>&1
+check "sin python3 y en locale C, learn detecta el duplicado en mayúsculas" '! PATH="$NOPY" LC_ALL=C $T learn "PAGINACIÓN INCORRECTA EN MIGRACIÓN AUTOMÁTICA" database "c" "s" >/dev/null 2>&1'
+check "sin python3 y en locale C, learn detecta el duplicado sin tildes" '! PATH="$NOPY" LC_ALL=C $T learn "Paginacion incorrecta en migracion automatica" database "c" "s" >/dev/null 2>&1'
+check "sin python3, learn sigue aceptando una lección distinta" 'PATH="$NOPY" LC_ALL=C $T learn "Timeout al conectar con el proveedor" backend "c" "s" >/dev/null 2>&1'
+$T add "Auditoría de diagnóstico ñandú" "backend-agent" "criterio" >/dev/null
+PATH="$NOPY" LC_ALL=C $T start "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" >/dev/null 2>&1
+check "sin python3 y en locale C, el slug de la rama no pierde letras con tilde" 'git branch --show-current | grep -q "auditoria-de-diagnostico-nandu"'
+git checkout -q main 2>/dev/null
+ONEARG="$WORK/un-arg"; mkdir -p "$ONEARG" && git -C "$ONEARG" init -q -b main
+check "init-project.sh con un solo argumento instala en el directorio actual" '(cd "$ONEARG" && bash "$ROOT/.agents/scripts/init-project.sh" "Solo Nombre" >/dev/null 2>&1) && grep -q "Solo Nombre" "$ONEARG/GLOBAL_STATE.md"'
+cd "$WORK" || exit 1
+
+# ------------------------------------------------------------------------------
 section "hooks de git (pre-commit / commit-msg) y task.sh commit"
 new_project hooks
 bash ./.agents/scripts/install-hooks.sh >/dev/null

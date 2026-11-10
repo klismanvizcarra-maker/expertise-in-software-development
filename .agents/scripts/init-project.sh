@@ -69,12 +69,12 @@ if [ -n "$SELECTED_STACK" ]; then
 fi
 
 if [ "$IS_UPDATE" -eq 1 ]; then
-  if [ -n "${positional[0]}" ]; then
+  if [ -n "${positional[0]:-}" ]; then
     TARGET_DIR="${positional[0]}"
   fi
 else
-  [ -n "${positional[0]}" ] && PROJECT_NAME="${positional[0]}"
-  [ -n "${positional[1]}" ] && TARGET_DIR="${positional[1]}"
+  [ -n "${positional[0]:-}" ] && PROJECT_NAME="${positional[0]}"
+  [ -n "${positional[1]:-}" ] && TARGET_DIR="${positional[1]}"
 fi
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
