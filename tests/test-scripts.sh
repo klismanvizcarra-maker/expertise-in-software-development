@@ -199,6 +199,11 @@ $T debt "Paginacion en memoria" TASK-001 "Paginar en SQL" baja >/dev/null
 check "debt registra TD-001 con prioridad normalizada" 'grep -q "TD-001.*\`BAJA\`" .agents/brain/tech_debt.md'
 check "debt con prioridad inválida falla" '! $T debt "x" TASK-001 "y" URGENTE >/dev/null 2>&1'
 check "learn rechaza una lección casi idéntica a una activa" '$T learn "Fallo de paginacion en listado de usuarios" backend "c" "s" >/dev/null; ! $T learn "Fallo de paginacion en el listado de usuarios" backend "c2" "s2" >/dev/null 2>&1'
+$T learn "Error en login" backend "c" "s" >/dev/null
+check "learn rechaza una lección idéntica aunque sea corta" '! $T learn "Error en login" backend "c" "s" >/dev/null 2>&1'
+$T learn "Paginación incorrecta en migración automática" database "c" "s" >/dev/null
+check "learn detecta duplicados con otras mayúsculas (locale C)" '! LC_ALL=C $T learn "PAGINACIÓN INCORRECTA EN MIGRACIÓN AUTOMÁTICA" database "c" "s" >/dev/null 2>&1'
+check "learn detecta duplicados escritos sin tildes" '! $T learn "Paginacion incorrecta en migracion automatica" database "c" "s" >/dev/null 2>&1'
 check "learn --force registra aunque exista una parecida" '$T learn "Fallo de paginacion en el listado de usuarios" backend "c2" "s2" --force >/dev/null && [ "$(grep -c "Fallo de paginacion" BRAIN.md)" = 2 ]'
 check "learn acepta una lección distinta sin --force" '$T learn "Timeout en webhook de pagos" backend "c" "s" >/dev/null'
 LL_RET=$(grep "Timeout en webhook" BRAIN.md | grep -oE "LL-[0-9]+" | head -1)
@@ -210,13 +215,20 @@ check "lesson-retire con ID inexistente falla" '! $T lesson-retire LL-999 >/dev/
 printf '%s\n' "| \`TD-001\` | \`TASK-001\` | Paginacion en memoria | Workaround | Paginar en SQL | \`BAJA\` |" >> BRAIN.md
 $T debt "Segunda deuda" TASK-001 "Accion" media >/dev/null
 $T debt-resolve TD-001 >/dev/null
-check "debt-resolve elimina la deuda de tech_debt.md y de BRAIN.md" '! grep -q "TD-001" .agents/brain/tech_debt.md && ! grep -q "TD-001" BRAIN.md && grep -q "TD-002" .agents/brain/tech_debt.md'
+check "debt-resolve marca SALDADA en tech_debt.md y la retira de BRAIN.md" 'grep "TD-001" .agents/brain/tech_debt.md | grep -q "SALDADA" && ! grep -q "TD-001" BRAIN.md && ! grep "TD-002" .agents/brain/tech_debt.md | grep -q "SALDADA"'
+check "debt-resolve conserva las columnas de la fila" '[ "$(grep "TD-001" .agents/brain/tech_debt.md | awk -F"|" "{print NF}")" = "$(grep "TD-002" .agents/brain/tech_debt.md | awk -F"|" "{print NF}")" ]'
+check "debt-resolve dos veces sobre la misma deuda falla" '! $T debt-resolve TD-001 >/dev/null 2>&1'
 check "debt-resolve con ID inexistente falla" '! $T debt-resolve TD-999 >/dev/null 2>&1'
-check "tras debt-resolve el siguiente ID no reutiliza uno vivo" '$T debt "Tercera" TASK-001 "x" baja >/dev/null && grep -q "TD-003" .agents/brain/tech_debt.md'
+$T debt-resolve TD-002 >/dev/null
+check "tras saldar la última deuda el siguiente ID no se reutiliza" '$T debt "Tercera" TASK-001 "x" baja >/dev/null && grep -q "TD-003" .agents/brain/tech_debt.md && [ "$(grep -c "TD-002" .agents/brain/tech_debt.md)" = 1 ]'
 $T add "Tarea con cerebro" "backend-agent" "criterio" >/dev/null
 START_OUT=$($T start "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" 2>&1)
 check "start recuerda las lecciones activas de BRAIN.md" 'printf "%s" "$START_OUT" | grep -q "Lecciones activas" && printf "%s" "$START_OUT" | grep -q "Problema A"'
 check "start no lista lecciones OBSOLETAS" '! printf "%s" "$START_OUT" | grep -q "$LL_RET "'
+for n in 1 2 3 4 5 6; do $T learn "Incidente frontend numero $n con render distinto $n$n" frontend "c" "s" --force >/dev/null; done
+$T add "Otra tarea de backend" "backend-agent" "criterio" >/dev/null
+START_OUT=$($T start "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" 2>&1)
+check "start prioriza las lecciones de la categoría del agente asignado" 'printf "%s" "$START_OUT" | grep -q "\[BACKEND\] Problema A" && printf "%s" "$START_OUT" | grep -q "\[BACKEND\] Error en login"'
 TEMPLATE_SUM=$(cksum < .agents/templates/BRAIN_TEMPLATE.md)
 mv BRAIN.md "$WORK/brain.bak"
 check "learn sin BRAIN.md falla sin tocar plantillas" '! $T learn "x" >/dev/null 2>&1 && [ "$(cksum < .agents/templates/BRAIN_TEMPLATE.md)" = "$TEMPLATE_SUM" ]'
