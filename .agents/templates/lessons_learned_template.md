@@ -7,8 +7,10 @@
 
 ## 1. Registro de Incidentes Categorizados
 
-| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) |
-| :---: | :---: | :---: | :--- | :--- | :--- |
+> **Fuente única**: esta tabla es el origen de las lecciones; la de `BRAIN.md` se regenera desde aquí (`task.sh brain sync`). **Ámbito** = globs de rutas a las que aplica la lección (`*` = general); **Estado** = `ACTIVO` u `OBSOLETA`.
+
+| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |
+| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |
 
 ---
 

@@ -68,6 +68,10 @@ replace_file() {
   cat "$tmp" > "$file" && rm -f "$tmp"
 }
 
+# Biblioteca del cerebro: norm_text, lecciones (fuente única), relevancia y búsqueda
+# shellcheck source=brain-lib.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/brain-lib.sh"
+
 LOCK_DIR="$PROJECT_ROOT/.agents/.task_lock"
 LOCK_ACQUIRED=0
 LOCK_OWNER_PID=0
@@ -141,83 +145,6 @@ next_id() {
   local max
   max=$(cat "$@" 2>/dev/null | grep -oE "${prefix}-[0-9]+" | sed "s/${prefix}-//" | sort -n | tail -1)
   printf "%s-%03d" "$prefix" $((10#${max:-0} + 1))
-}
-
-# Filas de lecciones ACTIVAS de BRAIN.md como "LL-NNN<TAB>CATEGORIA<TAB>problema"
-active_lessons() {
-  [ -f "$BRAIN_FILE" ] || return 0
-  awk -F'|' '
-    /^\|/ {
-      id = $2; gsub(/[ \t`]/, "", id)
-      if (id !~ /^LL-[0-9]+$/) next
-      st = $(NF-1); gsub(/[ \t`]/, "", st)
-      if (st != "ACTIVO") next
-      cat = $4; gsub(/[ \t`\[\]]/, "", cat)
-      p = $5; gsub(/^[ \t]+|[ \t]+$/, "", p)
-      print id "\t" cat "\t" p
-    }
-  ' "$BRAIN_FILE"
-}
-
-# Minúsculas y sin tildes, línea a línea (tolower de awk BSD no baja Á/Ó en locale C)
-norm_text() {
-  if command -v python3 >/dev/null 2>&1; then
-    PYTHONIOENCODING=utf-8 python3 -c 'import sys, unicodedata
-for line in sys.stdin:
-    sys.stdout.write("".join(c for c in unicodedata.normalize("NFKD", line) if not unicodedata.combining(c)).lower())'
-  else
-    # Sin python3: sustituciones byte a byte, válidas en cualquier locale (y/// falla en locale C)
-    sed -e 's/á/a/g;s/à/a/g;s/ä/a/g;s/â/a/g;s/ã/a/g;s/Á/a/g;s/À/a/g;s/Ä/a/g;s/Â/a/g;s/Ã/a/g' \
-        -e 's/é/e/g;s/è/e/g;s/ë/e/g;s/ê/e/g;s/É/e/g;s/È/e/g;s/Ë/e/g;s/Ê/e/g' \
-        -e 's/í/i/g;s/ì/i/g;s/ï/i/g;s/î/i/g;s/Í/i/g;s/Ì/i/g;s/Ï/i/g;s/Î/i/g' \
-        -e 's/ó/o/g;s/ò/o/g;s/ö/o/g;s/ô/o/g;s/õ/o/g;s/Ó/o/g;s/Ò/o/g;s/Ö/o/g;s/Ô/o/g;s/Õ/o/g' \
-        -e 's/ú/u/g;s/ù/u/g;s/ü/u/g;s/û/u/g;s/Ú/u/g;s/Ù/u/g;s/Ü/u/g;s/Û/u/g' \
-        -e 's/ñ/n/g;s/Ñ/n/g;s/ç/c/g;s/Ç/c/g' \
-      | tr '[:upper:]' '[:lower:]'
-  fi
-}
-
-# Devuelve "LL-NNN (problema)" si ya hay una lección activa equivalente; vacío si no.
-# Equivalente = mismo texto normalizado (sin tildes, mayúsculas ni puntuación), o bien
-# >= 60% de las palabras significativas (4+ letras) en común cuando la nueva tiene 3 o más
-similar_lesson() {
-  local new_norm
-  new_norm=$(printf '%s\n' "$1" | norm_text)
-  active_lessons | norm_text | awk -F'\t' -v new="$new_norm" '
-    function clean(str) { gsub(/[^a-z0-9]+/, " ", str); gsub(/^ +| +$/, "", str); return str }
-    function words(str, arr,    n, i, w, parts, c) {
-      n = split(str, parts, " "); c = 0
-      for (i = 1; i <= n; i++) { w = parts[i]; if (length(w) >= 4 && !(w in arr)) { arr[w] = 1; c++ } }
-      return c
-    }
-    BEGIN { new = clean(new); total = words(new, nw) }
-    {
-      old = clean($3)
-      if (old == new) { print toupper($1) " (" $3 ")"; exit }
-      if (total < 3) next
-      for (w in ow) delete ow[w]
-      words(old, ow); common = 0
-      for (w in nw) if (w in ow) common++
-      if (common / total >= 0.6) { print toupper($1) " (" $3 ")"; exit }
-    }
-  '
-}
-
-# Categoría de lecciones que corresponde al agente asignado a una tarea
-agent_category() {
-  case "$1" in
-    backend-agent)            echo BACKEND ;;
-    frontend-agent)           echo FRONTEND ;;
-    database-architect-agent) echo DATABASE ;;
-    qa-security-agent)        echo SECURITY ;;
-    devops-cloud-agent)       echo DEVOPS ;;
-    mobile-agent)             echo MOBILE ;;
-    ai-integrator-agent)      echo AI ;;
-    ui-ux-agent)              echo UI/UX ;;
-    domain-logic-agent)       echo DOMAIN ;;
-    docs-architecture-agent)  echo DOCS ;;
-    *)                        echo "" ;;
-  esac
 }
 
 # Imprime las filas del tablero de tareas (columna 1 = TASK-NNN)
@@ -309,7 +236,7 @@ in_git() {
 # ------------------------------------------------------------------------------
 
 case "$COMMAND" in
-  add|start|move|handoff|reject|close|learn|debt|debt-resolve|lesson-retire)
+  add|start|move|handoff|reject|close|learn|debt|debt-resolve|lesson-retire|brain)
     acquire_lock
     ;;
 esac
@@ -378,21 +305,20 @@ case "$COMMAND" in
       say "   Rama activa: ${CYAN}$(git -C "$PROJECT_ROOT" branch --show-current)${NC}"
     fi
 
-    # Recordatorio del cerebro (AGENTS.md §7.1): primero todas las lecciones de la categoría del
-    # agente asignado; después las más recientes del resto, hasta completar 5 líneas
+    # Recordatorio del cerebro (AGENTS.md §7.1): lecciones relevantes para esta tarea (mismo
+    # criterio que 'task.sh brain for') y, si sobran líneas, las más recientes del resto
     LESSONS=$(active_lessons)
     if [ -n "$LESSONS" ]; then
-      CAT=$(agent_category "$(task_field "$TASK_ID" 4)")
-      say "🧠 Lecciones activas en BRAIN.md ($(printf '%s\n' "$LESSONS" | wc -l | tr -d ' ')); revísalas antes de empezar:"
-      printf '%s\n' "$LESSONS" | awk -F'\t' -v cat="$CAT" '
-        { id[NR] = $1; c[NR] = $2; p[NR] = $3 }
-        END {
-          shown = 0
-          for (i = 1; i <= NR; i++) if (cat != "" && c[i] == cat) { printf "     %s  [%s] %s\n", id[i], c[i], substr(p[i], 1, 90); shown++ }
-          rest = 5 - shown; if (rest < 0) rest = 0
-          others = 0; for (i = 1; i <= NR; i++) if (cat == "" || c[i] != cat) others++
-          skip = others - rest; seen = 0
-          for (i = 1; i <= NR; i++) if (cat == "" || c[i] != cat) { seen++; if (seen > skip) printf "     %s  [%s] %s\n", id[i], c[i], substr(p[i], 1, 90) }
+      REL=$(relevant_lessons "$(agent_category "$(task_field "$TASK_ID" 4)")" "$(task_field "$TASK_ID" 3) $(task_field "$TASK_ID" 7)" "")
+      say "🧠 Lecciones activas ($(printf '%s\n' "$LESSONS" | wc -l | tr -d ' ')); revisa las de esta tarea antes de empezar (detalle: task.sh brain for $TASK_ID):"
+      REL="$REL" LESSONS="$LESSONS" awk '
+        BEGIN {
+          nr = split(ENVIRON["REL"], r, "\n"); shown = 0
+          for (i = 1; i <= nr; i++) if (r[i] != "") { split(r[i], f, "\t"); seen[f[1]] = 1; printf "     %s  [%s] %s  (%s)\n", f[1], f[2], substr(f[3], 1, 90), f[4]; shown++ }
+          nl = split(ENVIRON["LESSONS"], l, "\n"); rest = 5 - shown; if (rest < 0) rest = 0
+          others = 0; for (i = 1; i <= nl; i++) { split(l[i], f, "\t"); if (l[i] != "" && !(f[1] in seen)) others++ }
+          skip = others - rest; k = 0
+          for (i = 1; i <= nl; i++) { split(l[i], f, "\t"); if (l[i] == "" || (f[1] in seen)) continue; k++; if (k > skip) printf "     %s  [%s] %s\n", f[1], f[2], substr(f[3], 1, 90) }
         }
       '
     elif [ -f "$BRAIN_FILE" ]; then
@@ -689,32 +615,45 @@ EOF
   learn)
     shift
     FORCE=0
+    SCOPE='*'
     LEARN_ARGS=()
-    for a in "$@"; do
-      if [ "$a" = "--force" ]; then FORCE=1; else LEARN_ARGS+=("$a"); fi
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --force) FORCE=1; shift ;;
+        --paths)
+          [ -n "${2:-}" ] || die "--paths requiere globs separados por comas (ej. \"src/api/*.ts,server/*\")."
+          SCOPE="$2"; shift 2 ;;
+        --paths=*) SCOPE="${1#--paths=}"; shift ;;
+        *) LEARN_ARGS+=("$1"); shift ;;
+      esac
     done
     DESC="${LEARN_ARGS[0]:-}"
     CAT="${LEARN_ARGS[1]:-general}"
     CAUSE="${LEARN_ARGS[2]:-Por documentar}"
     FIX="${LEARN_ARGS[3]:-Por documentar}"
-    [ -n "$DESC" ] || die "Uso: ./task.sh learn \"<problema>\" [categoría] [\"<causa raíz>\"] [\"<solución>\"]"
+    [ -n "$DESC" ] || die "Uso: ./task.sh learn \"<problema>\" [categoría] [\"<causa raíz>\"] [\"<solución>\"] [--paths \"<globs>\"] [--force]"
     require_file "$BRAIN_FILE" "Créalo desde .agents/templates/BRAIN_TEMPLATE.md."
+    require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+    ensure_lessons_schema
     CAT_UPPER=$(printf '%s' "$CAT" | tr '[:lower:]' '[:upper:]')
+    SCOPE=$(printf '%s' "$SCOPE" | tr -d ' `')
+    case "$SCOPE" in *$'\n'*|*'|'*) die "Ámbito inválido: usa globs separados por comas, sin '|' ni saltos de línea." ;; esac
+    [ -n "$SCOPE" ] || SCOPE='*'
 
-    # Control de duplicados: lección ACTIVA cuyo problema comparte la mayoría de palabras significativas
+    # Control de duplicados: lección ACTIVA equivalente o con la mayoría de palabras en común
     if [ "$FORCE" -eq 0 ]; then
       SIMILAR=$(similar_lesson "$DESC")
       if [ -n "$SIMILAR" ]; then
-        die "Ya existe una lección parecida: $SIMILAR. Actualiza su antídoto en BRAIN.md, retírala con 'task.sh lesson-retire' o repite el comando con --force."
+        die "Ya existe una lección parecida: $SIMILAR. Actualiza su antídoto en lessons_learned.md, retírala con 'task.sh lesson-retire' o repite el comando con --force."
       fi
     fi
 
+    # Fuente única: la fila se escribe en lessons_learned.md y BRAIN.md se regenera
     NEXT_ID=$(next_id LL "$BRAIN_FILE" "$LL_FILE")
-    BASE_ROW="| \`$NEXT_ID\` | $TODAY | \`[$(cell "$CAT_UPPER")]\` | $(cell "$DESC") | $(cell "$CAUSE") | $(cell "$FIX") |"
-    append_to_table "$BRAIN_FILE" "$HDR_LESSONS" "$BASE_ROW \`ACTIVO\` |"
-    # lessons_learned.md no tiene columna de Estado
-    [ -f "$LL_FILE" ] && append_to_table "$LL_FILE" "$HDR_LESSONS" "$BASE_ROW"
-    say "${GREEN}🧠 Lección registrada:${NC} $NEXT_ID -> [$CAT_UPPER] $DESC"
+    append_to_table "$LL_FILE" "$HDR_LESSONS" \
+      "| \`$NEXT_ID\` | $TODAY | \`[$(cell "$CAT_UPPER")]\` | $(cell "$DESC") | $(cell "$CAUSE") | $(cell "$FIX") | \`$SCOPE\` | \`ACTIVO\` |"
+    brain_sync
+    say "${GREEN}🧠 Lección registrada:${NC} $NEXT_ID -> [$CAT_UPPER] $DESC (ámbito: $SCOPE)"
     ;;
 
   debt)
@@ -758,20 +697,78 @@ EOF
     [ -n "${2:-}" ] || die "Uso: ./task.sh lesson-retire LL-001"
     LL_ID=$(printf '%s' "$2" | tr '[:lower:]' '[:upper:]')
     [[ "$LL_ID" =~ ^LL-[0-9]+$ ]] || die "ID de lección inválido: '$2' (formato LL-001)."
-    require_file "$BRAIN_FILE" "Créalo desde .agents/templates/BRAIN_TEMPLATE.md."
-    grep -qE "^\|[[:space:]]*\`?$LL_ID\`?[[:space:]]*\|" "$BRAIN_FILE" || die "$LL_ID no existe en $BRAIN_FILE."
-    # BRAIN.md: la columna Estado pasa a OBSOLETA; lessons_learned.md (sin esa columna): se marca el problema
+    require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+    ensure_lessons_schema
+    grep -qE "^\|[[:space:]]*\`?$LL_ID\`?[[:space:]]*\|" "$LL_FILE" || die "$LL_ID no existe en $LL_FILE."
     awk -F'|' -v OFS='|' -v id="$LL_ID" '
       /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-1) = " `OBSOLETA` " } }
       { print }
-    ' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && replace_file "$BRAIN_FILE.tmp" "$BRAIN_FILE"
-    if [ -f "$LL_FILE" ]; then
-      awk -F'|' -v OFS='|' -v id="$LL_ID" '
-        /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id && $5 !~ /\[OBSOLETA\]/) { sub(/^[ \t]*/, " [OBSOLETA] ", $5) } }
-        { print }
-      ' "$LL_FILE" > "$LL_FILE.tmp" && replace_file "$LL_FILE.tmp" "$LL_FILE"
-    fi
+    ' "$LL_FILE" > "$LL_FILE.tmp" && replace_file "$LL_FILE.tmp" "$LL_FILE"
+    brain_sync
     say "${YELLOW}🗄  Lección retirada:${NC} $LL_ID marcada como OBSOLETA (ya no cuenta como antídoto vigente)."
+    ;;
+
+  brain)
+    SUB="${2:-}"
+    case "$SUB" in
+      sync)
+        require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+        brain_sync
+        say "${GREEN}🧠 BRAIN.md sincronizado${NC} desde .agents/brain/lessons_learned.md ($(all_lessons | wc -l | tr -d ' ') lecciones)."
+        ;;
+      scope)
+        [ -n "${3:-}" ] && [ -n "${4:-}" ] || die "Uso: ./task.sh brain scope LL-001 \"<globs separados por comas | *>\""
+        LL_ID=$(printf '%s' "$3" | tr '[:lower:]' '[:upper:]')
+        [[ "$LL_ID" =~ ^LL-[0-9]+$ ]] || die "ID de lección inválido: '$3' (formato LL-001)."
+        SCOPE=$(printf '%s' "$4" | tr -d ' `')
+        case "$SCOPE" in *$'\n'*|*'|'*|'') die "Ámbito inválido: usa globs separados por comas, sin '|' ni saltos de línea." ;; esac
+        require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+        ensure_lessons_schema
+        grep -qE "^\|[[:space:]]*\`?$LL_ID\`?[[:space:]]*\|" "$LL_FILE" || die "$LL_ID no existe en $LL_FILE."
+        SCOPE="$SCOPE" awk -F'|' -v OFS='|' -v id="$LL_ID" '
+          /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-2) = " `" ENVIRON["SCOPE"] "` " } }
+          { print }
+        ' "$LL_FILE" > "$LL_FILE.tmp" && replace_file "$LL_FILE.tmp" "$LL_FILE"
+        brain_sync
+        say "${GREEN}🧠 Ámbito actualizado:${NC} $LL_ID -> $SCOPE"
+        ;;
+      search)
+        shift 2
+        [ $# -gt 0 ] || die "Uso: ./task.sh brain search <términos...>"
+        OUT=$(brain_search "$@")
+        if [ -n "$OUT" ]; then
+          say "🧠 Coincidencias para: $*"
+          printf '%s\n' "$OUT"
+        else
+          say "🧠 Sin coincidencias para: $*"
+        fi
+        ;;
+      for)
+        require_state
+        [ -n "${3:-}" ] || die "Uso: ./task.sh brain for TASK-001 [ruta...]"
+        TASK_ID=$(normalize_id "$3")
+        require_task "$TASK_ID"
+        shift 3
+        PATHS=""
+        for pth in "$@"; do PATHS="${PATHS}${pth}"$'\n'; done
+        AGENT=$(task_field "$TASK_ID" 4)
+        REL=$(relevant_lessons "$(agent_category "$AGENT")" "$(task_field "$TASK_ID" 3) $(task_field "$TASK_ID" 7)" "$PATHS")
+        say "🧠 Cerebro para $TASK_ID ($AGENT):"
+        if [ -n "$REL" ]; then
+          printf '%s\n' "$REL" | awk -F'\t' '{ printf "  %s [%s] %s\n     ↳ %s\n     (motivo: %s)\n", $1, $2, $3, $5, $4 }'
+        else
+          say "  Sin lecciones específicas para esta tarea."
+        fi
+        DEBTS=$(pending_debts | awk -F'\t' -v t="$TASK_ID" '$2 == t || $4 == "ALTA" { printf "  %s (%s, %s) %s\n", $1, $2, $4, $3 }')
+        if [ -n "$DEBTS" ]; then
+          say "📋 Deuda técnica pendiente relacionada o de prioridad ALTA:"
+          printf '%s\n' "$DEBTS"
+        fi
+        ;;
+      *)
+        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\">"
+        ;;
+    esac
     ;;
 
   help|-h|--help|*)
@@ -791,10 +788,15 @@ EOF
   commit TASK-ID "<msg>" [tipo] [--trailer "Clave: valor"]...
                                          Commit con formato tipo(TASK-ID): msg (trailers de autoría
                                          también con MAESTRO_COMMIT_TRAILER)
-  learn "<problema>" [cat] ["<causa>"] ["<solución>"] [--force]
-                                         Lección en BRAIN.md (rechaza duplicados salvo --force)
+  learn "<problema>" [cat] ["<causa>"] ["<solución>"] [--paths "<globs>"] [--force]
+                                         Lección en lessons_learned.md (fuente única; rechaza
+                                         duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
-  debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
+brain search <términos...>             Busca en lecciones, gotchas y deuda
+  brain for TASK-ID [ruta...]            Lecciones y deuda relevantes para una tarea (y rutas)
+  brain scope LL-ID "<globs>"            Fija a qué rutas aplica una lección
+  brain sync                             Regenera la tabla de BRAIN.md desde lessons_learned.md
+    debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
   lesson-retire LL-ID                    Marca una lección como OBSOLETA
 =================================================================
 EOF

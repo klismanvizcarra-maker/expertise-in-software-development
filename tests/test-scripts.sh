@@ -194,7 +194,7 @@ new_project brain
 $T learn "Problema A" backend "Causa A" "Solucion A" >/dev/null
 $T learn "Problema B" database >/dev/null
 check "learn numera LL-001 y LL-002 sin duplicados" '[ "$(grep -c "LL-001" BRAIN.md)" = 1 ] && grep -q "LL-002" BRAIN.md && grep -q "LL-002" .agents/brain/lessons_learned.md'
-check "learn: 7 columnas en BRAIN.md y 6 en lessons_learned.md" '[ "$(grep "Problema A" BRAIN.md | awk -F"|" "{print NF-2}")" = 7 ] && [ "$(grep "Problema A" .agents/brain/lessons_learned.md | awk -F"|" "{print NF-2}")" = 6 ]'
+check "learn: 8 columnas (con Ámbito y Estado) e idénticas en BRAIN.md y lessons_learned.md" '[ "$(grep "Problema A" BRAIN.md | awk -F"|" "{print NF-2}")" = 8 ] && [ "$(grep "Problema A" BRAIN.md)" = "$(grep "Problema A" .agents/brain/lessons_learned.md)" ]'
 $T debt "Paginacion en memoria" TASK-001 "Paginar en SQL" baja >/dev/null
 check "debt registra TD-001 con prioridad normalizada" 'grep -q "TD-001.*\`BAJA\`" .agents/brain/tech_debt.md'
 check "debt con prioridad inválida falla" '! $T debt "x" TASK-001 "y" URGENTE >/dev/null 2>&1'
@@ -208,8 +208,8 @@ check "learn --force registra aunque exista una parecida" '$T learn "Fallo de pa
 check "learn acepta una lección distinta sin --force" '$T learn "Timeout en webhook de pagos" backend "c" "s" >/dev/null'
 LL_RET=$(grep "Timeout en webhook" BRAIN.md | grep -oE "LL-[0-9]+" | head -1)
 $T lesson-retire "$LL_RET" >/dev/null
-check "lesson-retire marca OBSOLETA en BRAIN.md y en lessons_learned.md" 'grep "$LL_RET" BRAIN.md | grep -q "OBSOLETA" && ! grep "$LL_RET" BRAIN.md | grep -q "ACTIVO" && grep "$LL_RET" .agents/brain/lessons_learned.md | grep -q "\[OBSOLETA\]"'
-check "lesson-retire conserva las 7 columnas de la fila" '[ "$(grep "$LL_RET" BRAIN.md | awk -F"|" "{print NF-2}")" = 7 ]'
+check "lesson-retire marca OBSOLETA en BRAIN.md y en lessons_learned.md" 'grep "$LL_RET" BRAIN.md | grep -q "OBSOLETA" && ! grep "$LL_RET" BRAIN.md | grep -q "ACTIVO" && grep "$LL_RET" .agents/brain/lessons_learned.md | grep -q "OBSOLETA"'
+check "lesson-retire conserva las 8 columnas de la fila" '[ "$(grep "$LL_RET" BRAIN.md | awk -F"|" "{print NF-2}")" = 8 ]'
 check "una lección OBSOLETA ya no bloquea registrar otra parecida" '$T learn "Timeout en webhook de pagos" backend "c" "s" >/dev/null'
 check "lesson-retire con ID inexistente falla" '! $T lesson-retire LL-999 >/dev/null 2>&1'
 printf '%s\n' "| \`TD-001\` | \`TASK-001\` | Paginacion en memoria | Workaround | Paginar en SQL | \`BAJA\` |" >> BRAIN.md
@@ -233,6 +233,64 @@ TEMPLATE_SUM=$(cksum < .agents/templates/BRAIN_TEMPLATE.md)
 mv BRAIN.md "$WORK/brain.bak"
 check "learn sin BRAIN.md falla sin tocar plantillas" '! $T learn "x" >/dev/null 2>&1 && [ "$(cksum < .agents/templates/BRAIN_TEMPLATE.md)" = "$TEMPLATE_SUM" ]'
 mv "$WORK/brain.bak" BRAIN.md
+
+# ------------------------------------------------------------------------------
+section "cerebro: fuente única, ámbito y recuperación dirigida (task.sh brain)"
+new_project cerebro
+$T learn "Consulta lenta en listado de pedidos" database "Falta indice en la FK" "Crear indice en cada FK" --paths "server/db/*.sql,migrations/*" >/dev/null
+$T learn "Token expirado devuelve 500" backend "No se captura el error de JWT" "Middleware que traduce a 401" >/dev/null
+check "learn --paths guarda el ámbito y sin --paths queda general (*)" 'grep "Consulta lenta" .agents/brain/lessons_learned.md | grep -qF "server/db/*.sql,migrations/*" && grep "Token expirado" .agents/brain/lessons_learned.md | grep -qF "| \`*\` | \`ACTIVO\` |"'
+check "la tabla de BRAIN.md es copia exacta de lessons_learned.md" '[ "$(grep "^| \`LL-" BRAIN.md)" = "$(grep "^| \`LL-" .agents/brain/lessons_learned.md)" ]'
+printf '%s\n' "| \`LL-050\` | 2026-01-01 | \`[QA]\` | Editada a mano en la fuente | causa | solucion | \`*\` | \`ACTIVO\` |" > "$WORK/fila.txt"
+awk -v f="$WORK/fila.txt" '{ print } /^\| `LL-002`/ { while ((getline l < f) > 0) print l }' .agents/brain/lessons_learned.md > "$WORK/ll.tmp" && cat "$WORK/ll.tmp" > .agents/brain/lessons_learned.md
+$T brain sync >/dev/null
+check "brain sync lleva a BRAIN.md una fila añadida a mano en la fuente" 'grep -q "LL-050" BRAIN.md && grep -q "## 3" BRAIN.md'
+check "brain sync es idempotente" 'cp BRAIN.md "$WORK/b1" && $T brain sync >/dev/null && cmp -s BRAIN.md "$WORK/b1"'
+check "tras una fila manual el siguiente ID no la pisa" '$T learn "Otra leccion cualquiera distinta" qa "c" "s" >/dev/null && grep -q "LL-051" BRAIN.md'
+$T brain scope LL-002 "server/auth/*.ts" >/dev/null
+check "brain scope cambia el ámbito en las dos tablas" 'grep "LL-002" BRAIN.md | grep -qF "server/auth/*.ts" && grep "LL-002" .agents/brain/lessons_learned.md | grep -qF "server/auth/*.ts"'
+check "brain scope con ID inexistente falla" '! $T brain scope LL-999 "x/*" >/dev/null 2>&1'
+check "brain search encuentra sin distinguir tildes ni mayúsculas" '$T brain search "ÍNDICE" pedidos | grep -q "LL-001"'
+check "brain search exige todos los términos" '! $T brain search indice inexistentexyz | grep -q "LL-001"'
+$T debt "Paginacion en memoria en pedidos" TASK-001 "Paginar en SQL" alta >/dev/null
+check "brain search incluye la deuda técnica" '$T brain search paginacion | grep -q "DEUDA.*TD-001"'
+$T add "Optimizar el listado de pedidos con consulta lenta" "frontend-agent" "El listado carga en menos de 1 s" >/dev/null
+BT=$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)
+check "brain for relaciona por palabras de la tarea" '$T brain for "$BT" | grep -q "LL-001.*Consulta lenta"'
+check "brain for no lista lecciones sin relación" '! $T brain for "$BT" | grep -q "LL-051"'
+check "brain for relaciona por ruta con el ámbito de la lección" '$T brain for "$BT" server/auth/login.ts | grep -A2 "LL-002" | grep -q "ámbito server/auth/\*.ts"'
+check "brain for acepta rutas absolutas" '$T brain for "$BT" "$PWD/migrations/0001_init.sql" | grep -A2 "LL-001" | grep -q "ámbito migrations/\*"'
+check "brain for muestra la deuda de prioridad ALTA" '$T brain for "$BT" | grep -q "TD-001"'
+$T add "Endpoint de salud" "backend-agent" "Responde 200" >/dev/null
+check "brain for relaciona por categoría del agente" '$T brain for "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" | grep -A2 "LL-002" | grep -q "categoría BACKEND"'
+$T lesson-retire LL-001 >/dev/null
+check "una lección OBSOLETA no aparece en brain for pero sí en brain search" '! $T brain for "$BT" | grep -q "LL-001" && $T brain search pedidos | grep -q "LL-001.*OBSOLETA"'
+START_OUT=$($T start "$BT" 2>&1)
+check "start muestra las lecciones relevantes con su motivo" 'printf "%s" "$START_OUT" | grep -q "brain for $BT"'
+git checkout -q main 2>/dev/null
+# Migración desde el esquema antiguo (BRAIN.md con 7 columnas, lessons_learned.md con 6)
+new_project cerebro-antiguo
+python3 - <<'PYEOF'
+import re
+b = open('BRAIN.md').read()
+b = b.replace('| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |\n| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |',
+              '| ID | Fecha | Categoría | Problema Detectado | Causa Raíz | Solución Definitiva (Antídoto) | Estado |\n| :---: | :---: | :---: | :--- | :--- | :--- | :---: |\n| `LL-001` | 2026-01-01 | `[BACKEND]` | Vieja activa | c | s | `ACTIVO` |\n| `LL-002` | 2026-01-02 | `[BACKEND]` | Vieja retirada | c | s | `OBSOLETA` |\n| `LL-003` | 2026-01-03 | `[QA]` | Solo en brain | c | s | `ACTIVO` |')
+open('BRAIN.md', 'w').write(b)
+l = open('.agents/brain/lessons_learned.md').read()
+l = l.replace('| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |\n| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |',
+              '| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) |\n| :---: | :---: | :---: | :--- | :--- | :--- |\n| `LL-001` | 2026-01-01 | `[BACKEND]` | Vieja activa | c | s |\n| `LL-002` | 2026-01-02 | `[BACKEND]` | [OBSOLETA] Vieja retirada | c | s |')
+open('.agents/brain/lessons_learned.md', 'w').write(l)
+PYEOF
+check "el proyecto de prueba parte del esquema antiguo" '[ "$(grep "Vieja activa" .agents/brain/lessons_learned.md | awk -F"|" "{print NF-2}")" = 6 ]'
+OLD_START=$($T brain search vieja 2>&1)
+check "con el esquema antiguo la lectura funciona sin migrar" 'printf "%s" "$OLD_START" | grep -q "LL-001" && [ "$(grep "Vieja activa" .agents/brain/lessons_learned.md | awk -F"|" "{print NF-2}")" = 6 ]'
+$T learn "Leccion nueva tras actualizar la libreria" backend "c" "s" >/dev/null
+check "learn migra el esquema antiguo conservando estados" 'grep "LL-001" .agents/brain/lessons_learned.md | grep -q "ACTIVO" && grep "LL-002" .agents/brain/lessons_learned.md | grep -q "OBSOLETA" && ! grep -q "\[OBSOLETA\]" .agents/brain/lessons_learned.md'
+check "la migración incorpora lecciones que solo estaban en BRAIN.md" 'grep -q "LL-003.*Solo en brain" .agents/brain/lessons_learned.md'
+check "tras migrar, todas las filas tienen 8 columnas y la nueva es LL-004" '[ -z "$(grep "^| \`LL-" .agents/brain/lessons_learned.md | awk -F"|" "NF-2 != 8")" ] && grep -q "LL-004.*Leccion nueva" BRAIN.md'
+check "tras migrar, BRAIN.md y la fuente coinciden y no se duplican filas" '[ "$(grep "^| \`LL-" BRAIN.md)" = "$(grep "^| \`LL-" .agents/brain/lessons_learned.md)" ] && [ "$(grep -c "LL-001" BRAIN.md)" = 1 ]'
+check "migrar dos veces no añade columnas" '$T brain sync >/dev/null && [ -z "$(grep "^| \`LL-" .agents/brain/lessons_learned.md | awk -F"|" "NF-2 != 8")" ]'
+cd "$WORK" || exit 1
 
 # ------------------------------------------------------------------------------
 section "robustez de task.sh (locale, permisos, escapes, sin python3)"
