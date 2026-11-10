@@ -46,8 +46,8 @@ TODAY=$(date +"%Y-%m-%d")
 
 # Colores ANSI (desactivados si la salida no es una terminal)
 if [ -t 1 ]; then
-  GREEN="\033[0;32m"; BLUE="\033[0;34m"; YELLOW="\033[1;33m"; RED="\033[0;31m"
-  CYAN="\033[0;36m"; BOLD="\033[1m"; NC="\033[0m"
+  GREEN=$'\033[0;32m'; BLUE=$'\033[0;34m'; YELLOW=$'\033[1;33m'; RED=$'\033[0;31m'
+  CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; NC=$'\033[0m'
 else
   GREEN=""; BLUE=""; YELLOW=""; RED=""; CYAN=""; BOLD=""; NC=""
 fi
@@ -56,8 +56,17 @@ fi
 # Utilidades
 # ------------------------------------------------------------------------------
 
-say()  { printf "%b\n" "$*"; }
-die()  { printf "%b\n" "${RED}❌ Error: $*${NC}" >&2; exit 1; }
+# Los mensajes se imprimen literalmente (%s): el texto del usuario nunca se interpreta como
+# secuencias de escape. Los colores llevan el carácter ESC real.
+say()  { printf '%s\n' "$*"; }
+die()  { printf '%s\n' "${RED}❌ Error: $*${NC}" >&2; exit 1; }
+
+# Sustituye FILE por el contenido de TMP conservando permisos e inodo del original
+# (mv dejaría el archivo con los permisos 0600 de mktemp)
+replace_file() {
+  local tmp="$1" file="$2"
+  cat "$tmp" > "$file" && rm -f "$tmp"
+}
 
 LOCK_DIR="$PROJECT_ROOT/.agents/.task_lock"
 LOCK_ACQUIRED=0
@@ -97,7 +106,7 @@ acquire_lock() {
 }
 
 require_file() {
-  [ -f "$1" ] || die "No existe $1.\n   $2"
+  [ -f "$1" ] || die "No existe $1."$'\n'"   $2"
 }
 
 require_state() {
@@ -157,7 +166,13 @@ norm_text() {
 for line in sys.stdin:
     sys.stdout.write("".join(c for c in unicodedata.normalize("NFKD", line) if not unicodedata.combining(c)).lower())'
   else
-    sed 'y/áàäâãéèëêíìïîóòöôõúùüûñçÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÑÇ/aaaaaeeeeiiiiooooouuuuncaaaaaeeeeiiiiooooouuuunc/' 2>/dev/null \
+    # Sin python3: sustituciones byte a byte, válidas en cualquier locale (y/// falla en locale C)
+    sed -e 's/á/a/g;s/à/a/g;s/ä/a/g;s/â/a/g;s/ã/a/g;s/Á/a/g;s/À/a/g;s/Ä/a/g;s/Â/a/g;s/Ã/a/g' \
+        -e 's/é/e/g;s/è/e/g;s/ë/e/g;s/ê/e/g;s/É/e/g;s/È/e/g;s/Ë/e/g;s/Ê/e/g' \
+        -e 's/í/i/g;s/ì/i/g;s/ï/i/g;s/î/i/g;s/Í/i/g;s/Ì/i/g;s/Ï/i/g;s/Î/i/g' \
+        -e 's/ó/o/g;s/ò/o/g;s/ö/o/g;s/ô/o/g;s/õ/o/g;s/Ó/o/g;s/Ò/o/g;s/Ö/o/g;s/Ô/o/g;s/Õ/o/g' \
+        -e 's/ú/u/g;s/ù/u/g;s/ü/u/g;s/û/u/g;s/Ú/u/g;s/Ù/u/g;s/Ü/u/g;s/Û/u/g' \
+        -e 's/ñ/n/g;s/Ñ/n/g;s/ç/c/g;s/Ç/c/g' \
       | tr '[:upper:]' '[:lower:]'
   fi
 }
@@ -256,7 +271,7 @@ set_task() {
     }
     { print }
   ' "$STATE_FILE" > "$tmp"
-  mv "$tmp" "$STATE_FILE"
+  replace_file "$tmp" "$STATE_FILE"
 }
 
 # Añade ROW al final de la tabla cuyo encabezado coincide con HDR (regex awk)
@@ -276,7 +291,7 @@ append_to_table() {
     rm -f "$tmp"
     die "No se encontró la tabla esperada en $file."
   fi
-  mv "$tmp" "$file"
+  replace_file "$tmp" "$file"
 }
 
 log_history() {
@@ -313,7 +328,7 @@ case "$COMMAND" in
     AGENT="${3:-orchestrator-agent}"
     CRITERIA="${4:-}"
     if [ -z "$DESC" ] || [ -z "$CRITERIA" ]; then
-      die "Faltan parámetros.\n   Uso: ./task.sh add \"<descripción>\" \"<agente>\" \"<criterios de aceptación>\""
+      die "Faltan parámetros."$'\n'"   Uso: ./task.sh add \"<descripción>\" \"<agente>\" \"<criterios de aceptación>\""
     fi
     if [ ! -d "$PROJECT_ROOT/.agents/skills/$AGENT" ]; then
       say "${YELLOW}⚠️  '$AGENT' no coincide con ninguna skill de .agents/skills/ (se registra igualmente).${NC}"
@@ -350,16 +365,8 @@ case "$COMMAND" in
         bug[:\ ]*|fix[:\ ]*|hotfix[:\ ]*) PREFIX="fix";      DESC="${DESC#*[: ]}" ;;
         refactor[:\ ]*)                   PREFIX="refactor"; DESC="${DESC#*[: ]}" ;;
       esac
-      if command -v python3 >/dev/null 2>&1; then
-        SLUG=$(python3 -c 'import unicodedata, sys; s = "".join(c for c in unicodedata.normalize("NFKD", sys.argv[1]) if not unicodedata.combining(c)); print(s)' "$DESC" 2>/dev/null \
-          | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c 1-30 | sed 's/-$//')
-      else
-        SLUG=$(printf '%s' "$DESC" \
-          | sed 'y/áàäâãéèëêíìïîóòöôõúùüûñçÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÑÇ/aaaaaeeeeiiiiooooouuuuncaaaaaeeeeiiiiooooouuuunc/' 2>/dev/null \
-          | tr '[:upper:]' '[:lower:]' \
-          | iconv -c -f utf-8 -t ascii 2>/dev/null \
-          | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c 1-30 | sed 's/-$//')
-      fi
+      SLUG=$(printf '%s\n' "$DESC" | norm_text \
+        | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c 1-30 | sed 's/-$//')
       BRANCH="$PREFIX/$TASK_ID-${SLUG:-tarea}"
       if git -C "$PROJECT_ROOT" show-ref --verify --quiet "refs/heads/$BRANCH"; then
         git -C "$PROJECT_ROOT" checkout "$BRANCH" >/dev/null 2>&1 \
@@ -581,7 +588,7 @@ EOF
     REVIEW_FILE="$PROJECT_ROOT/.agents/reviews/qa_$TASK_ID.md"
     [ -f "$REVIEW_FILE" ] || die "Falta el archivo de veredicto .agents/reviews/qa_$TASK_ID.md. Ejecuta /qa-review antes de cerrar la tarea."
 
-    REVIEWER=$(grep -Ei '^\s*[-*]?[[:space:]]*\*{0,2}Revisor\*{0,2}:' "$REVIEW_FILE" 2>/dev/null | head -n1 | sed -E 's/.*:[[:space:]]*`?([a-zA-Z0-9_-]+)`?.*/\1/' | tr -d '[:space:]')
+    REVIEWER=$(grep -Ei '^[[:space:]]*[-*]?[[:space:]]*\*{0,2}Revisor\*{0,2}:' "$REVIEW_FILE" 2>/dev/null | head -n1 | sed -E 's/.*:[[:space:]]*`?([a-zA-Z0-9_-]+)`?.*/\1/' | tr -d '[:space:]')
     [ -n "$REVIEWER" ] || die "No se encontró el campo 'Revisor' en $REVIEW_FILE."
 
     ASSIGNED=$(task_field "$TASK_ID" 4)
@@ -734,15 +741,15 @@ EOF
     grep -qE "^\|[[:space:]]*\`?$TD_ID\`?[[:space:]]*\|" "$DEBT_FILE" || die "$TD_ID no existe en $DEBT_FILE."
     # tech_debt.md conserva la fila marcada SALDADA (así el ID no se reutiliza y queda la traza);
     # del resumen de BRAIN.md se elimina
-    if grep -E "^\|[[:space:]]*\`?$TD_ID\`?[[:space:]]*\|" "$DEBT_FILE" | grep -q 'SALDADA'; then
+    if awk -F'|' -v id="$TD_ID" '/^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { p = $(NF-1); gsub(/[ \t`]/, "", p); if (p == "SALDADA") f = 1 } } END { exit !f }' "$DEBT_FILE"; then
       die "$TD_ID ya estaba marcada como SALDADA."
     fi
     awk -F'|' -v OFS='|' -v id="$TD_ID" '
       /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-1) = " `SALDADA` " } }
       { print }
-    ' "$DEBT_FILE" > "$DEBT_FILE.tmp" && mv "$DEBT_FILE.tmp" "$DEBT_FILE"
+    ' "$DEBT_FILE" > "$DEBT_FILE.tmp" && replace_file "$DEBT_FILE.tmp" "$DEBT_FILE"
     if [ -f "$BRAIN_FILE" ]; then
-      awk -F'|' -v id="$TD_ID" '{ c = $2; gsub(/[ \t`]/, "", c); if (/^\|/ && c == id) next; print }' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && mv "$BRAIN_FILE.tmp" "$BRAIN_FILE"
+      awk -F'|' -v id="$TD_ID" '{ c = $2; gsub(/[ \t`]/, "", c); if (/^\|/ && c == id) next; print }' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && replace_file "$BRAIN_FILE.tmp" "$BRAIN_FILE"
     fi
     say "${GREEN}✅ Deuda técnica saldada:${NC} $TD_ID marcada SALDADA en tech_debt.md y retirada de BRAIN.md."
     ;;
@@ -757,12 +764,12 @@ EOF
     awk -F'|' -v OFS='|' -v id="$LL_ID" '
       /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-1) = " `OBSOLETA` " } }
       { print }
-    ' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && mv "$BRAIN_FILE.tmp" "$BRAIN_FILE"
+    ' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && replace_file "$BRAIN_FILE.tmp" "$BRAIN_FILE"
     if [ -f "$LL_FILE" ]; then
       awk -F'|' -v OFS='|' -v id="$LL_ID" '
         /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id && $5 !~ /\[OBSOLETA\]/) { sub(/^[ \t]*/, " [OBSOLETA] ", $5) } }
         { print }
-      ' "$LL_FILE" > "$LL_FILE.tmp" && mv "$LL_FILE.tmp" "$LL_FILE"
+      ' "$LL_FILE" > "$LL_FILE.tmp" && replace_file "$LL_FILE.tmp" "$LL_FILE"
     fi
     say "${YELLOW}🗄  Lección retirada:${NC} $LL_ID marcada como OBSOLETA (ya no cuenta como antídoto vigente)."
     ;;
