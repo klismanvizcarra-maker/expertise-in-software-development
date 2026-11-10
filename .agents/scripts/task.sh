@@ -449,6 +449,9 @@ EOF
 
     say "${GREEN}📦 Handoff generado:${NC} ${HANDOFF_FILE#$PROJECT_ROOT/}"
     say "   $TASK_ID -> ${BOLD}IN_REVIEW_QA${NC} (iteración $ITERATION/$MAX_ITERATIONS), revisa: ${CYAN}$TARGET_AGENT${NC}"
+    if [ "$TARGET_AGENT" = "$SOURCE_AGENT" ]; then
+      say "${YELLOW}⚠️  El destino del handoff ($TARGET_AGENT) es el mismo agente asignado a la tarea: el segundo argumento es quien REVISA, no quien entrega. 'task.sh close' exigirá un revisor distinto.${NC}"
+    fi
     ;;
 
   reject)
@@ -536,10 +539,26 @@ EOF
     ;;
 
   commit)
-    [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh commit TASK-001 \"descripción\" [feat|fix|test|refactor|docs|perf|chore|style|build|ci]"
+    [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh commit TASK-001 \"descripción\" [feat|fix|test|refactor|docs|perf|chore|style|build|ci] [--trailer \"Clave: valor\"]..."
     TASK_ID=$(normalize_id "$2")
     MSG="$3"
-    TYPE="${4:-feat}"
+    shift 3
+    TYPE="feat"
+    TRAILERS=()
+    # Trailers de autoría (ej. Co-Authored-By): --trailer "<línea>" repetible, o MAESTRO_COMMIT_TRAILER
+    [ -n "${MAESTRO_COMMIT_TRAILER:-}" ] && TRAILERS+=("$MAESTRO_COMMIT_TRAILER")
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --trailer)
+          [ -n "${2:-}" ] || die "--trailer requiere una línea (ej. \"Co-Authored-By: Nombre <correo>\")."
+          TRAILERS+=("$2"); shift 2 ;;
+        --trailer=*) TRAILERS+=("${1#--trailer=}"); shift ;;
+        *) TYPE="$1"; shift ;;
+      esac
+    done
+    for t in ${TRAILERS[@]+"${TRAILERS[@]}"}; do
+      [[ "$t" =~ ^[A-Za-z][A-Za-z0-9-]*:\ .+ ]] || die "Trailer inválido: '$t' (formato 'Clave: valor')."
+    done
     [[ "$TYPE" =~ ^(feat|fix|test|docs|refactor|perf|chore|style|build|ci)$ ]] || die "Tipo de commit inválido: '$TYPE'."
     in_git || die "No se detectó un repositorio Git en $PROJECT_ROOT."
     if [ -f "$STATE_FILE" ] && [ -z "$(task_field "$TASK_ID" 2)" ]; then
@@ -559,7 +578,12 @@ EOF
 
     FULL_MSG="${TYPE}(${TASK_ID}): ${MSG}"
     say "${CYAN}-> Commit:${NC} $FULL_MSG"
-    git -C "$PROJECT_ROOT" commit -m "$FULL_MSG"
+    if [ ${#TRAILERS[@]} -gt 0 ]; then
+      TRAILER_BLOCK=$(printf '%s\n' "${TRAILERS[@]}")
+      git -C "$PROJECT_ROOT" commit -m "$FULL_MSG" -m "$TRAILER_BLOCK"
+    else
+      git -C "$PROJECT_ROOT" commit -m "$FULL_MSG"
+    fi
     ;;
 
   learn)
@@ -604,11 +628,14 @@ EOF
   metrics                                Progreso y salud de QA
   add "<desc>" "<agente>" "<criterios>"  Crear tarea (TODO)
   start TASK-ID                          TODO/rechazada -> IN_PROGRESS + rama Git
-  handoff TASK-ID [agente] [--verify "cmd"]...   IN_PROGRESS -> IN_REVIEW_QA + JSON + historial
+  handoff TASK-ID [revisor] [--verify "cmd"]...  IN_PROGRESS -> IN_REVIEW_QA + JSON + historial
+                                         (revisor: quien recibe la entrega; por defecto qa-security-agent)
   reject TASK-ID "<motivo>"              QA rechaza (+1); a 3/3 -> BLOCKED
   close TASK-ID                          QA aprueba: IN_REVIEW_QA -> DONE
   move TASK-ID <TODO|BACKLOG>            Replanificar o desbloquear (BLOCKED también -> IN_PROGRESS)
-  commit TASK-ID "<msg>" [tipo]          Commit con formato tipo(TASK-ID): msg
+  commit TASK-ID "<msg>" [tipo] [--trailer "Clave: valor"]...
+                                         Commit con formato tipo(TASK-ID): msg (trailers de autoría
+                                         también con MAESTRO_COMMIT_TRAILER)
   learn "<problema>" [cat] ["<causa>"] ["<solución>"]   Lección en BRAIN.md
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
 =================================================================

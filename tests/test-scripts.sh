@@ -240,6 +240,15 @@ echo "y" >> ok.js; echo "nuevo" > nuevo.txt
 $T commit TASK-001 "actualizar ok" fix >/dev/null 2>&1
 check "task.sh commit incluye cambios versionados" '[ "$(git log -1 --pretty=%s)" = "fix(TASK-001): actualizar ok" ]'
 check "task.sh commit no añade archivos nuevos a ciegas" '[ -n "$(git ls-files --others --exclude-standard | grep nuevo.txt)" ]'
+echo "z" >> ok.js
+$T commit TASK-001 "con autoria" fix --trailer "Co-Authored-By: Bot <bot@example.com>" >/dev/null 2>&1
+check "task.sh commit --trailer añade la línea de autoría al cuerpo" '[ "$(git log -1 --pretty=%s)" = "fix(TASK-001): con autoria" ] && git log -1 --pretty=%b | grep -qx "Co-Authored-By: Bot <bot@example.com>"'
+echo "w" >> ok.js
+MAESTRO_COMMIT_TRAILER="Co-Authored-By: Env <env@example.com>" $T commit TASK-001 "con autoria por entorno" >/dev/null 2>&1
+check "MAESTRO_COMMIT_TRAILER añade el trailer y el tipo por defecto es feat" '[ "$(git log -1 --pretty=%s)" = "feat(TASK-001): con autoria por entorno" ] && git log -1 --pretty=%b | grep -q "Env <env@example.com>"'
+echo "v" >> ok.js
+check "task.sh commit rechaza un trailer sin formato Clave: valor" '! $T commit TASK-001 "malo" fix --trailer "sin formato" >/dev/null 2>&1'
+git checkout -q ok.js 2>/dev/null; git reset -q 2>/dev/null
 
 # ------------------------------------------------------------------------------
 section "scan-secrets.sh --all (modo CI)"

@@ -70,7 +70,8 @@ mkdir -p src && echo "export const health = () => 200;" > src/health.ts
 git add -A >/dev/null
 $T commit $ID "anadir endpoint de salud" feat >/dev/null 2>&1
 check "commit convencional con $ID" 'git log -1 --format=%s | grep -q "^feat($ID): "'
-$T handoff $ID backend-agent --verify "echo ok" >/dev/null 2>&1
+HANDOFF_OUT=$($T handoff $ID backend-agent --verify "echo ok" 2>&1)
+check "handoff avisa si el destino es el propio agente asignado" 'printf "%s" "$HANDOFF_OUT" | grep -q "quien REVISA"'
 check "handoff pasa a IN_REVIEW_QA" '[ "$(state $ID)" = "IN_REVIEW_QA" ]'
 check "handoff genera el JSON con los comandos de verificación" 'grep -q "echo ok" .agents/handoffs/handoff_$ID.json'
 $T close $ID >/dev/null 2>&1
