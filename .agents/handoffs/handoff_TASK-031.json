@@ -1,0 +1,22 @@
+{
+  "task_id": "TASK-031",
+  "summary": "Sanear el contenido del cerebro de la libreria",
+  "source_agent": "orchestrator-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-10T09:44:13Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/domain_glossary.md" },
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/brain/preferences.md" },
+    { "type": "file", "path": ".agents/brain/system_map.md" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "bash tests/test-skills.sh",
+    "git status --short .agents/templates",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
