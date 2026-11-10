@@ -134,6 +134,77 @@ next_id() {
   printf "%s-%03d" "$prefix" $((10#${max:-0} + 1))
 }
 
+# Filas de lecciones ACTIVAS de BRAIN.md como "LL-NNN<TAB>CATEGORIA<TAB>problema"
+active_lessons() {
+  [ -f "$BRAIN_FILE" ] || return 0
+  awk -F'|' '
+    /^\|/ {
+      id = $2; gsub(/[ \t`]/, "", id)
+      if (id !~ /^LL-[0-9]+$/) next
+      st = $(NF-1); gsub(/[ \t`]/, "", st)
+      if (st != "ACTIVO") next
+      cat = $4; gsub(/[ \t`\[\]]/, "", cat)
+      p = $5; gsub(/^[ \t]+|[ \t]+$/, "", p)
+      print id "\t" cat "\t" p
+    }
+  ' "$BRAIN_FILE"
+}
+
+# Minúsculas y sin tildes, línea a línea (tolower de awk BSD no baja Á/Ó en locale C)
+norm_text() {
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHONIOENCODING=utf-8 python3 -c 'import sys, unicodedata
+for line in sys.stdin:
+    sys.stdout.write("".join(c for c in unicodedata.normalize("NFKD", line) if not unicodedata.combining(c)).lower())'
+  else
+    sed 'y/áàäâãéèëêíìïîóòöôõúùüûñçÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÑÇ/aaaaaeeeeiiiiooooouuuuncaaaaaeeeeiiiiooooouuuunc/' 2>/dev/null \
+      | tr '[:upper:]' '[:lower:]'
+  fi
+}
+
+# Devuelve "LL-NNN (problema)" si ya hay una lección activa equivalente; vacío si no.
+# Equivalente = mismo texto normalizado (sin tildes, mayúsculas ni puntuación), o bien
+# >= 60% de las palabras significativas (4+ letras) en común cuando la nueva tiene 3 o más
+similar_lesson() {
+  local new_norm
+  new_norm=$(printf '%s\n' "$1" | norm_text)
+  active_lessons | norm_text | awk -F'\t' -v new="$new_norm" '
+    function clean(str) { gsub(/[^a-z0-9]+/, " ", str); gsub(/^ +| +$/, "", str); return str }
+    function words(str, arr,    n, i, w, parts, c) {
+      n = split(str, parts, " "); c = 0
+      for (i = 1; i <= n; i++) { w = parts[i]; if (length(w) >= 4 && !(w in arr)) { arr[w] = 1; c++ } }
+      return c
+    }
+    BEGIN { new = clean(new); total = words(new, nw) }
+    {
+      old = clean($3)
+      if (old == new) { print toupper($1) " (" $3 ")"; exit }
+      if (total < 3) next
+      for (w in ow) delete ow[w]
+      words(old, ow); common = 0
+      for (w in nw) if (w in ow) common++
+      if (common / total >= 0.6) { print toupper($1) " (" $3 ")"; exit }
+    }
+  '
+}
+
+# Categoría de lecciones que corresponde al agente asignado a una tarea
+agent_category() {
+  case "$1" in
+    backend-agent)            echo BACKEND ;;
+    frontend-agent)           echo FRONTEND ;;
+    database-architect-agent) echo DATABASE ;;
+    qa-security-agent)        echo SECURITY ;;
+    devops-cloud-agent)       echo DEVOPS ;;
+    mobile-agent)             echo MOBILE ;;
+    ai-integrator-agent)      echo AI ;;
+    ui-ux-agent)              echo UI/UX ;;
+    domain-logic-agent)       echo DOMAIN ;;
+    docs-architecture-agent)  echo DOCS ;;
+    *)                        echo "" ;;
+  esac
+}
+
 # Imprime las filas del tablero de tareas (columna 1 = TASK-NNN)
 board_rows() {
   awk -F'|' '
@@ -223,7 +294,7 @@ in_git() {
 # ------------------------------------------------------------------------------
 
 case "$COMMAND" in
-  add|start|move|handoff|reject|close|learn|debt)
+  add|start|move|handoff|reject|close|learn|debt|debt-resolve|lesson-retire)
     acquire_lock
     ;;
 esac
@@ -298,6 +369,27 @@ case "$COMMAND" in
           || say "${YELLOW}⚠️  No se pudo crear la rama $BRANCH. Créala manualmente.${NC}"
       fi
       say "   Rama activa: ${CYAN}$(git -C "$PROJECT_ROOT" branch --show-current)${NC}"
+    fi
+
+    # Recordatorio del cerebro (AGENTS.md §7.1): primero todas las lecciones de la categoría del
+    # agente asignado; después las más recientes del resto, hasta completar 5 líneas
+    LESSONS=$(active_lessons)
+    if [ -n "$LESSONS" ]; then
+      CAT=$(agent_category "$(task_field "$TASK_ID" 4)")
+      say "🧠 Lecciones activas en BRAIN.md ($(printf '%s\n' "$LESSONS" | wc -l | tr -d ' ')); revísalas antes de empezar:"
+      printf '%s\n' "$LESSONS" | awk -F'\t' -v cat="$CAT" '
+        { id[NR] = $1; c[NR] = $2; p[NR] = $3 }
+        END {
+          shown = 0
+          for (i = 1; i <= NR; i++) if (cat != "" && c[i] == cat) { printf "     %s  [%s] %s\n", id[i], c[i], substr(p[i], 1, 90); shown++ }
+          rest = 5 - shown; if (rest < 0) rest = 0
+          others = 0; for (i = 1; i <= NR; i++) if (cat == "" || c[i] != cat) others++
+          skip = others - rest; seen = 0
+          for (i = 1; i <= NR; i++) if (cat == "" || c[i] != cat) { seen++; if (seen > skip) printf "     %s  [%s] %s\n", id[i], c[i], substr(p[i], 1, 90) }
+        }
+      '
+    elif [ -f "$BRAIN_FILE" ]; then
+      say "🧠 Revisa BRAIN.md (gotchas y preferencias) antes de empezar."
     fi
     ;;
 
@@ -557,6 +649,7 @@ EOF
       esac
     done
     for t in ${TRAILERS[@]+"${TRAILERS[@]}"}; do
+      case "$t" in *$'\n'*|*$'\r'*) die "Trailer inválido: debe ser una sola línea (formato 'Clave: valor')." ;; esac
       [[ "$t" =~ ^[A-Za-z][A-Za-z0-9-]*:\ .+ ]] || die "Trailer inválido: '$t' (formato 'Clave: valor')."
     done
     [[ "$TYPE" =~ ^(feat|fix|test|docs|refactor|perf|chore|style|build|ci)$ ]] || die "Tipo de commit inválido: '$TYPE'."
@@ -587,13 +680,27 @@ EOF
     ;;
 
   learn)
-    DESC="$2"
-    CAT="${3:-general}"
-    CAUSE="${4:-Por documentar}"
-    FIX="${5:-Por documentar}"
+    shift
+    FORCE=0
+    LEARN_ARGS=()
+    for a in "$@"; do
+      if [ "$a" = "--force" ]; then FORCE=1; else LEARN_ARGS+=("$a"); fi
+    done
+    DESC="${LEARN_ARGS[0]:-}"
+    CAT="${LEARN_ARGS[1]:-general}"
+    CAUSE="${LEARN_ARGS[2]:-Por documentar}"
+    FIX="${LEARN_ARGS[3]:-Por documentar}"
     [ -n "$DESC" ] || die "Uso: ./task.sh learn \"<problema>\" [categoría] [\"<causa raíz>\"] [\"<solución>\"]"
     require_file "$BRAIN_FILE" "Créalo desde .agents/templates/BRAIN_TEMPLATE.md."
     CAT_UPPER=$(printf '%s' "$CAT" | tr '[:lower:]' '[:upper:]')
+
+    # Control de duplicados: lección ACTIVA cuyo problema comparte la mayoría de palabras significativas
+    if [ "$FORCE" -eq 0 ]; then
+      SIMILAR=$(similar_lesson "$DESC")
+      if [ -n "$SIMILAR" ]; then
+        die "Ya existe una lección parecida: $SIMILAR. Actualiza su antídoto en BRAIN.md, retírala con 'task.sh lesson-retire' o repite el comando con --force."
+      fi
+    fi
 
     NEXT_ID=$(next_id LL "$BRAIN_FILE" "$LL_FILE")
     BASE_ROW="| \`$NEXT_ID\` | $TODAY | \`[$(cell "$CAT_UPPER")]\` | $(cell "$DESC") | $(cell "$CAUSE") | $(cell "$FIX") |"
@@ -619,6 +726,47 @@ EOF
     say "${YELLOW}📋 Deuda técnica registrada:${NC} $NEXT_ID -> $DESC (vinculada a $TASK_ID)"
     ;;
 
+  debt-resolve)
+    [ -n "${2:-}" ] || die "Uso: ./task.sh debt-resolve TD-001"
+    TD_ID=$(printf '%s' "$2" | tr '[:lower:]' '[:upper:]')
+    [[ "$TD_ID" =~ ^TD-[0-9]+$ ]] || die "ID de deuda inválido: '$2' (formato TD-001)."
+    require_file "$DEBT_FILE" "Créalo desde .agents/templates/tech_debt_template.md."
+    grep -qE "^\|[[:space:]]*\`?$TD_ID\`?[[:space:]]*\|" "$DEBT_FILE" || die "$TD_ID no existe en $DEBT_FILE."
+    # tech_debt.md conserva la fila marcada SALDADA (así el ID no se reutiliza y queda la traza);
+    # del resumen de BRAIN.md se elimina
+    if grep -E "^\|[[:space:]]*\`?$TD_ID\`?[[:space:]]*\|" "$DEBT_FILE" | grep -q 'SALDADA'; then
+      die "$TD_ID ya estaba marcada como SALDADA."
+    fi
+    awk -F'|' -v OFS='|' -v id="$TD_ID" '
+      /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-1) = " `SALDADA` " } }
+      { print }
+    ' "$DEBT_FILE" > "$DEBT_FILE.tmp" && mv "$DEBT_FILE.tmp" "$DEBT_FILE"
+    if [ -f "$BRAIN_FILE" ]; then
+      awk -F'|' -v id="$TD_ID" '{ c = $2; gsub(/[ \t`]/, "", c); if (/^\|/ && c == id) next; print }' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && mv "$BRAIN_FILE.tmp" "$BRAIN_FILE"
+    fi
+    say "${GREEN}✅ Deuda técnica saldada:${NC} $TD_ID marcada SALDADA en tech_debt.md y retirada de BRAIN.md."
+    ;;
+
+  lesson-retire)
+    [ -n "${2:-}" ] || die "Uso: ./task.sh lesson-retire LL-001"
+    LL_ID=$(printf '%s' "$2" | tr '[:lower:]' '[:upper:]')
+    [[ "$LL_ID" =~ ^LL-[0-9]+$ ]] || die "ID de lección inválido: '$2' (formato LL-001)."
+    require_file "$BRAIN_FILE" "Créalo desde .agents/templates/BRAIN_TEMPLATE.md."
+    grep -qE "^\|[[:space:]]*\`?$LL_ID\`?[[:space:]]*\|" "$BRAIN_FILE" || die "$LL_ID no existe en $BRAIN_FILE."
+    # BRAIN.md: la columna Estado pasa a OBSOLETA; lessons_learned.md (sin esa columna): se marca el problema
+    awk -F'|' -v OFS='|' -v id="$LL_ID" '
+      /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-1) = " `OBSOLETA` " } }
+      { print }
+    ' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && mv "$BRAIN_FILE.tmp" "$BRAIN_FILE"
+    if [ -f "$LL_FILE" ]; then
+      awk -F'|' -v OFS='|' -v id="$LL_ID" '
+        /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id && $5 !~ /\[OBSOLETA\]/) { sub(/^[ \t]*/, " [OBSOLETA] ", $5) } }
+        { print }
+      ' "$LL_FILE" > "$LL_FILE.tmp" && mv "$LL_FILE.tmp" "$LL_FILE"
+    fi
+    say "${YELLOW}🗄  Lección retirada:${NC} $LL_ID marcada como OBSOLETA (ya no cuenta como antídoto vigente)."
+    ;;
+
   help|-h|--help|*)
     cat <<'EOF'
 =================================================================
@@ -636,8 +784,11 @@ EOF
   commit TASK-ID "<msg>" [tipo] [--trailer "Clave: valor"]...
                                          Commit con formato tipo(TASK-ID): msg (trailers de autoría
                                          también con MAESTRO_COMMIT_TRAILER)
-  learn "<problema>" [cat] ["<causa>"] ["<solución>"]   Lección en BRAIN.md
+  learn "<problema>" [cat] ["<causa>"] ["<solución>"] [--force]
+                                         Lección en BRAIN.md (rechaza duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
+  debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
+  lesson-retire LL-ID                    Marca una lección como OBSOLETA
 =================================================================
 EOF
     ;;
