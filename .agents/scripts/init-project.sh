@@ -5,13 +5,13 @@
 # (.claude/skills + CLAUDE.md + .mcp.json) desde una única fuente.
 # ==============================================================================
 # Uso:
-#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular] [--ci]
+#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular|fastapi] [--ci]
 #   O simplemente: ./init-project.sh "Mi Proyecto"
 #
 #   --copy               Copia las skills en .claude/skills en vez de crear un enlace
 #                        simbólico (útil en Windows o si el repositorio no admite symlinks).
 #   --stack <nombre>     Pre-configura el stack tecnológico en GLOBAL_STATE.md sin
-#                        placeholders (opciones: nextjs | angular).
+#                        placeholders (opciones: nextjs | angular | fastapi).
 #   --ci                 Instala el pipeline de GitHub Actions (.github/workflows/audit.yml)
 #                        a partir de ci_workflow_template.yml sin sobrescribir si ya existe.
 #   --update, -u         Sincroniza scripts, plantillas, hooks y skills existentes sin tocar
@@ -59,10 +59,10 @@ done
 
 if [ -n "$SELECTED_STACK" ]; then
   case "$SELECTED_STACK" in
-    nextjs|angular) ;;
+    nextjs|angular|fastapi) ;;
     *)
       echo "❌ ERROR: Stack desconocido: '$SELECTED_STACK'." >&2
-      echo "   Valores permitidos: nextjs, angular." >&2
+      echo "   Valores permitidos: nextjs, angular, fastapi." >&2
       exit 1
       ;;
   esac
@@ -263,9 +263,9 @@ with open(dst, 'w', encoding='utf-8') as f:
       -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Next.js Server Actions y Route Handlers con validación Zod\`|g" \
       -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL con Prisma ORM (migraciones versionadas)\`|g" \
       -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Sesiones seguras con cookies HttpOnly / Auth.js\`|g" \
-      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura & Despliegue**: \`Docker multi-etapa / Vercel / Render\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura \& Despliegue**: \`Docker multi-etapa / Vercel / Render\`|g" \
       -e "s|Elección del stack base|Elección del stack React 19 + Next.js 15 + Prisma (stack-nextjs-tailwind-prisma)|g" \
-      -e "s|\[Breve descripción.*|Aplicación web construida con React 19, Next.js 15 App Router, Tailwind CSS y Prisma ORM.|g" \
+      -e "s|\[Breve descripción[^]]*\]|Aplicación web construida con React 19, Next.js 15 App Router, Tailwind CSS y Prisma ORM.|g" \
       "$TARGET_DIR/GLOBAL_STATE.md"
     rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
     echo "   (Stack Next.js configurado en GLOBAL_STATE.md)"
@@ -275,12 +275,24 @@ with open(dst, 'w', encoding='utf-8') as f:
       -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Node 24 LTS con Express 5 y validación Zod\`|g" \
       -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL 18 con Drizzle ORM\`|g" \
       -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Tokens JWT propios con rotación de refresh\`|g" \
-      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura & Despliegue**: \`Docker multi-etapa / Nginx SSR / VPS\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura \& Despliegue**: \`Docker multi-etapa / Nginx SSR / VPS\`|g" \
       -e "s|Elección del stack base|Elección del stack Angular 22 + Express 5 + PostgreSQL (stack-angular-express-postgres)|g" \
-      -e "s|\[Breve descripción.*|Aplicación web en monorepo npm con Angular 22, Express 5 y PostgreSQL 18 con Drizzle.|g" \
+      -e "s|\[Breve descripción[^]]*\]|Aplicación web en monorepo npm con Angular 22, Express 5 y PostgreSQL 18 con Drizzle.|g" \
       "$TARGET_DIR/GLOBAL_STATE.md"
     rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
     echo "   (Stack Angular configurado en GLOBAL_STATE.md)"
+  elif [ "$SELECTED_STACK" = "fastapi" ]; then
+    sed -i.bak \
+      -e "s|- \*\*Frontend\*\*:.*|- **Frontend**: \`Independiente (consume el contrato OpenAPI de la API)\`|g" \
+      -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Python 3.12 con FastAPI y validación Pydantic v2\`|g" \
+      -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL con SQLAlchemy 2 (async) y migraciones Alembic\`|g" \
+      -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Tokens JWT con hash de contraseñas argon2/bcrypt\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura \& Despliegue**: \`Docker multi-etapa / uvicorn / VPS\`|g" \
+      -e "s|Elección del stack base|Elección del stack FastAPI + SQLAlchemy + PostgreSQL (stack-fastapi-postgres)|g" \
+      -e "s|\[Breve descripción[^]]*\]|API en Python con FastAPI, SQLAlchemy 2, Alembic y PostgreSQL.|g" \
+      "$TARGET_DIR/GLOBAL_STATE.md"
+    rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
+    echo "   (Stack FastAPI configurado en GLOBAL_STATE.md)"
   fi
 fi
 

@@ -117,6 +117,13 @@ Para prevenir colisiones o sobreescrituras accidentales entre especialistas, cad
 
 > **Rutas según el stack**: las rutas de la tabla son genéricas. Si el proyecto tiene una skill `stack-*`, sus rutas mandan:
 > - **Monorepo Angular + Express (`stack-angular-express-postgres`)**: `apps/web/` = frontend, `apps/api/` = backend, `apps/api/drizzle/` y `apps/api/src/db/` = base de datos, `packages/shared/src/domain/` = dominio, `e2e/` = QA.
+> - **API Python (`stack-fastapi-postgres`)**:
+>   - **`backend-agent`**: `app/api/` (routers y `deps.py`), `app/services/`, `app/schemas/`, `app/core/`, `app/main.py`.
+>   - **`database-architect-agent`**: `app/models/`, `app/db/`, `alembic/` (`env.py` y `versions/`), scripts de seed.
+>   - **`domain-logic-agent`**: `app/domain/` (funciones puras sin FastAPI ni base de datos).
+>   - **`qa-security-agent`**: `tests/` (pytest) y `e2e/` si hay interfaz.
+>   - **`devops-cloud-agent`**: `Dockerfile`, `docker-compose.yml`, `.github/workflows/`, `pyproject.toml` (herramientas de build), `.env.example`.
+>   - **Frontend**: independiente; si lo hay, rige su propio stack y consume el contrato OpenAPI de `/openapi.json`.
 > - **Next.js + Prisma (`stack-nextjs-tailwind-prisma`)**:
 >   - **`frontend-agent`**: `app/(auth)/`, `app/(dashboard)/`, `app/page.tsx`, `app/layout.tsx`, `components/ui/`, `components/forms/`, `app/globals.css` (vistas, componentes interactivos y estado reactivo).
 >   - **`backend-agent`**: `app/api/` (Route Handlers), Server Actions en `app/actions/` o `lib/actions/`, `lib/auth.ts`, `lib/schemas/` (validaciones Zod).
