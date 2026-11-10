@@ -1,0 +1,25 @@
+{
+  "task_id": "TASK-035",
+  "summary": "Robustez de scripts: norm_text sin python3, init-project con un argumento, printf %b, permisos y observaciones de QA",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-10T09:52:05Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/brain/tech_debt.md" },
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "bash tests/test-flow.sh",
+    "bash tests/test-skills.sh",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
