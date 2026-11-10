@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-025",
+  "summary": "Test de integracion del flujo completo (init, tarea, handoff, QA, close, fusion)",
+  "source_agent": "qa-security-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-10T07:51:17Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".github/workflows/library.yml" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-flow.sh" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-flow.sh",
+    "bash tests/test-scripts.sh"
+  ]
+}
