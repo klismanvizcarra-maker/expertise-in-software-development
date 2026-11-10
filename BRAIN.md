@@ -74,4 +74,3 @@ flowchart TD
 
 | ID | Tarea Vinculada | Descripción de la Deuda | Solución Temporal Aplicada | Acción Definitiva Pendiente | Prioridad |
 | :---: | :---: | :--- | :--- | :--- | :---: |
-| `TD-001` | `TASK-008` | scan-secrets.sh: rutas con comilla doble o barra invertida escapan a --staged y --all; .env creado por rename escapa al historial | Workaround con `core.quotePath=false` y filtro básico | Listar y leer rutas con `-z` (diff/ls-files/log `-z`) y detectar `.env` con `--diff-filter=AR`; añadir tests dedicados | `MEDIA` |

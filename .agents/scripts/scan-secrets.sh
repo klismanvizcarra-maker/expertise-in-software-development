@@ -45,6 +45,12 @@ ENV_ALLOWED_RX='\.(example|template|sample)$'
 
 FOUND=0
 
+# Lista de archivos a revisar separada por NUL (-z): git entrecomilla y escapa las rutas con
+# comillas dobles o barra invertida aunque core.quotePath=false, y así se perderían
+FILES_Z=$(mktemp)
+UNTRACKED_Z=$(mktemp)
+trap 'rm -f "$FILES_Z" "$UNTRACKED_Z"' EXIT
+
 report() {
   echo "❌ $1"
   FOUND=1
@@ -52,10 +58,10 @@ report() {
 
 case "$MODE" in
   --staged)
-    FILES=$(git diff --cached --name-only --diff-filter=ACMR)
+    git diff --cached -z --name-only --diff-filter=ACMR > "$FILES_Z"
     ;;
   --all)
-    FILES=$(git ls-files)
+    git ls-files -z > "$FILES_Z"
     ;;
   --branch)
     if [ -z "$BASE_REF" ]; then
@@ -69,8 +75,8 @@ case "$MODE" in
     [ -n "$BASE_REF" ] || { echo "❌ No se encontró la rama base (main/master); indícala: $0 --branch <base>"; exit 2; }
     MERGE_BASE=$(git merge-base HEAD "$BASE_REF" 2>/dev/null) \
       || { echo "❌ No se pudo calcular el punto de divergencia con '$BASE_REF'."; exit 2; }
-    UNTRACKED=$(git ls-files --others --exclude-standard)
-    FILES=$(printf '%s\n%s\n' "$(git diff --name-only --diff-filter=ACMR "$MERGE_BASE")" "$UNTRACKED" | grep -v '^$' | sort -u)
+    git ls-files -z --others --exclude-standard > "$UNTRACKED_Z"
+    { git diff -z --name-only --diff-filter=ACMR "$MERGE_BASE"; cat "$UNTRACKED_Z"; } > "$FILES_Z"
     echo "-> Revisando la entrega respecto a $BASE_REF (${MERGE_BASE:0:7})"
     ;;
   *)
@@ -79,7 +85,7 @@ case "$MODE" in
     ;;
 esac
 
-while IFS= read -r f; do
+while IFS= read -r -d '' f; do
   [ -z "$f" ] && continue
 
   if printf '%s' "$f" | grep -qE "$ENV_FILE_RX" && ! printf '%s' "$f" | grep -qE "$ENV_ALLOWED_RX"; then
@@ -89,7 +95,7 @@ while IFS= read -r f; do
 
   if [ "$MODE" = "--staged" ]; then
     CONTENT=$(git diff --cached -U0 --no-color -- "$f" | grep -E '^\+' | grep -vE '^\+\+\+ ')
-  elif [ "$MODE" = "--branch" ] && ! printf '%s\n' "$UNTRACKED" | grep -qxF -- "$f"; then
+  elif [ "$MODE" = "--branch" ] && ! grep -qzxF -- "$f" "$UNTRACKED_Z"; then
     # Diff desde el punto de divergencia hasta el árbol de trabajo: commits de la rama + cambios sin commitear
     CONTENT=$(git diff "$MERGE_BASE" -U0 --no-color -- "$f" | grep -E '^\+' | grep -vE '^\+\+\+ ')
   else
@@ -104,26 +110,35 @@ while IFS= read -r f; do
     # Mostrar solo el inicio de la coincidencia, nunca el secreto completo
     printf '%s\n' "$HITS" | grep -oE -- "$PATTERNS" | cut -c1-12 | sed 's/^/     -> /; s/$/…/'
   fi
-done <<< "$FILES"
+done < "$FILES_Z"
 
 # --branch: líneas añadidas en cada commit de la rama, aunque un commit posterior las borrase
 HISTORY_FOUND=0
 if [ "$MODE" = "--branch" ]; then
+  # Solo cuentan las líneas dentro de un hunk (tras "@@"): una línea añadida que empiece por "++ "
+  # no debe confundirse con la cabecera "+++ archivo"
   ADDED=$(git log -p -U0 --no-color --format='@@commit %h' "$MERGE_BASE"..HEAD | awk '
-    /^@@commit / { c = $2; next }
-    /^\+\+\+ /  { f = substr($0, 7); next }
-    /^\+/        { print c " " f "\t" substr($0, 2) }
+    /^@@commit / { c = $2; inh = 0; next }
+    /^diff --git / { inh = 0; next }
+    /^@@ /       { inh = 1; next }
+    !inh && /^\+\+\+ / { f = substr($0, 7); next }
+    inh && /^\+/ { print c " " f "\t" substr($0, 2) }
   ')
   HITS=$(printf '%s\n' "$ADDED" | grep -E -- "$PATTERNS" | grep -v 'secret-scan:allow' || true)
-  ENV_ADDED=$(git log --format='@@commit %h' --name-only --diff-filter=A "$MERGE_BASE"..HEAD | awk '
-    /^@@commit / { c = $2; next }
-    NF           { print c " " $0 }
-  ' | while IFS= read -r line; do
-        f="${line#* }"
-        if printf '%s' "$f" | grep -qE "$ENV_FILE_RX" && ! printf '%s' "$f" | grep -qE "$ENV_ALLOWED_RX"; then
-          printf '%s\n' "$line"
-        fi
-      done)
+  # Archivos .env añadidos o renombrados en la rama (rutas sin escapar, separadas por NUL)
+  ENV_ADDED=""
+  commit=""
+  while IFS= read -r -d '' tok; do
+    tok="${tok#$'\n'}"
+    case "$tok" in
+      $'\001'*) commit="${tok#?}"; continue ;;
+    esac
+    [ -n "$tok" ] || continue
+    if printf '%s' "$tok" | grep -qE "$ENV_FILE_RX" && ! printf '%s' "$tok" | grep -qE "$ENV_ALLOWED_RX"; then
+      ENV_ADDED="${ENV_ADDED}${commit} ${tok}"$'\n'
+    fi
+  done < <(git log -z --format='%x01%h' --name-only --diff-filter=AR "$MERGE_BASE"..HEAD)
+  ENV_ADDED="${ENV_ADDED%$'\n'}"
   if [ -n "$HITS" ] || [ -n "$ENV_ADDED" ]; then
     report "Secretos en el historial de la rama (commit y archivo):"
     printf '%s\n' "$HITS" | grep -v '^$' | while IFS= read -r h; do

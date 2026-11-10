@@ -274,6 +274,25 @@ git checkout -q main && git checkout -qb fix/TASK-001-env
 mkdir -p producción && echo "SECRET=1" > producción/.env && git add -f producción/.env && git commit -qm "fix(TASK-001): env" --no-verify
 git rm -rq producción && git commit -qm "fix(TASK-001): quitar env" --no-verify
 check "--branch detecta un .env commiteado y borrado en una carpeta no ASCII" '! bash $S --branch >/dev/null'
+# TD-001: rutas con comilla doble o barra invertida, .env por rename y lineas que empiezan por "++ "
+git checkout -q main && git checkout -qb fix/TASK-001-ruta
+echo "token = \"$FAKE_KEY\"" > 'we"ird.ts'
+check "--branch detecta una clave en un archivo con comilla doble en el nombre" '! bash $S --branch >/dev/null'
+git add 'we"ird.ts'
+check "--staged detecta una clave en un archivo con comilla doble en el nombre" '! bash $S --staged >/dev/null'
+check "--all detecta una clave en un archivo con comilla doble en el nombre" '! bash $S --all >/dev/null'
+git reset -q && rm 'we"ird.ts'
+echo "token = \"$FAKE_KEY\"" > 'back\slash.ts'
+check "--branch detecta una clave en un archivo con barra invertida en el nombre" '! bash $S --branch >/dev/null'
+rm 'back\slash.ts'
+check "--branch vuelve a salir limpio tras quitar los archivos" 'bash $S --branch >/dev/null'
+echo "A=1" > ambiente.txt && git add ambiente.txt && git commit -qm "fix(TASK-001): ambiente" --no-verify
+git mv ambiente.txt .env && git commit -qm "fix(TASK-001): renombrar a env" --no-verify && git rm -q -f .env && git commit -qm "fix(TASK-001): quitar env" --no-verify
+check "--branch detecta un .env creado por rename y borrado despues (historial)" '! bash $S --branch >/dev/null'
+git checkout -q main && git checkout -qb fix/TASK-001-plus
+printf '++ token = "%s"\n' "$FAKE_KEY" > plus.txt && git add plus.txt && git commit -qm "fix(TASK-001): plus" --no-verify
+git rm -q plus.txt && git commit -qm "fix(TASK-001): quitar plus" --no-verify
+check "--branch detecta en el historial una linea que empieza por '++ '" '! bash $S --branch >/dev/null'
 cd "$WORK" || exit 1
 
 # ------------------------------------------------------------------------------

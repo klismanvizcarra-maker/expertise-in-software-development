@@ -8,7 +8,6 @@
 
 | ID | Tarea Vinculada | Fecha | Módulo | Descripción de la Deuda | Solución Temporal Aplicada | Acción Definitiva Pendiente | Prioridad |
 | :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |
-| `TD-001` | `TASK-008` | 2026-10-29 | General | scan-secrets.sh: rutas con comilla doble o barra invertida (git las sigue entrecomillando con core.quotePath=false) escapan a --staged, --all y al repaso por archivo de --branch; un .env creado por rename y las lineas que empiezan por '++ ' escapan al repaso del historial | Workaround temporal | Listar y leer rutas con -z (diff/ls-files/log -z) y detectar .env con --diff-filter=AR; anadir tests | `MEDIA` |
 
 ---
 
