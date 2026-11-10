@@ -10,7 +10,7 @@
 flowchart TD
     User([Usuario / Desarrollador]) -->|Instrucción o Slash Command| Agent[Asistente IA: Claude Code / Antigravity]
     Agent -->|Gobierno y SSOT| Governance["AGENTS.md / GLOBAL_STATE.md"]
-    Agent -->|Carga de Roles| Skills["Catálogo de Skills (.agents/skills/ 27 skills)"]
+    Agent -->|Carga de Roles| Skills["Catálogo de Skills (.agents/skills/)"]
     Agent -->|Operaciones del Ciclo de Vida| TaskCLI["CLI de Tareas (./.agents/scripts/task.sh)"]
     TaskCLI -->|start / handoff / reject / close| Branches["Ramas Git (feature/ / fix/ / refactor/)"]
     TaskCLI -->|Validación| Hooks["Git Hooks (commit-msg / pre-commit)"]
@@ -37,36 +37,54 @@ flowchart TD
 
 ---
 
-## 3. Quirks y Trampas Conocidas del Stack Tecnológico (*Gotchas*)
+## 3. Quirks y Trampas Conocidas (*Gotchas*)
 
-| Tecnología / Librería | Versión | Comportamiento Inesperado (Quirk) | Regla de Prevención Obligatoria |
+Solo las trampas del entorno en que se desarrolla **esta librería** (shell, git y herramientas de texto). Las de cada tecnología de producto viven en su skill, que es donde el agente las necesita:
+
+| Tecnología de producto | Dónde están sus trampas |
+| :--- | :--- |
+| Angular + Express + PostgreSQL (Express 5, Drizzle) | [`stack-angular-express-postgres`](.agents/skills/stack-angular-express-postgres/SKILL.md) |
+| Next.js + Prisma + Tailwind | [`stack-nextjs-tailwind-prisma`](.agents/skills/stack-nextjs-tailwind-prisma/SKILL.md) |
+| FastAPI + SQLAlchemy + Alembic | [`stack-fastapi-postgres`](.agents/skills/stack-fastapi-postgres/SKILL.md) |
+| Stripe (webhooks y firma) | [`payments-stripe`](.agents/skills/payments-stripe/SKILL.md) |
+| Angular SSR y hosts permitidos | [`seo-web`](.agents/skills/seo-web/SKILL.md) |
+| SQLite, PostgreSQL, MySQL, MongoDB | [`database-architect-agent`](.agents/skills/database-architect-agent/SKILL.md) |
+
+| Herramienta | Versión | Comportamiento Inesperado (Quirk) | Regla de Prevención Obligatoria |
 | :--- | :---: | :--- | :--- |
-| **SQLite (Nativo/Prisma)** | Todas | Claves foráneas desactivadas por defecto | Ejecutar `PRAGMA foreign_keys = ON;` al abrir la conexión |
-| **Node.js (Fetch API)** | >= 20.x | Cabecera `Host` es gestionada automáticamente | No forzar cabecera `Host` manual en peticiones locales para evitar fallos |
-| **CSS / Token System** | Modern | Colores en línea rompen temas oscuros | Usar siempre variables semánticas (`--bg-primary`, `--text-primary`) |
-| **Next.js + Prisma** | 15.x / 6.x | Hot-reload en desarrollo reinstancia el cliente y satura el pool de conexiones | Instanciar PrismaClient como singleton global en `globalThis` (`lib/prisma.ts`) |
-| **Express 5** | >= 5.x | `req.query` es un getter de solo lectura; reasignarlo lanza excepción | Parsear a una variable o constante nueva con esquema Zod (`const q = Query.parse(req.query)`) |
-| **Angular SSR** | 22.x | Peticiones con cabecera `Host` arbitraria abren vectores de ataque SSRF | Configurar dominios en `build.options.security.allowedHosts` o variable `NG_ALLOWED_HOSTS` |
-| **Git (rutas en scripts)** | Todas | `core.quotePath` entrecomilla y escapa rutas no ASCII; con `quotePath=false` siguen entrecomilladas las que tienen `"` o `\` | Leer rutas con `-z` y `read -r -d ''`; nunca con la salida por defecto de `git diff --name-only` o `ls-files` |
-| **Stripe Webhooks** | Express 5 | `express.json()` altera el stream de bytes original y rompe la verificación de firma | Montar la ruta del webhook con `express.raw({ type: 'application/json' })` antes de `express.json()` |
+| **bash (macOS)** | 3.2 | No tiene `mapfile` ni arrays asociativos; un array vacío con `set -u` lanza `unbound variable` | Leer con `while IFS= read -r`; expandir como `${ARR[@]+"${ARR[@]}"}` |
+| **awk (BSD)** | macOS | No reconoce `\s`; `tolower` no baja letras acentuadas en locale C | Usar `[[:space:]]`; normalizar tildes con `python3` antes de comparar |
+| **sed** | BSD y GNU | `&` en el reemplazo es el texto coincidente; `-i` exige sufijo en BSD; `y///` con multibyte falla en locale C | Escapar `\&`; usar `sed -i.bak` y borrar el `.bak`; no usar `y///` con tildes |
+| **Git (rutas en scripts)** | Todas | `core.quotePath` entrecomilla y escapa rutas no ASCII; con `quotePath=false` siguen entrecomilladas las que tienen `"` o `\` | Leer rutas con `-z` y `read -r -d ''`; nunca con la salida por defecto de `git diff --name-only` |
+| **Git (`diff -S`)** | Todas | El pickaxe solo ve cambios netos en el número de apariciones | Para "líneas añadidas" usar `git log -p` y filtrar las líneas `+` dentro de cada hunk |
+| **`mktemp` + `mv`** | Todas | El archivo final hereda los permisos `0600` del temporal | Restaurar los permisos originales tras sustituir un archivo |
+| **Locale** | macOS | Las herramientas arrancan con `LC_CTYPE=C` en muchos entornos de agente | Probar con `LC_ALL=C` todo lo que compare o corte texto |
 
 ---
 
 ## 4. Diccionario del Dominio (*Ubiquitous Language & Invariants*)
 
-| Término de Negocio | Definición Precisa | Invariante / Regla Inquebrantable |
+> Glosario completo en [`.agents/brain/domain_glossary.md`](./.agents/brain/domain_glossary.md).
+
+| Término | Definición Precisa | Invariante / Regla Inquebrantable |
 | :--- | :--- | :--- |
-| **Usuario Activo** | Sujeto autenticado con cuenta válida | No puede acceder a operaciones si su estado es `SUSPENDED` |
-| **Registro Inmutable** | Datos críticos con sello de tiempo | Los identificadores primarios y logs nunca pueden modificarse |
+| **Skill** | Instrucciones que se cargan por coincidencia de `description` o con `/nombre` | Se edita solo en `.agents/skills/`; `.claude/skills` es un enlace |
+| **Tarea (`TASK-XXX`)** | Trabajo con agente asignado y criterios verificables | Su estado solo cambia con `task.sh` |
+| **Veredicto** | Resultado de QA con evidencia en `.agents/reviews/` | El revisor nunca es el agente asignado |
+| **Lección (`LL-XXX`)** | Problema, causa raíz y antídoto | El ID no se reutiliza; se retira como `OBSOLETA`, no se borra |
+| **Deuda (`TD-XXX`)** | Solución provisional vinculada a una tarea | Nunca de seguridad; termina `SALDADA` |
+| **Plantilla / Instancia** | `.agents/templates/` es genérico; la raíz es el estado de esta librería | Las plantillas no llevan lecciones ni deudas reales |
 
 ---
 
 ## 5. Preferencias del Desarrollador (*Human Preferences*)
 
-- **Límites de Tamaño**: Componentes y funciones concisas (archivos menores a 200 líneas preferiblemente).
-- **Tipado Estricto**: TypeScript estricto; prohibido el uso indiscriminado de `any`.
-- **Formato de Respuestas**: Toda respuesta de API sigue el envoltorio `{ success: boolean, data?: T, error?: { code, message } }`.
-- **Diseño & UI**: Emplear exclusivamente los tokens globales de diseño; prohibido colocar valores arbitrarios en línea.
+> Detalle vinculante en [`.agents/brain/preferences.md`](./.agents/brain/preferences.md).
+
+- **Idioma**: español en skills, documentación y mensajes; commits sin tildes y con `tipo(TASK-XXX): ...`.
+- **Portabilidad**: scripts válidos en bash 3.2 de macOS y en Ubuntu, con awk y sed BSD y GNU; solo `git` y `python3` como dependencias.
+- **Pruebas**: todo cambio de script o de skill lleva su prueba, y la prueba debe fallar con el código anterior.
+- **Plantillas limpias**: nada del estado de la librería entra en `.agents/templates/`.
 
 ---
 

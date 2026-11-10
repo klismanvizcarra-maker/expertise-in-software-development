@@ -21,8 +21,9 @@
 
 ## 2. Antipatrones Prohibidos en este Proyecto
 
-1. **Manipulación directa del DOM (`[FRONTEND]`)**: Emplear siempre el estado reactivo del framework.
-2. **Consultas SQL sin parametrizar (`[DATABASE]`)**: Prohibida la interpolación directa de variables en cadenas SQL.
-3. **Secretos quemados en código (`[SECURITY]`)**: Toda credencial o URL sensible debe inyectarse vía variables `.env`.
-4. **Respuestas de error con stack trace interno (`[BACKEND]`)**: Los errores 500 no deben filtrar nombres de tablas ni rutas del sistema operativo.
-5. **Estilos y colores quemados en línea (`[UI/UX]`)**: Todo color, radio o sombra debe referenciar los tokens globales de diseño.
+1. **Extensiones GNU en scripts (`[SCRIPTS]`)**: nada de `\s` en awk, `grep -P`, `sed -i` sin sufijo ni `mapfile`; deben funcionar en macOS (BSD, bash 3.2) y en Ubuntu.
+2. **Leer rutas de git línea a línea (`[GIT]`)**: usar siempre `-z` con `read -r -d ''`; la salida por defecto entrecomilla y escapa rutas.
+3. **Texto sin escapar en `sed` (`[DEVOPS]`)**: `&` y el delimitador en el reemplazo se escapan; los patrones se acotan (`[^]]*\]`) en vez de usar `.*`.
+4. **Silenciar un fallo que cambia el resultado (`[DEVOPS]`)**: no usar `2>/dev/null` en una tubería cuya salida vacía se interpreta como "no hay coincidencias".
+5. **Tests que solo comprueban ausencias (`[QA]`)**: verificar la línea resultante completa, y confirmar que el test falla con el código anterior.
+6. **Estado de la librería en las plantillas (`[DOCS]`)**: `.agents/templates/` no contiene lecciones, deudas ni preferencias reales.
