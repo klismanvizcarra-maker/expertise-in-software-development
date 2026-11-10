@@ -1,0 +1,14 @@
+{
+  "task_id": "TASK-027",
+  "summary": "Re-ejecutar bateria real de activacion de skills y analizar fallos",
+  "source_agent": "qa-security-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-10T07:57:20Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "python3 tests/triggers/lint_descriptions.py"
+  ]
+}
