@@ -324,6 +324,9 @@ check "el proyecto sembrado queda en main" '[ "$(git -C "$SEEDED" branch --show-
 [ -n "$SEEDED" ] && rm -rf "$SEEDED"
 
 # ------------------------------------------------------------------------------
+section "test-flow.sh (ciclo completo de una tarea)"
+check "el flujo add -> handoff -> reject x3 -> close -> merge pasa de punta a punta" 'bash "$ROOT/tests/test-flow.sh" >/dev/null'
+
 section "test-skills.sh (linter estructural de skills)"
 check "auditoría estructural de skills sin errores" 'bash "$ROOT/tests/test-skills.sh" >/dev/null'
 check "test-skills.sh sale con exit 1 ante errores" 'bash -c "FAKE=\$(mktemp -d); cp -r \"$ROOT/tests\" \"\$FAKE/\"; mkdir -p \"\$FAKE/.agents/skills/broken-agent\"; cat > \"\$FAKE/.agents/skills/broken-agent/SKILL.md\" <<\"EOF\"

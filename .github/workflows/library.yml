@@ -23,6 +23,8 @@ jobs:
           git config --global user.name ci
       - name: Pruebas de scripts (task.sh, hooks, init-project, scan-secrets)
         run: bash tests/test-scripts.sh
+      - name: Flujo completo de una tarea (integración)
+        run: bash tests/test-flow.sh
       - name: Linter estructural de skills (5 pilares y enlaces)
         run: bash tests/test-skills.sh
       - name: Lint de descripciones de skills
