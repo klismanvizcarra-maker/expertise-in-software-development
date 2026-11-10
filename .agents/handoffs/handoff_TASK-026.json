@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-026",
+  "summary": "Documentar uso en Windows (WSL) y anadir job de CI",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "devops-cloud-agent",
+  "timestamp": "2026-11-10T07:53:27Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".github/workflows/library.yml" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "grep -n 'WSL' QUICKSTART.md .github/workflows/library.yml"
+  ]
+}
