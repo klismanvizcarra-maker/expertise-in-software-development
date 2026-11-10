@@ -79,7 +79,7 @@
 | `TASK-023` | Opción --ci en init-project y QUICKSTART actualizado | devops-cloud-agent | `DONE` | `0/3` | init-project.sh --ci copia ci_workflow_template.yml a .github/workflows/audit.yml sin sobrescribir; QUICKSTART.md refleja el número real de comprobaciones y las opciones nuevas; test nuevo en tests/test-scripts.sh al 100% |
 | `TASK-024` | Fix: scan-secrets omite rutas con comillas/barra invertida y .env por rename (TD-001) | devops-cloud-agent | `DONE` | `0/3` | scan-secrets.sh lee rutas con -z y detecta .env con --diff-filter=AR; tests nuevos para ruta con comilla, barra invertida y .env renombrado en tests/test-scripts.sh; TD-001 cerrada; suite al 100% |
 | `TASK-025` | Test de integracion del flujo completo (init, tarea, handoff, QA, close, fusion) | qa-security-agent | `DONE` | `0/3` | tests/test-flow.sh crea un proyecto temporal con init-project.sh y recorre add/start/handoff/close/merge; integrado en test-scripts.sh o en CI; suite al 100% |
-| `TASK-026` | Documentar uso en Windows (WSL) y anadir job de CI | devops-cloud-agent | `TODO` | `0/3` | QUICKSTART.md y README explican requisitos en Windows via WSL/Git Bash; library.yml incluye comprobacion en windows o nota justificada; suite al 100% |
+| `TASK-026` | Documentar uso en Windows (WSL) y anadir job de CI | devops-cloud-agent | `DONE` | `0/3` | QUICKSTART.md y README explican requisitos en Windows via WSL/Git Bash; library.yml incluye comprobacion en windows o nota justificada; suite al 100% |
 | `TASK-027` | Re-ejecutar bateria real de activacion de skills y analizar fallos | qa-security-agent | `TODO` | `0/3` | run_claude.py ejecutado con resultado guardado en tests/triggers/results y al menos 55 aciertos; fallos analizados en el handoff |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
@@ -153,3 +153,5 @@
 | `2026-11-10` | qa-security-agent | orchestrator-agent | `TASK-024` | Aprobada por QA -> DONE |
 | `2026-11-10` | qa-security-agent | qa-security-agent | `TASK-025` | Test de integracion del flujo completo (init, tarea, handoff, QA, close, fusion). Comandos: `bash tests/test-flow.sh`, `bash tests/test-scripts.sh` |
 | `2026-11-10` | devops-cloud-agent | orchestrator-agent | `TASK-025` | Aprobada por QA -> DONE |
+| `2026-11-10` | devops-cloud-agent | devops-cloud-agent | `TASK-026` | Documentar uso en Windows (WSL) y anadir job de CI. Comandos: `bash tests/test-scripts.sh`, `grep -n 'WSL' QUICKSTART.md .github/workflows/library.yml` |
+| `2026-11-10` | qa-security-agent | orchestrator-agent | `TASK-026` | Aprobada por QA -> DONE |

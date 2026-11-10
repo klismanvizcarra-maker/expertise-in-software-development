@@ -16,6 +16,19 @@ El sistema funciona igual en **Claude Code** y en **Antigravity**: las skills vi
 | Hook "cero código sin tarea" | — (regla de `AGENTS.md`) | `.claude/settings.json` → `.agents/scripts/require-active-task.sh` |
 | Invocar una skill | `/<nombre>` o activación automática | `/<nombre>` o activación automática |
 
+### Requisitos y uso en Windows
+
+Los scripts (`task.sh`, `init-project.sh`, hooks) son **bash** y requieren `git` y `python3`. Se prueban en CI en Ubuntu y macOS.
+
+| Entorno | Estado |
+| :--- | :--- |
+| Linux y macOS | Soportado y probado en CI |
+| Windows con **WSL 2** (Ubuntu) | Recomendado: es Linux real. Clona el proyecto **dentro** del sistema de archivos de WSL (`~/proyectos`, no `/mnt/c/...`) para tener enlaces simbólicos, permisos y rendimiento correctos |
+| Windows con Git Bash | No probado en CI. Puede funcionar con `--copy` (sin enlaces simbólicos), pero no está garantizado |
+| PowerShell o `cmd` | No soportado: los scripts no se ejecutan fuera de bash |
+
+En WSL instala las dependencias una vez: `sudo apt update && sudo apt install -y git python3`. Si usas Claude Code o Antigravity en Windows, abre el proyecto desde WSL para que los hooks y `./.agents/scripts/task.sh` se ejecuten con bash.
+
 ### Opción A: Usando el script automático
 En tu terminal, ejecuta:
 ```bash
