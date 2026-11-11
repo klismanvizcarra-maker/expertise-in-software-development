@@ -20,7 +20,9 @@ graph TD
 
 ## 2. Lecciones Aprendidas Categorizadas (*Scoped Lessons Learned*)
 
-> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto aquí con `./task.sh learn`.
+> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto con `./.agents/scripts/task.sh learn`.
+>
+> **Tabla generada**: la fuente única es `.agents/brain/lessons_learned.md`; esta copia se regenera con `task.sh brain sync` y no se edita a mano. **Ámbito** = rutas a las que aplica la lección (`*` = general).
 
 | ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |
 | :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |

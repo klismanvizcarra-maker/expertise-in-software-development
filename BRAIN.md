@@ -23,7 +23,9 @@ flowchart TD
 
 ## 2. Lecciones Aprendidas Categorizadas (*Scoped Lessons Learned*)
 
-> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto aquí con `./.agents/scripts/task.sh learn`.
+> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto con `./.agents/scripts/task.sh learn`.
+>
+> **Tabla generada**: la fuente única es [`.agents/brain/lessons_learned.md`](./.agents/brain/lessons_learned.md); esta copia se regenera con `task.sh brain sync` y no se edita a mano. **Ámbito** = rutas a las que aplica la lección (`*` = general). Para ver solo lo relevante: `task.sh brain for TASK-XXX [ruta...]` o `task.sh brain search <términos>`.
 
 | ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |
 | :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |
@@ -55,6 +57,7 @@ Solo las trampas del entorno en que se desarrolla **esta librería** (shell, git
 | **bash (macOS)** | 3.2 | No tiene `mapfile` ni arrays asociativos; un array vacío con `set -u` lanza `unbound variable` | Leer con `while IFS= read -r`; expandir como `${ARR[@]+"${ARR[@]}"}` |
 | **awk (BSD)** | macOS | No reconoce `\s`; `tolower` no baja letras acentuadas en locale C | Usar `[[:space:]]`; normalizar tildes con `python3` antes de comparar |
 | **sed** | BSD y GNU | `&` en el reemplazo es el texto coincidente; `-i` exige sufijo en BSD; `y///` con multibyte falla en locale C | Escapar `\&`; usar `sed -i.bak` y borrar el `.bak`; no usar `y///` con tildes |
+| **awk (`-v`)** | BSD y GNU | `-v var="$x"` interpreta las barras invertidas: una regex `^\\|` llega como `^|` y casa con todo | Pasar patrones y texto del usuario por `ENVIRON["VAR"]`, nunca por `-v` |
 | **Git (rutas en scripts)** | Todas | `core.quotePath` entrecomilla y escapa rutas no ASCII; con `quotePath=false` siguen entrecomilladas las que tienen `"` o `\` | Leer rutas con `-z` y `read -r -d ''`; nunca con la salida por defecto de `git diff --name-only` |
 | **Git (`diff -S`)** | Todas | El pickaxe solo ve cambios netos en el número de apariciones | Para "líneas añadidas" usar `git log -p` y filtrar las líneas `+` dentro de cada hunk |
 | **`mktemp` + `mv`** | Todas | El archivo final hereda los permisos `0600` del temporal | Restaurar los permisos originales tras sustituir un archivo |

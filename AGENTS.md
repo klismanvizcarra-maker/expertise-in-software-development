@@ -90,8 +90,8 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
 
 ## 7. Protocolo del Cerebro y Memoria Persistente (Long-Term Brain)
 
-1. **Consulta Previa al Cerebro**: Antes de abordar cualquier refactorización compleja, solución de bugs o diseño de módulos, el agente debe inspeccionar `BRAIN.md` o `.agents/brain/lessons_learned.md` para verificar si ya existe una solución previa o un antipatrón prohibido.
-2. **Registro Obligatorio de Aprendizajes**: Cuando el `qa-security-agent` apruebe la resolución de un defecto no trivial o se adopte una regla crítica, el `orchestrator-agent` debe registrar de inmediato el aprendizaje en la sección de Lecciones Aprendidas de `BRAIN.md`.
+1. **Consulta Previa al Cerebro**: Antes de abordar cualquier refactorización compleja, solución de bugs o diseño de módulos, el agente debe inspeccionar `BRAIN.md` o `.agents/brain/lessons_learned.md` para verificar si ya existe una solución previa o un antipatrón prohibido. La forma dirigida es `./.agents/scripts/task.sh brain for TASK-XXX [ruta...]` (lecciones y deuda relevantes para la tarea y los archivos que se van a tocar) y `task.sh brain search <términos>`; `task.sh start` muestra ese resumen al iniciar la tarea.
+2. **Registro Obligatorio de Aprendizajes**: Cuando el `qa-security-agent` apruebe la resolución de un defecto no trivial o se adopte una regla crítica, el `orchestrator-agent` debe registrar de inmediato el aprendizaje con `task.sh learn` (skill `/aprender`), indicando con `--paths` las rutas a las que aplica. La fuente única de lecciones es `.agents/brain/lessons_learned.md`; la tabla de `BRAIN.md` se genera desde ella y no se edita a mano.
 3. **Respeto a las Preferencias del Usuario**: El archivo `.agents/brain/preferences.md` es vinculante para todos los agentes; se deben respetar las convenciones de tipado, estilo de código y UX allí indicadas.
 
 ---

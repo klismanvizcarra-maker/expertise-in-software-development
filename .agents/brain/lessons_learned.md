@@ -1,7 +1,8 @@
 # Lecciones Aprendidas y Antipatrones (Lessons Learned)
 
 > **Propósito**: Registro categorizado de bugs complejos superados, trampas de dependencias y soluciones probadas para que ningún agente repita errores del pasado.
-> **Comando de registro rápido**: `./.agents/scripts/task.sh learn "<problema: solución>" [categoría]`
+> **Comando de registro**: `./.agents/scripts/task.sh learn "<problema>" <categoría> "<causa raíz>" "<solución>" [--paths "<globs>"]`
+> **Fuente única**: esta tabla es el origen; la de `BRAIN.md` se regenera desde aquí (`task.sh brain sync`). **Ámbito** = globs de rutas a las que aplica la lección (`*` = general); **Estado** = `ACTIVO` u `OBSOLETA`.
 
 ---
 

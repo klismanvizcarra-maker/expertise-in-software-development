@@ -28,6 +28,7 @@ flowchart TD
   - Cada skill contiene frontmatter con nombre y descripción con límites negativos, protocolo paso a paso, checklist interactivo y sección `Prohibido`.
 - **Scripts de Automatización (`.agents/scripts/`)**:
   - `task.sh`: CLI central de ciclo de vida (`add`, `start`, `handoff`, `reject`, `close`, `move`, `learn`, `lesson-retire`, `debt`, `debt-resolve`, `list`, `metrics`, `commit`).
+  - `brain-lib.sh`: Biblioteca del cerebro que carga `task.sh`: lecciones en fuente única (`lessons_learned.md`), sincronización de `BRAIN.md`, relevancia por ámbito/categoría/palabras y búsqueda (`task.sh brain sync|search|for|scope`).
   - `init-project.sh`: Inicializador de proyectos nuevos y configuración de stack (`--stack nextjs|angular|fastapi`, `--ci`, `--update`).
   - `install-hooks.sh`: Instalador de Git hooks locales (`commit-msg` y `pre-commit`).
   - `scan-secrets.sh`: Escáner de secretos y claves criptográficas (`--staged`, `--branch`, `--all`).
