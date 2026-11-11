@@ -1,13 +1,18 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Biblioteca del Cerebro (memoria a largo plazo): la cargan task.sh y brain-context.sh
+# Biblioteca del Cerebro (memoria a largo plazo): la carga task.sh
 # ==============================================================================
 # Fuente única de lecciones: .agents/brain/lessons_learned.md, con 8 columnas:
 #   | ID | Fecha | Categoría | Problema | Causa Raíz | Solución | Ámbito | Estado |
 # La tabla de lecciones de BRAIN.md es una copia generada con brain_sync: no se edita a mano.
 #
 # Ámbito: globs de rutas separados por comas (ej. `.agents/scripts/*.sh,tests/*.sh`) a las
-# que aplica la lección; `*` = general (no ligada a archivos concretos).
+# que aplica la lección; `*` = general (no ligada a archivos concretos). Semántica del glob:
+#   - `*` casa cualquier secuencia, también `/` (`src/api/*.ts` cubre `src/api/v1/x.ts`);
+#     `?` casa un carácter; el resto es literal.
+#   - El glob ancla al final de la ruta y al inicio o a un límite de directorio, así que vale
+#     para rutas relativas y absolutas (`src/api/*.ts` cubre `/repo/src/api/x.ts`).
+#   - Un glob terminado en `/` cubre todo lo que haya dentro de ese directorio.
 #
 # Requiere definidos: BRAIN_FILE, LL_FILE, DEBT_FILE, STATE_FILE y las funciones die y
 # replace_file. Compatible con bash 3.2 y awk/sed BSD y GNU; python3 es opcional.
@@ -50,6 +55,63 @@ agent_category() {
     docs-architecture-agent)  echo DOCS ;;
     *)                        echo "" ;;
   esac
+}
+
+# Normaliza un ámbito: recorta espacios alrededor de cada glob (los interiores se conservan),
+# quita backticks y elementos vacíos. Imprime vacío si no queda ningún glob.
+norm_scope() {
+  printf '%s' "$1" | tr -d '`' | tr '\t' ' ' | awk '
+    { n = split($0, parts, ","); out = ""
+      for (i = 1; i <= n; i++) { g = parts[i]; gsub(/^ +| +$/, "", g); if (g != "") out = out (out == "" ? "" : ",") g }
+      printf "%s", out }'
+}
+
+# Crea lessons_learned.md si falta (proyectos antiguos podían no tenerlo): desde la plantilla,
+# sin sus filas de ejemplo, o con una tabla mínima
+ensure_lessons_file() {
+  [ -f "$LL_FILE" ] && return 0
+  local tpl
+  tpl="$(dirname "$LL_FILE")/../templates/lessons_learned_template.md"
+  mkdir -p "$(dirname "$LL_FILE")"
+  if [ -f "$tpl" ]; then
+    grep -vE '^\|[ \t]*`?LL-[0-9]+' "$tpl" > "$LL_FILE" || true
+  fi
+  if ! grep -qE "$BRAIN_HDR_LESSONS" "$LL_FILE" 2>/dev/null; then
+    printf '%s\n\n%s\n%s\n' '# Lecciones Aprendidas y Antipatrones (Lessons Learned)' "$BRAIN_LL_HEADER" "$BRAIN_LL_SEP" > "$LL_FILE"
+  fi
+}
+
+# Incorpora a la fuente única las lecciones que solo existan en BRAIN.md (con 7 u 8 columnas),
+# para que regenerar la tabla de BRAIN.md nunca pierda una lección
+adopt_brain_lessons() {
+  [ -f "$BRAIN_FILE" ] && [ -f "$LL_FILE" ] || return 0
+  local missing tmp
+  missing=$(awk -F'|' '
+    function cid(   c) { c = $2; gsub(/[ \t`]/, "", c); return c }
+    FNR == 1 { fileno++ }
+    !/^\|/ || cid() !~ /^LL-[0-9]+$/ { next }
+    fileno == 1 { have[cid()] = 1; next }
+    !(cid() in have) {
+      have[cid()] = 1
+      st = $(NF-1); gsub(/[ \t`]/, "", st)
+      if (st != "ACTIVO" && st != "OBSOLETA") st = "ACTIVO"
+      line = $0
+      if (NF - 2 >= 8) { sub(/[ \t]*\|[ \t]*$/, " |", line); print line }
+      else { sub(/\|[^|]*\|[ \t]*$/, "", line); sub(/[ \t]+$/, "", line); print line " | `*` | `" st "` |" }
+    }
+  ' "$LL_FILE" "$BRAIN_FILE")
+  [ -n "$missing" ] || return 0
+  tmp=$(mktemp)
+  HDR="$BRAIN_HDR_LESSONS" ROWS="$missing" awk '
+    { lines[NR] = $0 }
+    !found && $0 ~ ENVIRON["HDR"] { found = 1; intable = 1; at = NR; next }
+    intable { if ($0 ~ /^\|/) at = NR; else intable = 0 }
+    END {
+      if (!found) exit 2
+      for (i = 1; i <= NR; i++) { print lines[i]; if (i == at) print ENVIRON["ROWS"] }
+    }
+  ' "$LL_FILE" > "$tmp" || { rm -f "$tmp"; die "No se encontró la tabla de lecciones en $LL_FILE; no se modifica BRAIN.md."; }
+  replace_file "$tmp" "$LL_FILE"
 }
 
 # ¿lessons_learned.md ya tiene el esquema de 8 columnas (con Ámbito y Estado)?
@@ -111,8 +173,12 @@ ensure_lessons_schema() {
 
 # Regenera la tabla de lecciones de BRAIN.md a partir de lessons_learned.md (fuente única)
 brain_sync() {
-  [ -f "$BRAIN_FILE" ] && [ -f "$LL_FILE" ] || return 0
+  ensure_lessons_file
+  grep -qE "$BRAIN_HDR_LESSONS" "$LL_FILE" || die "No se encontró la tabla de lecciones en $LL_FILE; no se modifica BRAIN.md."
   ensure_lessons_schema
+  [ -f "$BRAIN_FILE" ] || return 0
+  # Antes de regenerar BRAIN.md, ninguna lección suya puede faltar en la fuente
+  adopt_brain_lessons
   grep -qE "$BRAIN_HDR_LESSONS" "$BRAIN_FILE" || return 0
   local tmp
   tmp=$(mktemp)
@@ -144,8 +210,9 @@ all_lessons() {
         cat = $4; gsub(/[ \t`\[\]]/, "", cat)
         p = $5; gsub(/^[ \t]+|[ \t]+$/, "", p)
         s = $7; gsub(/^[ \t]+|[ \t]+$/, "", s)
-        sc = $8; gsub(/[ \t`]/, "", sc)
+        sc = $8; gsub(/`/, "", sc); gsub(/^[ \t]+|[ \t]+$/, "", sc)
         st = $(NF-1); gsub(/[ \t`]/, "", st)
+        gsub(/\t/, " ", p); gsub(/\t/, " ", s); gsub(/\t/, " ", sc)
         print id "\t" cat "\t" p "\t" sc "\t" s "\t" st
       }
     ' "$LL_FILE"
@@ -158,6 +225,7 @@ all_lessons() {
         p = $5; gsub(/^[ \t]+|[ \t]+$/, "", p)
         s = $7; gsub(/^[ \t]+|[ \t]+$/, "", s)
         st = $(NF-1); gsub(/[ \t`]/, "", st)
+        gsub(/\t/, " ", p); gsub(/\t/, " ", s)
         print id "\t" cat "\t" p "\t*\t" s "\t" st
       }
     ' "$BRAIN_FILE"
@@ -225,7 +293,7 @@ relevant_lessons() {
       for (i = 1; i <= n; i++) {
         gl = parts[i]; gsub(/^[ \t`]+|[ \t`]+$/, "", gl)
         if (gl == "" || gl == "*") continue
-        re = "(^|/)" glob2re(gl) "$"
+        re = "(^|/)" glob2re(gl) (gl ~ /\/$/ ? ".*" : "") "$"
         for (j = 1; j <= np; j++) if (paths[j] != "" && paths[j] ~ re) return gl
       }
       return ""
@@ -274,6 +342,7 @@ pending_debts() {
 brain_search() {
   local corpus norm terms
   terms=$(printf '%s\n' "$*" | norm_text)
+  case "$terms" in *[![:space:]]*) ;; *) return 0 ;; esac
   corpus=$(
     all_lessons | awk -F'\t' '{ print "LECCION\t" $1 " [" $2 "] " $3 " → " $5 " (ámbito: " $4 ($6 == "ACTIVO" ? "" : "; " $6) ")" }'
     if [ -f "$BRAIN_FILE" ]; then

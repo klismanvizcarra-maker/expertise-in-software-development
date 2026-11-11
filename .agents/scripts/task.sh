@@ -70,7 +70,9 @@ replace_file() {
 
 # Biblioteca del cerebro: norm_text, lecciones (fuente única), relevancia y búsqueda
 # shellcheck source=brain-lib.sh
-. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/brain-lib.sh"
+BRAIN_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/brain-lib.sh"
+[ -f "$BRAIN_LIB" ] || die "Falta $BRAIN_LIB (instalación incompleta). Restáurala con: init-project.sh --update <proyecto>"
+. "$BRAIN_LIB"
 
 LOCK_DIR="$PROJECT_ROOT/.agents/.task_lock"
 LOCK_ACQUIRED=0
@@ -119,7 +121,7 @@ require_state() {
 
 # Texto seguro para una celda de tabla Markdown: sin barras verticales ni saltos de línea
 cell() {
-  printf '%s' "$1" | tr '\n\r|' '  /'
+  printf '%s' "$1" | tr '\n\r\t|' '   /'
 }
 
 json_escape() {
@@ -633,12 +635,13 @@ EOF
     FIX="${LEARN_ARGS[3]:-Por documentar}"
     [ -n "$DESC" ] || die "Uso: ./task.sh learn \"<problema>\" [categoría] [\"<causa raíz>\"] [\"<solución>\"] [--paths \"<globs>\"] [--force]"
     require_file "$BRAIN_FILE" "Créalo desde .agents/templates/BRAIN_TEMPLATE.md."
-    require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+    ensure_lessons_file
     ensure_lessons_schema
+    adopt_brain_lessons
     CAT_UPPER=$(printf '%s' "$CAT" | tr '[:lower:]' '[:upper:]')
-    SCOPE=$(printf '%s' "$SCOPE" | tr -d ' `')
-    case "$SCOPE" in *$'\n'*|*'|'*) die "Ámbito inválido: usa globs separados por comas, sin '|' ni saltos de línea." ;; esac
-    [ -n "$SCOPE" ] || SCOPE='*'
+    case "$SCOPE" in *$'\n'*|*$'\r'*|*'|'*) die "Ámbito inválido: usa globs separados por comas, sin '|' ni saltos de línea." ;; esac
+    SCOPE=$(norm_scope "$SCOPE")
+    [ -n "$SCOPE" ] || die "Ámbito vacío: indica al menos un glob en --paths, o no uses --paths para una lección general."
 
     # Control de duplicados: lección ACTIVA equivalente o con la mayoría de palabras en común
     if [ "$FORCE" -eq 0 ]; then
@@ -697,8 +700,9 @@ EOF
     [ -n "${2:-}" ] || die "Uso: ./task.sh lesson-retire LL-001"
     LL_ID=$(printf '%s' "$2" | tr '[:lower:]' '[:upper:]')
     [[ "$LL_ID" =~ ^LL-[0-9]+$ ]] || die "ID de lección inválido: '$2' (formato LL-001)."
-    require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+    ensure_lessons_file
     ensure_lessons_schema
+    adopt_brain_lessons
     grep -qE "^\|[[:space:]]*\`?$LL_ID\`?[[:space:]]*\|" "$LL_FILE" || die "$LL_ID no existe en $LL_FILE."
     awk -F'|' -v OFS='|' -v id="$LL_ID" '
       /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-1) = " `OBSOLETA` " } }
@@ -712,7 +716,8 @@ EOF
     SUB="${2:-}"
     case "$SUB" in
       sync)
-        require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+        require_file "$BRAIN_FILE" "Créalo desde .agents/templates/BRAIN_TEMPLATE.md."
+        grep -qE "$HDR_LESSONS" "$BRAIN_FILE" || die "BRAIN.md no tiene la tabla de lecciones (cabecera '| ID | Fecha | Categoría | ...'); añádela desde .agents/templates/BRAIN_TEMPLATE.md."
         brain_sync
         say "${GREEN}🧠 BRAIN.md sincronizado${NC} desde .agents/brain/lessons_learned.md ($(all_lessons | wc -l | tr -d ' ') lecciones)."
         ;;
@@ -720,10 +725,12 @@ EOF
         [ -n "${3:-}" ] && [ -n "${4:-}" ] || die "Uso: ./task.sh brain scope LL-001 \"<globs separados por comas | *>\""
         LL_ID=$(printf '%s' "$3" | tr '[:lower:]' '[:upper:]')
         [[ "$LL_ID" =~ ^LL-[0-9]+$ ]] || die "ID de lección inválido: '$3' (formato LL-001)."
-        SCOPE=$(printf '%s' "$4" | tr -d ' `')
-        case "$SCOPE" in *$'\n'*|*'|'*|'') die "Ámbito inválido: usa globs separados por comas, sin '|' ni saltos de línea." ;; esac
-        require_file "$LL_FILE" "Créalo desde .agents/templates/lessons_learned_template.md."
+        case "$4" in *$'\n'*|*$'\r'*|*'|'*) die "Ámbito inválido: usa globs separados por comas, sin '|' ni saltos de línea." ;; esac
+        SCOPE=$(norm_scope "$4")
+        [ -n "$SCOPE" ] || die "Ámbito vacío: indica al menos un glob, o '*' para una lección general."
+        ensure_lessons_file
         ensure_lessons_schema
+        adopt_brain_lessons
         grep -qE "^\|[[:space:]]*\`?$LL_ID\`?[[:space:]]*\|" "$LL_FILE" || die "$LL_ID no existe en $LL_FILE."
         SCOPE="$SCOPE" awk -F'|' -v OFS='|' -v id="$LL_ID" '
           /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-2) = " `" ENVIRON["SCOPE"] "` " } }
@@ -734,7 +741,7 @@ EOF
         ;;
       search)
         shift 2
-        [ $# -gt 0 ] || die "Uso: ./task.sh brain search <términos...>"
+        case "$*" in *[![:space:]]*) ;; *) die "Uso: ./task.sh brain search <términos...>" ;; esac
         OUT=$(brain_search "$@")
         if [ -n "$OUT" ]; then
           say "🧠 Coincidencias para: $*"
@@ -792,11 +799,11 @@ EOF
                                          Lección en lessons_learned.md (fuente única; rechaza
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
-brain search <términos...>             Busca en lecciones, gotchas y deuda
+  brain search <términos...>             Busca en lecciones, gotchas y deuda
   brain for TASK-ID [ruta...]            Lecciones y deuda relevantes para una tarea (y rutas)
   brain scope LL-ID "<globs>"            Fija a qué rutas aplica una lección
   brain sync                             Regenera la tabla de BRAIN.md desde lessons_learned.md
-    debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
+  debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
   lesson-retire LL-ID                    Marca una lección como OBSOLETA
 =================================================================
 EOF

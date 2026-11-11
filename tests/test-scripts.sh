@@ -290,6 +290,43 @@ check "la migración incorpora lecciones que solo estaban en BRAIN.md" 'grep -q 
 check "tras migrar, todas las filas tienen 8 columnas y la nueva es LL-004" '[ -z "$(grep "^| \`LL-" .agents/brain/lessons_learned.md | awk -F"|" "NF-2 != 8")" ] && grep -q "LL-004.*Leccion nueva" BRAIN.md'
 check "tras migrar, BRAIN.md y la fuente coinciden y no se duplican filas" '[ "$(grep "^| \`LL-" BRAIN.md)" = "$(grep "^| \`LL-" .agents/brain/lessons_learned.md)" ] && [ "$(grep -c "LL-001" BRAIN.md)" = 1 ]'
 check "migrar dos veces no añade columnas" '$T brain sync >/dev/null && [ -z "$(grep "^| \`LL-" .agents/brain/lessons_learned.md | awk -F"|" "NF-2 != 8")" ]'
+# Proyecto antiguo sin lessons_learned.md: las lecciones solo viven en BRAIN.md (7 columnas)
+new_project cerebro-sin-fuente
+python3 - <<'PYEOF'
+b = open('BRAIN.md').read()
+b = b.replace('| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |\n| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |',
+              '| ID | Fecha | Categoría | Problema Detectado | Causa Raíz | Solución Definitiva (Antídoto) | Estado |\n| :---: | :---: | :---: | :--- | :--- | :--- | :---: |\n| `LL-001` | 2026-01-01 | `[BACKEND]` | Solo brain uno | c | s | `ACTIVO` |\n| `LL-002` | 2026-01-02 | `[QA]` | Solo brain dos | c | s | `OBSOLETA` |')
+open('BRAIN.md', 'w').write(b)
+PYEOF
+rm .agents/brain/lessons_learned.md
+$T brain sync >/dev/null 2>&1
+check "brain sync sin lessons_learned.md lo crea y no pierde las lecciones de BRAIN.md" '[ -f .agents/brain/lessons_learned.md ] && grep -q "LL-001.*Solo brain uno" BRAIN.md && grep -q "LL-002.*Solo brain dos" BRAIN.md && grep "LL-002" .agents/brain/lessons_learned.md | grep -q "OBSOLETA"'
+check "las lecciones adoptadas quedan con 8 columnas e idénticas en ambos archivos" '[ -z "$(grep "^| \`LL-" BRAIN.md | awk -F"|" "NF-2 != 8")" ] && [ "$(grep "^| \`LL-" BRAIN.md)" = "$(grep "^| \`LL-" .agents/brain/lessons_learned.md)" ]'
+rm .agents/brain/lessons_learned.md
+git checkout -q BRAIN.md 2>/dev/null; python3 - <<'PYEOF'
+b = open('BRAIN.md').read()
+b = b.replace('| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |', '| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |\n| `LL-001` | 2026-01-01 | `[BACKEND]` | Ocho columnas solo en brain | c | s | `src/*.ts` | `ACTIVO` |', 1)
+open('BRAIN.md', 'w').write(b)
+PYEOF
+$T learn "Primera leccion registrada sin archivo fuente" backend "c" "s" >/dev/null 2>&1
+check "learn sin lessons_learned.md lo crea, adopta lo de BRAIN.md y numera a continuación" 'grep -q "LL-001.*Ocho columnas solo en brain" BRAIN.md && grep -q "LL-002.*Primera leccion" BRAIN.md && grep "LL-001" .agents/brain/lessons_learned.md | grep -qF "src/*.ts"'
+: > "$WORK/vacio.md"; cp .agents/brain/lessons_learned.md "$WORK/ll.bak"; printf '# sin tabla\n' > .agents/brain/lessons_learned.md
+check "brain sync aborta sin tocar BRAIN.md si la fuente no tiene tabla" 'cp BRAIN.md "$WORK/b2" && ! $T brain sync >/dev/null 2>&1 && cmp -s BRAIN.md "$WORK/b2"'
+cat "$WORK/ll.bak" > .agents/brain/lessons_learned.md
+$T learn "$(printf 'Fallo con\ttabulador en el texto')" backend "$(printf 'causa\tcon tab')" "s" >/dev/null
+check "una lección con tabuladores sigue activa y visible" '$T brain search tabulador | grep -q "LL-003" && [ "$($T brain search tabulador | grep -c "ACTIVO\|OBSOLETA")" = 0 ] && ! grep -q "$(printf "\t")" .agents/brain/lessons_learned.md'
+$T learn "Ruta con espacios en el nombre de carpeta" devops "c" "s" --paths " Mis Documentos/app/*.ts , , scripts/ " >/dev/null
+check "el ámbito conserva espacios interiores y descarta elementos vacíos" 'grep "Ruta con espacios" .agents/brain/lessons_learned.md | grep -qF "| \`Mis Documentos/app/*.ts,scripts/\` |"'
+$T add "Tarea cualquiera sin relacion" "mobile-agent" "criterio" >/dev/null
+RT=$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)
+check "brain for casa una ruta con espacios" '$T brain for "$RT" "/home/u/Mis Documentos/app/main.ts" | grep -q "Ruta con espacios"'
+check "un ámbito acabado en / cubre los archivos del directorio" '$T brain for "$RT" scripts/deploy/run.sh | grep -q "Ruta con espacios"'
+check "el glob no casa un sufijo distinto ni un directorio de nombre parecido" '! $T brain for "$RT" "Mis Documentos/app/main.ts.bak" | grep -q "Ruta con espacios" && ! $T brain for "$RT" "myscripts/x.sh" | grep -q "Ruta con espacios"'
+check "brain scope y learn rechazan un ámbito vacío" '! $T brain scope LL-001 " , ," >/dev/null 2>&1 && ! $T learn "Otra leccion con ambito vacio" qa "c" "s" --paths " , " >/dev/null 2>&1'
+check "brain search sin términos reales falla" '! $T brain search "  " >/dev/null 2>&1'
+cp .agents/scripts/brain-lib.sh "$WORK/lib.bak" && rm .agents/scripts/brain-lib.sh
+check "sin brain-lib.sh task.sh falla con un mensaje claro" '$T list 2>&1 | grep -q "instalación incompleta" && ! $T list >/dev/null 2>&1'
+cp "$WORK/lib.bak" .agents/scripts/brain-lib.sh
 cd "$WORK" || exit 1
 
 # ------------------------------------------------------------------------------
