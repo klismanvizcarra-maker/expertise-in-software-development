@@ -20,12 +20,14 @@ graph TD
 
 ## 2. Lecciones Aprendidas Categorizadas (*Scoped Lessons Learned*)
 
-> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto aquí con `./task.sh learn`.
+> **Regla de Oro**: Cada vez que se resuelva un bug complejo o se descubra una incompatibilidad de librerías, registrar el antídoto con `./.agents/scripts/task.sh learn`.
+>
+> **Tabla generada**: la fuente única es `.agents/brain/lessons_learned.md`; esta copia se regenera con `task.sh brain sync` y no se edita a mano. **Ámbito** = rutas a las que aplica la lección (`*` = general).
 
-| ID | Fecha | Categoría | Problema Detectado | Causa Raíz | Solución Definitiva (Antídoto) | Estado |
-| :---: | :---: | :---: | :--- | :--- | :--- | :---: |
-| `LL-001` | YYYY-MM-DD | `[DATABASE]` | Ejemplo: Bloqueos de concurrencia | Modo journal DELETE por defecto | Configurar `PRAGMA journal_mode = WAL;` y `busy_timeout = 5000` | `ACTIVO` |
-| `LL-002` | YYYY-MM-DD | `[FRONTEND]` | Ejemplo: Fugas de memoria reactivas | Suscripciones abiertas sin destruir | Usar `takeUntilDestroyed` o Signals puros | `ACTIVO` |
+| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |
+| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |
+| `LL-001` | YYYY-MM-DD | `[DATABASE]` | Ejemplo: Bloqueos de concurrencia | Modo journal DELETE por defecto | Configurar `PRAGMA journal_mode = WAL;` y `busy_timeout = 5000` | `*` | `ACTIVO` |
+| `LL-002` | YYYY-MM-DD | `[FRONTEND]` | Ejemplo: Fugas de memoria reactivas | Suscripciones abiertas sin destruir | Usar `takeUntilDestroyed` o Signals puros | `*` | `ACTIVO` |
 
 ---
 
