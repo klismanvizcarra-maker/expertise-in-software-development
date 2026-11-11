@@ -324,9 +324,51 @@ check "un ámbito acabado en / cubre los archivos del directorio" '$T brain for 
 check "el glob no casa un sufijo distinto ni un directorio de nombre parecido" '! $T brain for "$RT" "Mis Documentos/app/main.ts.bak" | grep -q "Ruta con espacios" && ! $T brain for "$RT" "myscripts/x.sh" | grep -q "Ruta con espacios"'
 check "brain scope y learn rechazan un ámbito vacío" '! $T brain scope LL-001 " , ," >/dev/null 2>&1 && ! $T learn "Otra leccion con ambito vacio" qa "c" "s" --paths " , " >/dev/null 2>&1'
 check "brain search sin términos reales falla" '! $T brain search "  " >/dev/null 2>&1'
+printf '%s\n' "| \`LL-090\` | 2026-01-01 | \`[QA]\` | Fila de seis columnas | causa seis | solucion seis |" > "$WORK/f6.txt"
+awk -v f="$WORK/f6.txt" '{ print } /^\| `LL-002`/ { while ((getline l < f) > 0) print l }' BRAIN.md > "$WORK/b6" && cat "$WORK/b6" > BRAIN.md
+$T brain sync >/dev/null 2>&1
+check "adoptar una fila de BRAIN.md sin columna Estado conserva su solución" 'grep "LL-090" .agents/brain/lessons_learned.md | grep -q "solucion seis.*ACTIVO" && [ "$(grep "LL-090" BRAIN.md | awk -F"|" "{print NF-2}")" = 8 ]'
 cp .agents/scripts/brain-lib.sh "$WORK/lib.bak" && rm .agents/scripts/brain-lib.sh
 check "sin brain-lib.sh task.sh falla con un mensaje claro" '$T list 2>&1 | grep -q "instalación incompleta" && ! $T list >/dev/null 2>&1'
 cp "$WORK/lib.bak" .agents/scripts/brain-lib.sh
+cd "$WORK" || exit 1
+
+# ------------------------------------------------------------------------------
+section "hook de Claude Code: brain-context.sh (el cerebro va al agente)"
+new_project contexto
+BC=./.agents/scripts/brain-context.sh
+export TMPDIR="$WORK/tmp-hook"; mkdir -p "$TMPDIR"
+ctx_json() { printf '{"session_id":"%s","tool_name":"Edit","tool_input":{"file_path":"%s"}}' "$1" "$2"; }
+ctx() { ctx_json "$1" "$2" | CLAUDE_PROJECT_DIR="$PWD" bash $BC; }
+ctx_text() { ctx "$1" "$2" | python3 -c 'import json,sys; print(json.load(sys.stdin)["hookSpecificOutput"]["additionalContext"])' 2>/dev/null; }
+check "init-project registra el hook del cerebro en .claude/settings.json" 'grep -q "brain-context.sh" .claude/settings.json && grep -q "require-active-task.sh" .claude/settings.json && python3 -m json.tool .claude/settings.json >/dev/null'
+$T learn "Consulta sin indice en pedidos" database "Falta indice" "Crear indice en cada FK" --paths "server/db/*.sql,migrations/" >/dev/null
+$T learn "Leccion general sin ambito" backend "c" "s" >/dev/null
+$T learn "Token con \"comillas\" y barra \\ invertida" backend "c" "Usar middleware" --paths "server/auth/*.ts" >/dev/null
+check "sin lecciones para la ruta no imprime nada y sale con 0" '[ -z "$(ctx s1 "$PWD/src/app/home.ts")" ] && ctx s1 "$PWD/src/app/home.ts"'
+check "muestra la lección cuyo ámbito cubre el archivo, con su antídoto" 'ctx_text s2 "$PWD/server/db/001.sql" | grep -q "LL-001.*Consulta sin indice" && ctx_text s2b "$PWD/server/db/001.sql" | grep -q "Antídoto: Crear indice en cada FK"'
+check "la salida es JSON válido de PreToolUse aunque el texto tenga comillas y barras" 'ctx s3 "$PWD/server/auth/login.ts" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"] == \"PreToolUse\"; assert \"comillas\" in d[\"hookSpecificOutput\"][\"additionalContext\"]"'
+check "cada lección se muestra una sola vez por sesión" '[ -n "$(ctx s4 "$PWD/server/db/a.sql")" ] && [ -z "$(ctx s4 "$PWD/server/db/b.sql")" ] && [ -n "$(ctx s5 "$PWD/server/db/b.sql")" ]'
+check "en la misma sesión sí muestra una lección distinta" 'ctx_text s4 "$PWD/server/auth/login.ts" | grep -q "LL-003"'
+check "las lecciones generales (*) no se inyectan al editar" '! ctx_text s6 "$PWD/server/db/001.sql" | grep -q "LL-002"'
+check "acepta rutas relativas y un ámbito de directorio" 'ctx_text s7 "migrations/2026/0001.sql" | grep -q "LL-001"'
+check "ignora archivos de fuera del proyecto" '[ -z "$(ctx s8 "/tmp/otro/server/db/x.sql")" ]'
+$T lesson-retire LL-001 >/dev/null
+check "una lección OBSOLETA deja de mostrarse" '[ -z "$(ctx s9 "$PWD/server/db/001.sql")" ]'
+check "MAESTRO_BRAIN_CONTEXT=0 lo desactiva" '[ -z "$(ctx_json s10 "$PWD/server/auth/login.ts" | MAESTRO_BRAIN_CONTEXT=0 CLAUDE_PROJECT_DIR="$PWD" bash $BC)" ]'
+check "entrada que no es JSON, vacía o sin ruta: sale con 0 y sin salida" '[ -z "$(printf "no-json" | CLAUDE_PROJECT_DIR="$PWD" bash $BC)" ] && printf "" | CLAUDE_PROJECT_DIR="$PWD" bash $BC && printf "{\"tool_input\":{}}" | CLAUDE_PROJECT_DIR="$PWD" bash $BC'
+check "sin session_id muestra la lección y no falla" 'printf "{\"tool_input\":{\"file_path\":\"server/auth/x.ts\"}}" | CLAUDE_PROJECT_DIR="$PWD" bash $BC | grep -q "LL-003"'
+check "un session_id hostil no escribe fuera del directorio temporal" 'ctx "../../../x/../pwned" "$PWD/server/auth/y.ts" >/dev/null; [ ! -e "$WORK/pwned" ] && [ ! -e "$TMPDIR/../pwned" ] && [ -z "$(find "$TMPDIR/maestro-brain-context" -name "*..*" 2>/dev/null)" ]'
+check "sin python3 sale con 0 y en silencio" 'NOPYH="$WORK/nopy-hook"; mkdir -p "$NOPYH"; for d in /bin /usr/bin; do for f in "$d"/*; do b=$(basename "$f"); case "$b" in python*) continue ;; esac; [ -e "$NOPYH/$b" ] || ln -s "$f" "$NOPYH/$b" 2>/dev/null; done; done; OUT=$(ctx_json s11 "$PWD/server/auth/login.ts" | PATH="$NOPYH" CLAUDE_PROJECT_DIR="$PWD" bash $BC); [ $? -eq 0 ] && [ -z "$OUT" ]'
+mv .agents/brain/lessons_learned.md "$WORK/ll.hook"; mv BRAIN.md "$WORK/brain.hook"
+check "sin cerebro en el proyecto sale con 0 y en silencio" '[ -z "$(ctx s12 "$PWD/server/auth/login.ts")" ] && ctx s12 "$PWD/server/auth/login.ts"'
+mv "$WORK/ll.hook" .agents/brain/lessons_learned.md; mv "$WORK/brain.hook" BRAIN.md
+check "el hook no modifica ningún archivo del proyecto" '[ -z "$(git status --porcelain -- BRAIN.md .agents/brain GLOBAL_STATE.md | grep -v "^ M\|^M " )" ] && cp BRAIN.md "$WORK/bh" && cp .agents/brain/lessons_learned.md "$WORK/lh" && ctx s13 "$PWD/server/auth/login.ts" >/dev/null && cmp -s BRAIN.md "$WORK/bh" && cmp -s .agents/brain/lessons_learned.md "$WORK/lh"'
+OLDSET="$WORK/proy-settings-viejo"; mkdir -p "$OLDSET" && git -C "$OLDSET" init -q -b main
+bash "$ROOT/.agents/scripts/init-project.sh" "Viejo" "$OLDSET" >/dev/null 2>&1
+printf '{"hooks":{"PreToolUse":[{"matcher":"Edit","hooks":[{"type":"command","command":"bash x/require-active-task.sh"}]}]}}\n' > "$OLDSET/.claude/settings.json"
+check "init-project --update avisa del hook que falta sin tocar settings.json" 'cp "$OLDSET/.claude/settings.json" "$WORK/set.bak" && bash "$ROOT/.agents/scripts/init-project.sh" --update "$OLDSET" 2>&1 | grep -q "brain-context.sh" && cmp -s "$OLDSET/.claude/settings.json" "$WORK/set.bak"'
+unset TMPDIR
 cd "$WORK" || exit 1
 
 # ------------------------------------------------------------------------------

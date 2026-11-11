@@ -86,18 +86,19 @@ ensure_lessons_file() {
 adopt_brain_lessons() {
   [ -f "$BRAIN_FILE" ] && [ -f "$LL_FILE" ] || return 0
   local missing tmp
-  missing=$(awk -F'|' '
-    function cid(   c) { c = $2; gsub(/[ \t`]/, "", c); return c }
-    FNR == 1 { fileno++ }
+  missing=$(LLF="$LL_FILE" awk -F'|' '
+    function cid(   c) { c = $2; gsub(/[ \t`\r]/, "", c); return c }
     !/^\|/ || cid() !~ /^LL-[0-9]+$/ { next }
-    fileno == 1 { have[cid()] = 1; next }
+    FILENAME == ENVIRON["LLF"] { have[cid()] = 1; next }
     !(cid() in have) {
       have[cid()] = 1
       st = $(NF-1); gsub(/[ \t`]/, "", st)
       if (st != "ACTIVO" && st != "OBSOLETA") st = "ACTIVO"
       line = $0
+      sub(/\r$/, "", line)
       if (NF - 2 >= 8) { sub(/[ \t]*\|[ \t]*$/, " |", line); print line }
-      else { sub(/\|[^|]*\|[ \t]*$/, "", line); sub(/[ \t]+$/, "", line); print line " | `*` | `" st "` |" }
+      else if (NF - 2 == 7) { sub(/\|[^|]*\|[ \t]*$/, "", line); sub(/[ \t]+$/, "", line); print line " | `*` | `" st "` |" }
+      else { sub(/[ \t]*\|[ \t]*$/, "", line); print line " | `*` | `ACTIVO` |" }   # sin columna Estado
     }
   ' "$LL_FILE" "$BRAIN_FILE")
   [ -n "$missing" ] || return 0
