@@ -499,9 +499,9 @@ EOF
     NEXT=$(( $(task_iteration "$TASK_ID") + 1 ))
     # Reincidencia: el motivo repite algo que una lección activa ya cubría
     REC=$(recurrence_for "$REASON")
+    REC_REASON="$REASON"
     if [ -n "$REC" ]; then
       REC_ID="${REC%%$'\t'*}"
-      record_recurrence "$TASK_ID" "$REC_ID" "$REASON"
       REASON="$REASON (reincidencia de $REC_ID)"
     fi
     if [ "$NEXT" -ge "$MAX_ITERATIONS" ]; then
@@ -516,6 +516,10 @@ EOF
       say "   Vuelve a ${BOLD}IN_PROGRESS${NC}; el especialista retoma con 'task.sh start $TASK_ID'."
     fi
     if [ -n "$REC" ]; then
+      # El rechazo ya está registrado: un fallo al anotar la reincidencia solo avisa, nunca lo deshace
+      if ! record_recurrence "$TASK_ID" "$REC_ID" "$REC_REASON" 2>/dev/null; then
+        say "${YELLOW}⚠️  No se pudo anotar la reincidencia en .agents/brain/recurrences.md (¿permisos?); el rechazo sí quedó registrado.${NC}"
+      fi
       say "${YELLOW}🧠 Reincidencia:${NC} $REC_ID ya cubría este fallo (${REC#*$'\t'}). La lección no llegó a tiempo: revisa su ámbito con 'task.sh brain scope $REC_ID \"<globs>\"' o mejora su antídoto."
     fi
     ;;
@@ -551,8 +555,14 @@ EOF
 
     # Captura obligatoria (AGENTS.md §7.2): una tarea que fue rechazada o que corrige un defecto
     # (rama fix/ o descripción Bug:/Fix:/Hotfix:) no se cierra sin lección o sin justificar su ausencia
+    # Los rechazos se cuentan en el historial (§7), no en el contador n/3: 'move' lo reinicia al
+    # salir de BLOCKED, y una tarea que llegó a bloquearse es la que más tiene que enseñar
     NEEDS_LESSON=""
-    [ "$(task_iteration "$TASK_ID")" -ge 1 ] && NEEDS_LESSON="tuvo $(task_iteration "$TASK_ID") rechazo(s) de QA"
+    REJECTIONS=$(TID="$TASK_ID" awk -F'|' '
+      /^\|/ { id = $5; gsub(/[ \t`]/, "", id); if (id == ENVIRON["TID"] && $6 ~ /^[ \t]*Rechazo [0-9]+\/[0-9]+/) n++ }
+      END { print n + 0 }' "$STATE_FILE")
+    [ "$(task_iteration "$TASK_ID")" -gt "$REJECTIONS" ] && REJECTIONS=$(task_iteration "$TASK_ID")
+    [ "$REJECTIONS" -ge 1 ] && NEEDS_LESSON="tuvo $REJECTIONS rechazo(s) de QA"
     if [ -z "$NEEDS_LESSON" ]; then
       case "$(task_field "$TASK_ID" 3 | tr '[:upper:]' '[:lower:]')" in
         bug[:\ ]*|fix[:\ ]*|hotfix[:\ ]*) NEEDS_LESSON="corrige un defecto" ;;
@@ -567,6 +577,8 @@ EOF
       [[ "$CLOSE_LESSON" =~ ^LL-[0-9]+$ ]] || die "ID de lección inválido: '$CLOSE_LESSON' (formato LL-001)."
       all_lessons | awk -F'\t' -v id="$CLOSE_LESSON" '$1 == id { f = 1 } END { exit !f }' \
         || die "$CLOSE_LESSON no existe en el cerebro. Regístrala antes con 'task.sh learn' (skill /aprender)."
+      active_lessons | awk -F'\t' -v id="$CLOSE_LESSON" '$1 == id { f = 1 } END { exit !f }' \
+        || die "$CLOSE_LESSON está OBSOLETA: una lección retirada no vale como aprendizaje de esta tarea. Registra una nueva con 'task.sh learn'."
       LESSON_NOTE=" Lección: $CLOSE_LESSON."
     elif [ -n "$CLOSE_NO_LESSON" ]; then
       case "$CLOSE_NO_LESSON" in *[![:space:]]*) ;; *) die "--no-lesson requiere un motivo." ;; esac

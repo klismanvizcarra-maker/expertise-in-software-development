@@ -377,8 +377,9 @@ BRAIN_REC_SEP='| :---: | :---: | :---: | :--- |'
 rec_file() { printf '%s' "$(dirname "$LL_FILE")/recurrences.md"; }
 
 # Lección activa que un motivo de rechazo repite: "LL-NNN<TAB>problema", o vacío.
-# Coincide si el motivo cita el ID de una lección activa, o si comparte 2 o más palabras
-# significativas (5+ letras) con su problema y su antídoto.
+# Coincide si el motivo cita el ID de una lección activa, o si comparte 3 o más palabras
+# significativas (5+ letras, sin palabras genéricas) con su problema y su antídoto. El umbral
+# es deliberadamente alto: una reincidencia falsa ensucia el historial y las métricas.
 recurrence_for() {
   local lessons norm
   lessons=$(active_lessons)
@@ -387,10 +388,12 @@ recurrence_for() {
   LESSONS="$lessons" NORM="$norm" REASON="$(printf '%s\n' "$1" | norm_text)" awk '
     function words(str, arr,    n, i, w, parts, c) {
       gsub(/[^a-z0-9]+/, " ", str); n = split(str, parts, " "); c = 0
-      for (i = 1; i <= n; i++) { w = parts[i]; if (length(w) >= 5 && !(w in arr)) { arr[w] = 1; c++ } }
+      for (i = 1; i <= n; i++) { w = parts[i]; if (length(w) >= 5 && !(w in stop) && !(w in arr)) { arr[w] = 1; c++ } }
       return c
     }
     BEGIN {
+      ns = split("antes despues cuando donde sobre entre desde hasta todos todas todo cada tiene tienen hacer hacia falta faltan falla fallan fallo fallos error errores tests prueba pruebas suite completa completo ejecutar ejecuta enviar envia valida validar codigo archivo archivos tarea tareas debe deben puede pueden usar usando siempre nunca nuevo nueva nuevos nuevas mismo misma aunque porque mientras tambien solo cualquier correcto correcta incorrecto incorrecta criterio criterios aceptacion cumple cumplen funciona funcionan devuelve devolver salida entrada valor valores datos sistema proyecto script scripts comando comandos linea lineas", sw, " ")
+      for (i = 1; i <= ns; i++) stop[sw[i]] = 1
       nl = split(ENVIRON["LESSONS"], raw, "\n"); split(ENVIRON["NORM"], nrm, "\n")
       reason = ENVIRON["REASON"]; words(reason, rw)
       best = 0; bi = 0
@@ -401,7 +404,7 @@ recurrence_for() {
         for (w in ow) delete ow[w]
         words(g[3] " " g[5], ow); c = 0
         for (w in rw) if (w in ow) c++
-        if (c >= 2 && c > best) { best = c; bi = k }
+        if (c >= 3 && c > best) { best = c; bi = k }
       }
       if (bi) { split(raw[bi], f, "\t"); print f[1] "\t" f[3] }
     }
@@ -412,13 +415,15 @@ recurrence_for() {
 record_recurrence() {
   local file task="$1" lesson="$2" reason="$3" tmp
   file=$(rec_file)
+  [ -d "$file" ] && return 1
   if [ ! -f "$file" ]; then
-    mkdir -p "$(dirname "$file")"
+    mkdir -p "$(dirname "$file")" 2>/dev/null || return 1
+    { : > "$file"; } 2>/dev/null || return 1
     printf '%s\n\n%s\n\n%s\n%s\n' '# Reincidencias (Recurrences)' \
       '> **Propósito**: rechazos de QA cuyo motivo ya estaba cubierto por una lección activa. Lo escribe `task.sh reject`; una lección con reincidencias no está llegando a tiempo al agente: revisa su ámbito (`task.sh brain scope`) o su antídoto.' \
       "$BRAIN_REC_HEADER" "$BRAIN_REC_SEP" > "$file"
   fi
-  printf '| %s | `%s` | `%s` | %s |\n' "$(date +%Y-%m-%d)" "$task" "$lesson" "$(printf '%s' "$reason" | tr '\n\r\t|' '   /')" >> "$file"
+  { printf '| %s | `%s` | `%s` | %s |\n' "$(date +%Y-%m-%d)" "$task" "$lesson" "$(printf '%s' "$reason" | tr '\n\r\t|' '   /')" >> "$file"; } 2>/dev/null || return 1
 }
 
 # Reincidencias como "LL-NNN<TAB>TASK"
@@ -439,7 +444,7 @@ brain_doctor() {
     return 0
   fi
   if ! grep -qE "$BRAIN_HDR_LESSONS" "$LL_FILE"; then
-    printf '%s\n' "ERROR: lessons_learned.md no tiene la tabla de lecciones (cabecera '| ID | Fecha | Categoría | ...')"
+    printf '%s\n' "ERROR: lessons_learned.md no tiene la tabla de lecciones (cabecera '| ID | Fecha | Categoría | ...'); si el archivo está vacío o dañado, bórralo y ejecuta: task.sh brain sync (lo recrea y recupera las lecciones de BRAIN.md)"
     return 1
   fi
   if ! lessons_schema_ok; then

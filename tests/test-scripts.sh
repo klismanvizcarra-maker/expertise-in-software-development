@@ -177,7 +177,8 @@ mkdir -p .agents/reviews
 echo "- **Revisor**: backend-agent" > .agents/reviews/qa_TASK-003.md
 check "close con autor como revisor falla" '! $T close TASK-003 >/dev/null 2>&1'
 echo "- **Revisor**: qa-security-agent" > .agents/reviews/qa_TASK-003.md
-CLOSE_OUT=$($T close TASK-003)
+check "close de una tarea que llegó a BLOCKED sigue exigiendo lección tras move" '! $T close TASK-003 >/dev/null 2>&1 && [ "$(col TASK-003 5)" = IN_REVIEW_QA ]'
+CLOSE_OUT=$($T close TASK-003 --no-lesson "Tarea de prueba del ciclo de vida")
 check "close tras revisión con revisor independiente -> DONE" '[ "$(col TASK-003 5)" = DONE ]'
 check "close muestra comando de fusión a main" 'echo "$CLOSE_OUT" | grep -q "git merge --no-ff"'
 
@@ -363,8 +364,21 @@ to_qa "$F3"; review "$F3"
 check "una corrección (Bug:/rama fix/) no se cierra sin lección aunque no tenga rechazos" 'git branch --list "fix/$F3-*" | grep -q fix/ && ! $T close "$F3" >/dev/null 2>&1'
 check "close --no-lesson con motivo cierra y lo deja en el historial" '$T close "$F3" --no-lesson "Errata en un literal" >/dev/null 2>&1 && [ "$(col "$F3" 5)" = DONE ] && grep "$F3" GLOBAL_STATE.md | grep -q "Sin lección: Errata en un literal"'
 git checkout -q main 2>/dev/null
+$T learn "Leccion que se retira despues" qa "c" "s" >/dev/null; LOBS=$(grep "Leccion que se retira" BRAIN.md | grep -oE "LL-[0-9]+" | head -1); $T lesson-retire "$LOBS" >/dev/null
+$T add "Feature: informe mensual" "backend-agent" "criterio" >/dev/null; F4=$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)
+to_qa "$F4"; review "$F4"; $T reject "$F4" "uno" >/dev/null 2>&1; to_qa "$F4"
+check "close --lesson con una lección OBSOLETA falla" '! $T close "$F4" --lesson "$LOBS" >/dev/null 2>&1 && [ "$(col "$F4" 5)" = IN_REVIEW_QA ]'
+check "motivos genéricos no cuentan como reincidencia" 'R0=$(grep -c "LL-" .agents/brain/recurrences.md) && $T reject "$F4" "Los tests de integracion fallan al ejecutar la suite completa de pedidos" >/dev/null 2>&1 && [ "$(grep -c "LL-" .agents/brain/recurrences.md)" = "$R0" ]'
+to_qa "$F4"
+chmod 444 .agents/brain/recurrences.md
+REJ3=$($T reject "$F4" "Otra vez el listado de pedidos sin paginacion agota la memoria" 2>&1)
+check "si no se puede escribir recurrences.md el rechazo se registra igualmente" '[ "$(col "$F4" 5)" = BLOCKED ] && grep "$F4" GLOBAL_STATE.md | grep -q "Rechazo 3/3.*reincidencia de LL-001" && printf "%s" "$REJ3" | grep -q "No se pudo anotar la reincidencia"'
+chmod 644 .agents/brain/recurrences.md
+$T move "$F4" IN_PROGRESS >/dev/null 2>&1; $T handoff "$F4" >/dev/null 2>&1
+check "reabrir una tarea BLOCKED con move no borra la obligación de lección" '[ "$(col "$F4" 6)" = 0/3 ] && ! $T close "$F4" >/dev/null 2>&1 && $T close "$F4" --lesson LL-001 >/dev/null 2>&1 && [ "$(col "$F4" 5)" = DONE ]'
+git checkout -q main 2>/dev/null
 check "brain doctor da el cerebro por sano" '$T brain doctor >/dev/null 2>&1'
-check "brain stats resume lecciones, reincidencias y deuda" '$T brain stats | grep -q "Lecciones: 1 (1 activas, 0 obsoletas)" && $T brain stats | grep -q "Reincidencias: 1" && $T brain stats | grep -q "LL-001: 1" && $T brain stats | grep -q "\[BACKEND\] 1"'
+check "brain stats resume lecciones, reincidencias y deuda" '$T brain stats | grep -q "Lecciones: 2 (1 activas, 1 obsoletas)" && $T brain stats | grep -q "Reincidencias: 1" && $T brain stats | grep -q "LL-001: 1" && $T brain stats | grep -q "\[BACKEND\] 1"'
 check "validate-state.sh incluye el chequeo del cerebro y pasa" 'bash .agents/scripts/validate-state.sh | grep -q "Cerebro sin errores estructurales"'
 cp .agents/brain/lessons_learned.md "$WORK/ll.doc"; cp BRAIN.md "$WORK/brain.doc"
 grep "LL-001" .agents/brain/lessons_learned.md >> .agents/brain/lessons_learned.md
@@ -374,11 +388,11 @@ cat "$WORK/ll.doc" > .agents/brain/lessons_learned.md
 sed -i.bak 's/`ACTIVO` |$/`RARO` |/' .agents/brain/lessons_learned.md && rm -f .agents/brain/lessons_learned.md.bak
 check "brain doctor detecta un Estado inválido y la desincronización con BRAIN.md" '$T brain doctor 2>&1 | grep -q "Estado inválido" && $T brain doctor 2>&1 | grep -q "no coincide con lessons_learned.md"'
 cat "$WORK/ll.doc" > .agents/brain/lessons_learned.md
-printf '%s\n' "| \`LL-002\` | 2026-01-01 | \`[QA]\` | Texto con | barra sin escapar | causa | solucion | \`*\` | \`ACTIVO\` |" >> .agents/brain/lessons_learned.md
-check "brain doctor detecta una fila con columnas de más" '$T brain doctor 2>&1 | grep -q "ERROR: LL-002 tiene 9 columnas"'
+printf '%s\n' "| \`LL-009\` | 2026-01-01 | \`[QA]\` | Texto con | barra sin escapar | causa | solucion | \`*\` | \`ACTIVO\` |" >> .agents/brain/lessons_learned.md
+check "brain doctor detecta una fila con columnas de más" '$T brain doctor 2>&1 | grep -q "ERROR: LL-00[0-9] tiene 9 columnas"'
 cat "$WORK/ll.doc" > .agents/brain/lessons_learned.md
 $T learn "Leccion a medias sin causa" qa >/dev/null
-check "una lección sin causa ni solución es un aviso, no un error" '$T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "AVISO: LL-002 no documenta la causa"'
+check "una lección sin causa ni solución es un aviso, no un error" '$T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "AVISO: LL-00[0-9] no documenta la causa"'
 check "doctor y stats no modifican ningún archivo" 'cp BRAIN.md "$WORK/b9" && cp .agents/brain/lessons_learned.md "$WORK/l9" && $T brain doctor >/dev/null 2>&1; $T brain stats >/dev/null && cmp -s BRAIN.md "$WORK/b9" && cmp -s .agents/brain/lessons_learned.md "$WORK/l9"'
 mkdir .agents/.task_lock 2>/dev/null
 check "brain doctor, stats, search y for no esperan el lock de escritura" '$T brain doctor >/dev/null 2>&1; $T brain stats >/dev/null 2>&1 && $T brain search pedidos >/dev/null 2>&1'
