@@ -367,3 +367,146 @@ brain_search() {
     }
   '
 }
+
+# ------------------------------------------------------------------------------
+# Reincidencias, salud y métricas
+# ------------------------------------------------------------------------------
+BRAIN_REC_HEADER='| Fecha | Tarea | Lección | Motivo del rechazo |'
+BRAIN_REC_SEP='| :---: | :---: | :---: | :--- |'
+
+rec_file() { printf '%s' "$(dirname "$LL_FILE")/recurrences.md"; }
+
+# Lección activa que un motivo de rechazo repite: "LL-NNN<TAB>problema", o vacío.
+# Coincide si el motivo cita el ID de una lección activa, o si comparte 2 o más palabras
+# significativas (5+ letras) con su problema y su antídoto.
+recurrence_for() {
+  local lessons norm
+  lessons=$(active_lessons)
+  [ -n "$lessons" ] || return 0
+  norm=$(printf '%s\n' "$lessons" | norm_text)
+  LESSONS="$lessons" NORM="$norm" REASON="$(printf '%s\n' "$1" | norm_text)" awk '
+    function words(str, arr,    n, i, w, parts, c) {
+      gsub(/[^a-z0-9]+/, " ", str); n = split(str, parts, " "); c = 0
+      for (i = 1; i <= n; i++) { w = parts[i]; if (length(w) >= 5 && !(w in arr)) { arr[w] = 1; c++ } }
+      return c
+    }
+    BEGIN {
+      nl = split(ENVIRON["LESSONS"], raw, "\n"); split(ENVIRON["NORM"], nrm, "\n")
+      reason = ENVIRON["REASON"]; words(reason, rw)
+      best = 0; bi = 0
+      for (k = 1; k <= nl; k++) {
+        if (raw[k] == "") continue
+        split(raw[k], f, "\t"); split(nrm[k], g, "\t")
+        if (reason ~ ("(^|[^a-z0-9])" tolower(f[1]) "([^0-9]|$)")) { bi = k; best = 99; break }
+        for (w in ow) delete ow[w]
+        words(g[3] " " g[5], ow); c = 0
+        for (w in rw) if (w in ow) c++
+        if (c >= 2 && c > best) { best = c; bi = k }
+      }
+      if (bi) { split(raw[bi], f, "\t"); print f[1] "\t" f[3] }
+    }
+  '
+}
+
+# Anota una reincidencia en .agents/brain/recurrences.md (lo crea si falta)
+record_recurrence() {
+  local file task="$1" lesson="$2" reason="$3" tmp
+  file=$(rec_file)
+  if [ ! -f "$file" ]; then
+    mkdir -p "$(dirname "$file")"
+    printf '%s\n\n%s\n\n%s\n%s\n' '# Reincidencias (Recurrences)' \
+      '> **Propósito**: rechazos de QA cuyo motivo ya estaba cubierto por una lección activa. Lo escribe `task.sh reject`; una lección con reincidencias no está llegando a tiempo al agente: revisa su ámbito (`task.sh brain scope`) o su antídoto.' \
+      "$BRAIN_REC_HEADER" "$BRAIN_REC_SEP" > "$file"
+  fi
+  printf '| %s | `%s` | `%s` | %s |\n' "$(date +%Y-%m-%d)" "$task" "$lesson" "$(printf '%s' "$reason" | tr '\n\r\t|' '   /')" >> "$file"
+}
+
+# Reincidencias como "LL-NNN<TAB>TASK"
+all_recurrences() {
+  local file
+  file=$(rec_file)
+  [ -f "$file" ] || return 0
+  awk -F'|' '/^\|/ { l = $4; gsub(/[ \t`]/, "", l); t = $3; gsub(/[ \t`]/, "", t); if (l ~ /^LL-[0-9]+$/) print l "\t" t }' "$file"
+}
+
+# Valida el cerebro. Imprime "ERROR: ..." o "AVISO: ..." por línea; devuelve 1 si hay errores.
+brain_doctor() {
+  local out="" rc=0
+  if [ ! -f "$LL_FILE" ]; then
+    [ -f "$BRAIN_FILE" ] && grep -qE '^\|[ \t]*`?LL-[0-9]+' "$BRAIN_FILE" \
+      && out="AVISO: falta .agents/brain/lessons_learned.md y BRAIN.md tiene lecciones; ejecuta: task.sh brain sync"
+    [ -n "$out" ] && printf '%s\n' "$out"
+    return 0
+  fi
+  if ! grep -qE "$BRAIN_HDR_LESSONS" "$LL_FILE"; then
+    printf '%s\n' "ERROR: lessons_learned.md no tiene la tabla de lecciones (cabecera '| ID | Fecha | Categoría | ...')"
+    return 1
+  fi
+  if ! lessons_schema_ok; then
+    printf '%s\n' "AVISO: lessons_learned.md usa el esquema antiguo (sin Ámbito ni Estado); ejecuta: task.sh brain sync"
+    return 0
+  fi
+  out=$(awk -F'|' '
+    function trim(x) { gsub(/^[ \t`]+|[ \t`]+$/, "", x); return x }
+    /^\|/ {
+      id = trim($2)
+      if (id !~ /^LL-[0-9]+$/) next
+      n++
+      if (id in seen) print "ERROR: " id " está duplicada en lessons_learned.md"
+      seen[id] = 1
+      if (NF - 2 != 8) { print "ERROR: " id " tiene " (NF - 2) " columnas en lugar de 8 (¿un | sin escapar en el texto?)"; next }
+      st = trim($(NF-1))
+      if (st != "ACTIVO" && st != "OBSOLETA") print "ERROR: " id " tiene un Estado inválido: \"" st "\" (ACTIVO u OBSOLETA)"
+      if (trim($5) == "") print "ERROR: " id " no tiene problema"
+      if (trim($8) == "") print "ERROR: " id " no tiene ámbito (usa * si es general)"
+      if (st == "ACTIVO") {
+        if (trim($6) == "" || trim($6) == "Por documentar") print "AVISO: " id " no documenta la causa raíz"
+        if (trim($7) == "" || trim($7) == "Por documentar") print "AVISO: " id " no documenta la solución"
+      }
+    }
+  ' "$LL_FILE")
+  if [ -f "$BRAIN_FILE" ] && grep -qE "$BRAIN_HDR_LESSONS" "$BRAIN_FILE"; then
+    if [ "$(grep -E '^\|[ \t]*`?LL-[0-9]+' "$BRAIN_FILE")" != "$(grep -E '^\|[ \t]*`?LL-[0-9]+' "$LL_FILE")" ]; then
+      out="${out}${out:+$'\n'}ERROR: la tabla de lecciones de BRAIN.md no coincide con lessons_learned.md; ejecuta: task.sh brain sync"
+    fi
+  fi
+  if [ -f "$DEBT_FILE" ]; then
+    out="${out}${out:+$'\n'}$(awk -F'|' '
+      function trim(x) { gsub(/^[ \t`]+|[ \t`]+$/, "", x); return x }
+      /^\|/ {
+        id = trim($2)
+        if (id !~ /^TD-[0-9]+$/) next
+        if (id in seen) print "ERROR: " id " está duplicada en tech_debt.md"
+        seen[id] = 1
+        pr = trim($(NF-1))
+        if (pr != "ALTA" && pr != "MEDIA" && pr != "BAJA" && pr != "SALDADA") print "ERROR: " id " tiene una prioridad inválida: \"" pr "\""
+        if (trim($3) !~ /^TASK-[0-9]+$/) print "AVISO: " id " no está vinculada a una TASK-XXX"
+      }
+    ' "$DEBT_FILE")"
+  fi
+  out=$(printf '%s\n' "$out" | grep -v '^$' || true)
+  [ -n "$out" ] && printf '%s\n' "$out"
+  printf '%s\n' "$out" | grep -q '^ERROR' && rc=1
+  return $rc
+}
+
+# Resumen numérico del cerebro (orden estable: no depende del "for in" de awk)
+brain_stats() {
+  local lessons recs
+  lessons=$(all_lessons)
+  recs=$(all_recurrences)
+  LESSONS="$lessons" awk '
+    BEGIN {
+      n = split(ENVIRON["LESSONS"], l, "\n")
+      for (i = 1; i <= n; i++) { if (l[i] == "") continue; split(l[i], f, "\t"); total++; if (f[6] == "ACTIVO") { act++; if (f[4] == "*") general++ } else obs++ }
+      printf "Lecciones: %d (%d activas, %d obsoletas)\n", total, act, obs
+      if (act) printf "  Con ámbito de rutas: %d · generales (*): %d\n", act - general, general
+    }'
+  printf '%s\n' "$lessons" | awk -F'\t' '$6 == "ACTIVO" { print $2 }' | sort | uniq -c | awk '{ printf "  [%s] %d\n", $2, $1 }'
+  printf 'Reincidencias: %d\n' "$(printf '%s\n' "$recs" | grep -c . || true)"
+  printf '%s\n' "$recs" | awk -F'\t' 'NF { print $1 }' | sort | uniq -c | sort -rn | awk '{ printf "  %s: %d\n", $2, $1 }'
+  if [ -f "$DEBT_FILE" ]; then
+    awk -F'|' '/^\|/ { id = $2; gsub(/[ \t`]/, "", id); if (id ~ /^TD-[0-9]+$/) { p = $(NF-1); gsub(/[ \t`]/, "", p); if (p == "SALDADA") paid++; else { pend++; if (p == "ALTA") high++ } } }
+      END { printf "Deuda técnica: %d pendiente (%d de prioridad ALTA), %d saldada\n", pend, high, paid }' "$DEBT_FILE"
+  fi
+}

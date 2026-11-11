@@ -38,7 +38,7 @@ Toda transición de estado se hace **exclusivamente** con `./.agents/scripts/tas
 | `IN_PROGRESS` → `IN_REVIEW_QA` | `task.sh handoff TASK-XXX` | Especialista asignado |
 | `IN_REVIEW_QA` → `IN_PROGRESS` (rechazo, +1 iteración) | `task.sh reject TASK-XXX "<motivo>"` | `qa-security-agent` |
 | Retomar tras rechazo (vuelve a su rama) | `task.sh start TASK-XXX` | Especialista asignado |
-| `IN_REVIEW_QA` → `DONE` | `task.sh close TASK-XXX` | `qa-security-agent` (solo tras aprobar) |
+| `IN_REVIEW_QA` → `DONE` | `task.sh close TASK-XXX [--lesson LL-XXX \| --no-lesson "<motivo>"]` | `qa-security-agent` (solo tras aprobar) |
 | Salir de `BLOCKED` (→ `TODO`, `BACKLOG` o `IN_PROGRESS`, reinicia a 0/3) | `task.sh move TASK-XXX <ESTADO>` | `orchestrator-agent` (solo tras decisión humana) |
 | Replanificar (→ `TODO` o `BACKLOG`) | `task.sh move TASK-XXX <ESTADO>` | `orchestrator-agent` |
 
@@ -91,7 +91,7 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
 ## 7. Protocolo del Cerebro y Memoria Persistente (Long-Term Brain)
 
 1. **Consulta Previa al Cerebro**: Antes de abordar cualquier refactorización compleja, solución de bugs o diseño de módulos, el agente debe inspeccionar `BRAIN.md` o `.agents/brain/lessons_learned.md` para verificar si ya existe una solución previa o un antipatrón prohibido. La forma dirigida es `./.agents/scripts/task.sh brain for TASK-XXX [ruta...]` (lecciones y deuda relevantes para la tarea y los archivos que se van a tocar) y `task.sh brain search <términos>`; `task.sh start` muestra ese resumen al iniciar la tarea.
-2. **Registro Obligatorio de Aprendizajes**: Cuando el `qa-security-agent` apruebe la resolución de un defecto no trivial o se adopte una regla crítica, el `orchestrator-agent` debe registrar de inmediato el aprendizaje con `task.sh learn` (skill `/aprender`), indicando con `--paths` las rutas a las que aplica. La fuente única de lecciones es `.agents/brain/lessons_learned.md`; la tabla de `BRAIN.md` se genera desde ella y no se edita a mano.
+2. **Registro Obligatorio de Aprendizajes**: Cuando el `qa-security-agent` apruebe la resolución de un defecto no trivial o se adopte una regla crítica, el `orchestrator-agent` debe registrar de inmediato el aprendizaje con `task.sh learn` (skill `/aprender`), indicando con `--paths` las rutas a las que aplica. La fuente única de lecciones es `.agents/brain/lessons_learned.md`; la tabla de `BRAIN.md` se genera desde ella y no se edita a mano. `task.sh close` lo impone: una tarea que tuvo rechazos de QA o que corrige un defecto (rama `fix/`) no se cierra sin `--lesson LL-XXX` o `--no-lesson "<motivo>"`. Si el motivo de un `task.sh reject` ya estaba cubierto por una lección activa, se anota como **reincidencia** en `.agents/brain/recurrences.md`.
 3. **Respeto a las Preferencias del Usuario**: El archivo `.agents/brain/preferences.md` es vinculante para todos los agentes; se deben respetar las convenciones de tipado, estilo de código y UX allí indicadas.
 4. **El Cerebro va al Agente**: cada lección declara su **ámbito** (globs de rutas). En Claude Code, el hook `.agents/scripts/brain-context.sh` (`.claude/settings.json`) muestra al agente, una vez por sesión, las lecciones activas cuyo ámbito cubre el archivo que va a editar; es informativo y nunca bloquea. En Antigravity no hay hooks: antes de editar, el agente ejecuta `./.agents/scripts/task.sh brain for TASK-XXX <rutas que va a tocar>`.
 

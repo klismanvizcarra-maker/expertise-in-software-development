@@ -32,6 +32,9 @@ Si en lugar de un aprendizaje se trata de una solución provisional aceptada par
 ```
 
 ## Mantenimiento del Cerebro
+- **Captura obligatoria**: `task.sh close` no cierra una tarea que tuvo rechazos de QA o que corrige un defecto sin `--lesson LL-XXX` (la lección registrada) o `--no-lesson "<motivo>"`.
+- **Reincidencias**: cuando el motivo de un `task.sh reject` coincide con una lección activa, queda anotado en `.agents/brain/recurrences.md`. Una lección con reincidencias no está llegando al agente: corrige su ámbito o reescribe su antídoto.
+- **Salud y métricas**: `./.agents/scripts/task.sh brain doctor` valida el cerebro (columnas, IDs duplicados, estados, sincronía con `BRAIN.md`; también lo ejecuta `validate-state.sh`) y `task.sh brain stats` resume lecciones por categoría, reincidencias y deuda.
 - **Consultar antes de trabajar**: `./.agents/scripts/task.sh brain for TASK-XXX [ruta...]` lista las lecciones y la deuda relevantes para una tarea (por ámbito de rutas, categoría del agente y palabras en común); `task.sh brain search <términos>` busca en lecciones, gotchas y deuda sin distinguir tildes ni mayúsculas.
 - **Corregir el ámbito de una lección**: `./.agents/scripts/task.sh brain scope LL-XXX "<globs>"`.
 - **Tras editar a mano `lessons_learned.md`** (por ejemplo, para mejorar un antídoto): `./.agents/scripts/task.sh brain sync`.

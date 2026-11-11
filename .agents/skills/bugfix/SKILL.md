@@ -24,7 +24,7 @@ description: Corrige un bug con método - lo registra como tarea, lo reproduce, 
    - Rastrea con `grep` si el mismo antipatrón se repite en otros módulos del proyecto y corrígelo.
    - Ejecuta `./.agents/scripts/scan-secrets.sh --branch` para asegurar que no se introdujeron credenciales durante la depuración.
 8. **Commit y entrega**: realiza el commit con `./.agents/scripts/task.sh commit TASK-XXX "<descripción del arreglo>" fix` y ejecuta `/handoff`.
-9. **Cierre de aprendizaje**: tras la aprobación en QA, si el defecto fue complejo, de concurrencia, seguridad o incompatibilidad de librerías, ejecuta `/aprender` para incorporar el antídoto en `BRAIN.md`.
+9. **Cierre de aprendizaje**: una corrección no se cierra sin lección. Antes de que QA ejecute `task.sh close`, registra la causa raíz y el antídoto con `/aprender` (`task.sh learn ... --paths "<globs de los archivos afectados>"`); QA cierra con `--lesson LL-XXX`, o con `--no-lesson "<motivo>"` si el defecto era trivial (una errata) y no deja nada que aprender.
 
 ## Checklist antes de `task.sh handoff`
 - [ ] Test automatizado de regresión añadido y pasando en verde.

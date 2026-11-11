@@ -22,8 +22,9 @@
 
 - **Observaciones (BAJA)**: [Detalles no bloqueantes si aplican]
 - **Deuda Técnica**: [Registrada con task.sh debt si aplica]
+- **Lección**: `[LL-XXX registrada con task.sh learn | Sin lección: <motivo>]` (obligatoria si la tarea tuvo rechazos o corrige un defecto)
 
 ## 3. Conclusión y Veredicto Final
 
 - **Estado**: `[APROBADA | RECHAZADA]`
-- **Siguiente paso**: `[task.sh close TASK-XXX | task.sh reject TASK-XXX "<motivo>"]`
+- **Siguiente paso**: `[task.sh close TASK-XXX [--lesson LL-XXX | --no-lesson "<motivo>"] | task.sh reject TASK-XXX "<motivo>"]`
