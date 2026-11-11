@@ -147,6 +147,13 @@ if [ "$IS_UPDATE" -eq 1 ]; then
     fi
   fi
 
+  # .claude/settings.json es del proyecto y no se sobrescribe: solo se avisa si le falta un hook nuevo
+  if [ -f "$TARGET_DIR/.claude/settings.json" ] && ! grep -q 'brain-context.sh' "$TARGET_DIR/.claude/settings.json"; then
+    echo "   (aviso: .claude/settings.json no registra el hook del cerebro; añade la entrada"
+    echo "    'brain-context.sh' de .agents/templates/claude_settings_template.json para que"
+    echo "    las lecciones se muestren al editar los archivos de su ámbito)"
+  fi
+
   if [ -d "$TARGET_DIR/.git" ]; then
     echo "-> Actualizando Git Hooks en repositorio..."
     (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh) || true
@@ -228,9 +235,9 @@ echo "-> Instalando configuracion MCP (.mcp.json)..."
 copy_if_missing "$SKILL_ROOT/.agents/templates/mcp_config_template.json" "$TARGET_DIR/.mcp.json"
 
 # Hook de Claude Code que exige una tarea IN_PROGRESS antes de editar código (AGENTS.md §2.4)
-echo "-> Instalando hook 'Cero Código sin Tarea' (.claude/settings.json)..."
+echo "-> Instalando hooks de Claude Code: 'Cero Código sin Tarea' y cerebro (.claude/settings.json)..."
 if [ -e "$TARGET_DIR/.claude/settings.json" ]; then
-  echo "   (se conserva .claude/settings.json existente: añade a mano el hook de"
+  echo "   (se conserva .claude/settings.json existente: añade a mano los hooks de"
   echo "    .agents/templates/claude_settings_template.json)"
 else
   cp "$SKILL_ROOT/.agents/templates/claude_settings_template.json" "$TARGET_DIR/.claude/settings.json"

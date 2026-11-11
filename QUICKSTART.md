@@ -14,6 +14,7 @@ El sistema funciona igual en **Claude Code** y en **Antigravity**: las skills vi
 | Skills | `.agents/skills/<nombre>/SKILL.md` | `.claude/skills` → enlace a `.agents/skills` |
 | Servidores MCP | `.agents/plugins/maestro-mcp/mcp_config.json` | `.mcp.json` |
 | Hook "cero código sin tarea" | — (regla de `AGENTS.md`) | `.claude/settings.json` → `.agents/scripts/require-active-task.sh` |
+| Hook del cerebro (lecciones al editar) | — (`task.sh brain for TASK-XXX <rutas>`) | `.claude/settings.json` → `.agents/scripts/brain-context.sh` |
 | Invocar una skill | `/<nombre>` o activación automática | `/<nombre>` o activación automática |
 
 ### Requisitos y uso en Windows
@@ -188,7 +189,7 @@ Instala los hooks con un solo comando:
 ```bash
 bash tests/test-scripts.sh
 ```
-Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (194 comprobaciones).
+Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (213 comprobaciones).
 
 ---
 

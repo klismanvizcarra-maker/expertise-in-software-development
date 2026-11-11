@@ -10,6 +10,7 @@
 | :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |
 | `TD-001` | `TASK-029` | 2026-11-10 | General | task.sh commit acepta trailers multilinea: la validacion no rechaza saltos de linea y rompe el bloque de trailers | Workaround temporal | Rechazar trailers con salto de linea (anclar el patron y comprobar una sola linea) y anadir test en tests/test-scripts.sh | `SALDADA` |
 | `TD-002` | `TASK-030` | 2026-11-10 | General | task.sh learn: sin python3 y en locale C el detector de duplicados queda desactivado en silencio (el sed y/// de norm_text falla con caracteres multibyte y devuelve vacio) | Workaround temporal | Hacer el camino sin python3 de norm_text independiente del locale (o degradar a tr sin quitar tildes si sed falla) y anadir test con PATH sin python3 | `SALDADA` |
+| `TD-003` | `TASK-037` | 2026-11-11 | General | brain-context.sh marca la leccion como vista aunque otro hook bloquee la edicion y el registro de sesion no es atomico ni se limpia | Workaround temporal | Verificar en Claude Code si additionalContext llega cuando require-active-task bloquea; si no, no anotar la leccion sin tarea activa; registro atomico y limpieza de archivos antiguos | `MEDIA` |
 
 ---
 

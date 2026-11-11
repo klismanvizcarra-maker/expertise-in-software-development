@@ -33,6 +33,7 @@ flowchart TD
   - `install-hooks.sh`: Instalador de Git hooks locales (`commit-msg` y `pre-commit`).
   - `scan-secrets.sh`: Escáner de secretos y claves criptográficas (`--staged`, `--branch`, `--all`).
   - `require-active-task.sh`: Hook de Claude Code (`.claude/settings.json`) que impone "Cero Código sin Tarea".
+  - `brain-context.sh`: Hook de Claude Code (`.claude/settings.json`) que muestra al agente, una vez por sesión, las lecciones activas cuyo ámbito cubre el archivo que va a editar; nunca bloquea.
   - `validate-state.sh`: Linter de integridad de `GLOBAL_STATE.md` (formato, ciclos y regla de 3 iteraciones).
 - **Arnés de Pruebas y Validación (`tests/`)**:
   - `test-scripts.sh`: Suite de integración de scripts, ciclo de vida, hooks y seguridad.
