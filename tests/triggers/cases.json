@@ -1154,6 +1154,36 @@
     "refactor"
    ],
    "type": "flujo"
+  },
+  {
+   "id": "adp-01",
+   "prompt": "Ya tenemos una API en producción con Express y Drizzle escrita hace un año; queremos integrar SKILL MAESTRO sin sobrescribir nuestro README, código ni configuración",
+   "expect": [
+    "adoptar-proyecto"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "iniciar-proyecto",
+    "refactor"
+   ],
+   "type": "flujo"
+  },
+  {
+   "id": "adp-02",
+   "prompt": "Acabo de correr init-project.sh --adopt sobre este repositorio heredado; haz el inventario inicial, registra la deuda técnica encontrada y deja listo GLOBAL_STATE.md",
+   "expect": [
+    "adoptar-proyecto"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "iniciar-proyecto",
+    "qa-review"
+   ],
+   "type": "flujo"
   }
  ],
  "_seed_tasks": [

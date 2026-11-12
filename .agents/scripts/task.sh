@@ -31,6 +31,7 @@ BRAIN_FILE="$PROJECT_ROOT/BRAIN.md"
 LL_FILE="$PROJECT_ROOT/.agents/brain/lessons_learned.md"
 DEBT_FILE="$PROJECT_ROOT/.agents/brain/tech_debt.md"
 HANDOFF_DIR="$PROJECT_ROOT/.agents/handoffs"
+ARCHIVE_DIR="$PROJECT_ROOT/.agents/archive"
 
 VALID_STATUSES="BACKLOG|TODO|IN_PROGRESS|IN_REVIEW_QA|BLOCKED|DONE"
 MAX_ITERATIONS=3
@@ -145,7 +146,9 @@ normalize_id() {
 next_id() {
   local prefix="$1"; shift
   local files=() f max=0
-  for f in "$@"; do [ -f "$f" ] && files+=("$f"); done
+  for f in "$@"; do
+    if [ -f "$f" ]; then files+=("$f"); fi
+  done
   if [ "${#files[@]}" -gt 0 ]; then
     max=$(P="$prefix" awk -F'|' '
       /^\|/ {
@@ -161,14 +164,33 @@ next_id() {
   printf "%s-%03d" "$prefix" $((10#${max:-0} + 1))
 }
 
-# Imprime las filas del tablero de tareas (columna 1 = TASK-NNN)
-board_rows() {
+# Imprime filas | TASK-NNN | ... | de los archivos indicados
+table_task_rows() {
+  [ "$#" -gt 0 ] || return 0
   awk -F'|' '
     /^\|/ {
       id = $2; gsub(/[ \t`]/, "", id)
       if (id ~ /^TASK-[0-9]+$/) print
     }
-  ' "$STATE_FILE"
+  ' "$@"
+}
+
+# Imprime las filas del tablero de tareas activas (columna 1 = TASK-NNN)
+board_rows() {
+  table_task_rows "$STATE_FILE"
+}
+
+# Imprime las filas de tareas archivadas en .agents/archive/*.md
+archived_rows() {
+  local files=() af
+  if [ -d "$ARCHIVE_DIR" ]; then
+    for af in "$ARCHIVE_DIR"/*.md; do
+      if [ -f "$af" ]; then files+=("$af"); fi
+    done
+  fi
+  if [ "${#files[@]}" -gt 0 ]; then
+    table_task_rows "${files[@]}"
+  fi
 }
 
 # Valor limpio de la columna N (2=ID, 3=desc, 4=agente, 5=estado, 6=iteración) para una tarea
@@ -186,7 +208,15 @@ task_field() {
 }
 
 require_task() {
-  [ -n "$(task_field "$1" 2)" ] || die "La tarea $1 no existe en el tablero de $STATE_FILE."
+  if [ -n "$(task_field "$1" 2)" ]; then
+    return 0
+  fi
+  local arch
+  arch=$(archived_rows | awk -F'|' -v id="$1" '{ c=$2; gsub(/[ \t`]/,"",c); if (c==id) { print id; exit } }' || true)
+  if [ -n "$arch" ]; then
+    die "$1 ya fue completada y archivada en $ARCHIVE_DIR."
+  fi
+  die "La tarea $1 no existe en el tablero de $STATE_FILE."
 }
 
 # Iteraciones de QA consumidas (número antes de /3)
@@ -263,7 +293,7 @@ in_git() {
 # ------------------------------------------------------------------------------
 
 case "$COMMAND" in
-  add|start|move|handoff|reject|close|learn|debt|debt-resolve|lesson-retire)
+  add|start|move|handoff|reject|close|archive|learn|debt|debt-resolve|lesson-retire)
     acquire_lock
     ;;
   brain)
@@ -293,7 +323,13 @@ case "$COMMAND" in
       say "${YELLOW}⚠️  '$AGENT' no coincide con ninguna skill de .agents/skills/ (se registra igualmente).${NC}"
     fi
 
-    NEXT_ID=$(next_id TASK "$STATE_FILE")
+    ADD_FILES=("$STATE_FILE")
+    if [ -d "$ARCHIVE_DIR" ]; then
+      for af in "$ARCHIVE_DIR"/*.md; do
+        if [ -f "$af" ]; then ADD_FILES+=("$af"); fi
+      done
+    fi
+    NEXT_ID=$(next_id TASK "${ADD_FILES[@]}")
     append_to_table "$STATE_FILE" "$HDR_TASKS" \
       "| \`$NEXT_ID\` | $(cell "$DESC") | $(cell "$AGENT") | \`TODO\` | \`0/$MAX_ITERATIONS\` | $(cell "$CRITERIA") |"
     touch_state_date
@@ -643,10 +679,128 @@ EOF
     fi
     ;;
 
+  archive)
+    require_state
+    shift
+    KEEP=0
+    PHASE_LABEL=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --keep)
+          [ -n "${2:-}" ] && [[ "${2:-}" =~ ^[0-9]+$ ]] || die "--keep requiere un entero >= 0 (ej. --keep 5)."
+          KEEP="$2"; shift 2 ;;
+        --keep=*)
+          KEEP="${1#--keep=}"
+          [[ "$KEEP" =~ ^[0-9]+$ ]] || die "--keep requiere un entero >= 0 (ej. --keep=5)."
+          shift ;;
+        --phase)
+          [ -n "${2:-}" ] || die "--phase requiere el nombre de la fase archivada."
+          PHASE_LABEL="$2"; shift 2 ;;
+        --phase=*)
+          PHASE_LABEL="${1#--phase=}"; shift ;;
+        *)
+          die "Opción desconocida para archive: '$1'. Uso: ./task.sh archive [--keep N] [--phase \"<fase>\"]" ;;
+      esac
+    done
+
+    DONE_ROWS=$(board_rows | awk -F'|' '{ st=$5; gsub(/[ \t`]/,"",st); if (st=="DONE") print }')
+    DONE_COUNT=0
+    [ -n "$DONE_ROWS" ] && DONE_COUNT=$(printf '%s\n' "$DONE_ROWS" | grep -c '^|' || true)
+    if [ "$DONE_COUNT" -le "$KEEP" ]; then
+      say "ℹ️  No hay tareas DONE para archivar (en tablero: $DONE_COUNT, --keep $KEEP)."
+      exit 0
+    fi
+
+    ARCHIVE_COUNT=$((DONE_COUNT - KEEP))
+    TO_ARCHIVE_ROWS=$(printf '%s\n' "$DONE_ROWS" | head -n "$ARCHIVE_COUNT")
+    ARCHIVE_IDS=$(printf '%s\n' "$TO_ARCHIVE_ROWS" | awk -F'|' '{ id=$2; gsub(/[ \t`]/,"",id); printf "%s ", id }')
+    FIRST_ID=$(printf '%s' "$ARCHIVE_IDS" | awk '{ print $1 }')
+    LAST_ID=$(printf '%s' "$ARCHIVE_IDS" | awk '{ print $NF }')
+
+    EXISTING_ARCH=$(archived_rows || true)
+    if [ -n "$EXISTING_ARCH" ]; then
+      DUP_ID=$(printf '%s\n' "$EXISTING_ARCH" | IDS="$ARCHIVE_IDS" awk -F'|' '
+        BEGIN { n=split(ENVIRON["IDS"], a, " "); for (i=1;i<=n;i++) if (a[i]!="") want[a[i]]=1 }
+        /^\|/ { cur=$2; gsub(/[ \t`]/,"",cur); if (cur in want) { print cur; exit } }
+      ')
+      [ -z "$DUP_ID" ] || die "$DUP_ID ya existe en $ARCHIVE_DIR; resuelve el duplicado antes de archivar."
+    fi
+
+    mkdir -p "$ARCHIVE_DIR"
+    ARCHIVE_BASENAME="tasks_${TODAY}.md"
+    ARCHIVE_FILE="$ARCHIVE_DIR/$ARCHIVE_BASENAME"
+    if [ ! -f "$ARCHIVE_FILE" ]; then
+      cat > "$ARCHIVE_FILE" <<EOF_ARCH
+# Archivo de Tareas Completadas — $TODAY
+
+> Tareas \`DONE\` archivadas desde \`GLOBAL_STATE.md\`. Contabilizadas por \`task.sh metrics\`, \`task.sh add\` (\`next_id\`) y \`validate-state.sh\`.
+
+| ID Tarea | Descripción | Asignado a | Estado | Iteración QA | Criterios de Aceptación |
+| :--- | :--- | :--- | :--- | :---: | :--- |
+EOF_ARCH
+    fi
+
+    tmp_rows=$(mktemp)
+    printf '%s\n' "$TO_ARCHIVE_ROWS" > "$tmp_rows"
+    tmp_arch=$(mktemp)
+    if ! HDR="$HDR_TASKS" ROWS_FILE="$tmp_rows" awk '
+      { lines[NR] = $0 }
+      !found && $0 ~ ENVIRON["HDR"] { found = 1; intable = 1; at = NR; next }
+      intable { if ($0 ~ /^\|/) at = NR; else intable = 0 }
+      END {
+        if (!found) exit 2
+        for (i = 1; i <= NR; i++) {
+          print lines[i]
+          if (i == at) {
+            while ((getline r < ENVIRON["ROWS_FILE"]) > 0) print r
+            close(ENVIRON["ROWS_FILE"])
+          }
+        }
+      }
+    ' "$ARCHIVE_FILE" > "$tmp_arch"; then
+      rm -f "$tmp_rows" "$tmp_arch"
+      die "No se encontró la tabla de tareas en $ARCHIVE_FILE."
+    fi
+    rm -f "$tmp_rows"
+    replace_file "$tmp_arch" "$ARCHIVE_FILE"
+
+    tmp_state=$(mktemp)
+    HDR="$HDR_TASKS" IDS="$ARCHIVE_IDS" awk '
+      BEGIN {
+        n = split(ENVIRON["IDS"], arr, " ")
+        for (i = 1; i <= n; i++) if (arr[i] != "") drop[arr[i]] = 1
+      }
+      !in_tasks && $0 ~ ENVIRON["HDR"] { in_tasks = 1; print; next }
+      in_tasks {
+        if ($0 !~ /^\|/) { in_tasks = 0; print; next }
+        cur = $2; gsub(/[ \t`]/, "", cur)
+        if (cur in drop) next
+        print; next
+      }
+      { print }
+    ' "$STATE_FILE" > "$tmp_state"
+    replace_file "$tmp_state" "$STATE_FILE"
+    touch_state_date
+
+    RANGE_LABEL="$FIRST_ID"
+    [ "$FIRST_ID" != "$LAST_ID" ] && RANGE_LABEL="${FIRST_ID}..${LAST_ID}"
+    PHASE_NOTE=""
+    [ -n "$PHASE_LABEL" ] && PHASE_NOTE=" ($(cell "$PHASE_LABEL"))"
+    log_history "orchestrator-agent" "orchestrator-agent" "$RANGE_LABEL" "Archivadas $ARCHIVE_COUNT tareas DONE${PHASE_NOTE} en .agents/archive/$ARCHIVE_BASENAME (--keep $KEEP)."
+
+    say "${GREEN}📦 Archivadas $ARCHIVE_COUNT tareas DONE${PHASE_NOTE} en .agents/archive/$ARCHIVE_BASENAME (conservadas en tablero: $KEEP DONE).${NC}"
+    ;;
+
   metrics)
     require_state
-    ROWS=$(board_rows)
-    TOTAL=$(printf '%s' "$ROWS" | grep -c '^|' || true)
+    ACTIVE_ROWS=$(board_rows)
+    ARCH_ROWS=$(archived_rows)
+    ROWS=$(printf '%s\n%s\n' "$ACTIVE_ROWS" "$ARCH_ROWS" | grep -v '^$' || true)
+    if [ -n "$ROWS" ]; then
+      TOTAL=$(printf '%s\n' "$ROWS" | grep -c '^|' || true)
+    else
+      TOTAL=0
+    fi
     if [ "${TOTAL:-0}" -eq 0 ]; then say "No hay tareas registradas."; exit 0; fi
 
     count_status() { printf '%s\n' "$ROWS" | awk -F'|' -v s="$1" '{ v=$5; gsub(/[ \t`]/,"",v); if (v==s) n++ } END { print n+0 }'; }
@@ -654,13 +808,19 @@ EOF
 
     DONE=$(count_status DONE); IN_PROG=$(count_status IN_PROGRESS); IN_QA=$(count_status IN_REVIEW_QA)
     TODO=$(count_status TODO); BACKLOG=$(count_status BACKLOG); BLOCKED=$(count_status BLOCKED)
+    ACTIVE_DONE=$(printf '%s\n' "$ACTIVE_ROWS" | awk -F'|' '{ v=$5; gsub(/[ \t`]/,"",v); if (v=="DONE") n++ } END { print n+0 }')
+    ARCHIVED_DONE=$((DONE - ACTIVE_DONE))
     PCT=$((DONE * 100 / TOTAL)); FILLED=$((PCT * 20 / 100)); BAR=""
     for ((i=0; i<20; i++)); do if [ $i -lt $FILLED ]; then BAR="${BAR}█"; else BAR="${BAR}░"; fi; done
 
     say "${BLUE}${BOLD}=== Métricas del Proyecto ===${NC}"
     say "Progreso: [${GREEN}${BAR}${NC}] ${BOLD}${PCT}%${NC} ($DONE de $TOTAL tareas)"
     say ""
-    say "  - ${GREEN}DONE:${NC}         $DONE"
+    if [ "$ARCHIVED_DONE" -gt 0 ]; then
+      say "  - ${GREEN}DONE:${NC}         $DONE ($ACTIVE_DONE activas, $ARCHIVED_DONE archivadas)"
+    else
+      say "  - ${GREEN}DONE:${NC}         $DONE"
+    fi
     say "  - ${YELLOW}IN_REVIEW_QA:${NC} $IN_QA"
     say "  - ${CYAN}IN_PROGRESS:${NC}  $IN_PROG"
     say "  - ${BLUE}TODO:${NC}         $TODO"
@@ -917,6 +1077,7 @@ EOF
                                          QA aprueba: IN_REVIEW_QA -> DONE (lección obligatoria si la
                                          tarea fue rechazada o corrige un defecto)
   move TASK-ID <TODO|BACKLOG>            Replanificar o desbloquear (BLOCKED también -> IN_PROGRESS)
+  archive [--keep N] [--phase "<fase>"]  Archiva tareas DONE en .agents/archive/ (conserva N recientes)
   commit TASK-ID "<msg>" [tipo] [--trailer "Clave: valor"]...
                                          Commit con formato tipo(TASK-ID): msg (trailers de autoría
                                          también con MAESTRO_COMMIT_TRAILER)

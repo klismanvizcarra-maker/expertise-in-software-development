@@ -31,17 +31,41 @@ ROWS=$(awk -F'|' '
   }
 ' "$STATE_FILE")
 
+ARCHIVE_DIR="$(cd "$(dirname "$STATE_FILE")" 2>/dev/null && pwd)/.agents/archive"
+ARCHIVE_FILES=()
+if [ -d "$ARCHIVE_DIR" ]; then
+  for af in "$ARCHIVE_DIR"/*.md; do
+    [ -f "$af" ] && ARCHIVE_FILES+=("$af")
+  done
+fi
+ARCHIVE_ROWS=""
+if [ "${#ARCHIVE_FILES[@]}" -gt 0 ]; then
+  ARCHIVE_ROWS=$(awk -F'|' '
+    /^\|/ {
+      id = $2; gsub(/[ \t`]/, "", id)
+      if (id !~ /^TASK-[0-9]+$/) next
+      st = $5; gsub(/[ \t`]/, "", st)
+      it = $6; gsub(/[ \t`]/, "", it)
+      print id "|" st "|" it
+    }
+  ' "${ARCHIVE_FILES[@]}")
+fi
+
+ALL_ROWS=$(printf '%s\n%s\n' "$ROWS" "$ARCHIVE_ROWS" | grep -v '^$' || true)
+
 # 1. Filas mal formadas e IDs duplicados
 echo "-> Verificando formato del tablero..."
 BAD=$(printf '%s\n' "$ROWS" | awk -F'|' 'NF == 3 && ($2 !~ /^(BACKLOG|TODO|IN_PROGRESS|IN_REVIEW_QA|BLOCKED|DONE)$/ || $3 !~ /^[0-3]\/3$/) { print "   " $0 }')
-DUP_TASKS=$(printf '%s\n' "$ROWS" | awk -F'|' 'NF == 3 { c[$1]++ } END { for (id in c) if (c[id] > 1) print "   " id " (" c[id] " veces)" }' | sort || true)
+BAD_ARCH=$(printf '%s\n' "$ARCHIVE_ROWS" | awk -F'|' 'NF == 3 && ($2 != "DONE" || $3 !~ /^[0-3]\/3$/) { print "   [archivo] " $0 }')
+[ -n "$BAD_ARCH" ] && BAD=$(printf '%s\n%s\n' "$BAD" "$BAD_ARCH" | grep -v '^$' || true)
+DUP_TASKS=$(printf '%s\n' "$ALL_ROWS" | awk -F'|' 'NF == 3 { c[$1]++ } END { for (id in c) if (c[id] > 1) print "   " id " (" c[id] " veces)" }' | sort || true)
 if [ -n "$BAD" ]; then
   echo "❌ Filas con estado o iteración inválidos (ID|ESTADO|ITERACIÓN):"
   echo "$BAD"
   ERRORS=$((ERRORS + 1))
 fi
 if [ -n "$DUP_TASKS" ]; then
-  echo "❌ IDs de tarea duplicados en el tablero:"
+  echo "❌ IDs de tarea duplicados (tablero / .agents/archive/):"
   echo "$DUP_TASKS"
   ERRORS=$((ERRORS + 1))
 fi
@@ -83,8 +107,14 @@ if [ -d "$SKILLS_DIR" ]; then
 fi
 
 # 3. Resumen
-DONE_TASKS=$(printf '%s\n' "$ROWS" | awk -F'|' '$2 == "DONE" { n++ } END { print n+0 }')
-echo "   [INFO] Tareas completadas (DONE): $DONE_TASKS"
+ACTIVE_DONE=$(printf '%s\n' "$ROWS" | awk -F'|' '$2 == "DONE" { n++ } END { print n+0 }')
+ARCHIVED_DONE=$(printf '%s\n' "$ARCHIVE_ROWS" | awk -F'|' '$2 == "DONE" { n++ } END { print n+0 }')
+DONE_TASKS=$((ACTIVE_DONE + ARCHIVED_DONE))
+if [ "$ARCHIVED_DONE" -gt 0 ]; then
+  echo "   [INFO] Tareas completadas (DONE): $DONE_TASKS ($ACTIVE_DONE activas, $ARCHIVED_DONE archivadas)"
+else
+  echo "   [INFO] Tareas completadas (DONE): $DONE_TASKS"
+fi
 
 # 3b. Salud del cerebro (lecciones y deuda): errores estructurales cuentan como errores
 TASK_SH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/task.sh"
