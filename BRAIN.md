@@ -102,4 +102,3 @@ Solo las trampas del entorno en que se desarrolla **esta librería** (shell, git
 
 | ID | Tarea Vinculada | Descripción de la Deuda | Solución Temporal Aplicada | Acción Definitiva Pendiente | Prioridad |
 | :---: | :---: | :--- | :--- | :--- | :---: |
-| `TD-004` | `TASK-038` | Pendiente documental de TD-004: documentar en qa-review que citar LL-XXX garantiza el registro (comparacion de causa raiz/plurales y filtro de close resueltos en TASK-039) | Workaround temporal | Documentar en qa-review/SKILL.md que citar LL-XXX garantiza el registro y saldar en TASK-041 | `BAJA` |

@@ -43,3 +43,8 @@ Instalación (una vez por proyecto): `npm i -D @playwright/test && npx playwrigh
 - [ ] Cada escenario Gherkin crítico tiene su test.
 - [ ] Sin `waitForTimeout` ni selectores CSS frágiles.
 - [ ] Los tests pasan 3 veces seguidas en local (`--repeat-each=3`).
+
+## Prohibido
+- Usar esperas fijas (`waitForTimeout`) ni aumentar reintentos para ocultar tests inestables (*flaky*).
+- Depender del orden de ejecución o compartir datos/usuarios mutables entre especificaciones.
+- Usar selectores CSS estructurales frágiles cuando existan roles, etiquetas o texto accesibles.

@@ -2,6 +2,19 @@
 
 Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado, [SemVer](https://semver.org/lang/es/). La versión instalada en un proyecto está en `.agents/VERSION`; `init-project.sh --update` la sincroniza.
 
+## [Unreleased]
+
+### Cambiado
+- `orchestrator-agent` lista también `security-hardening` y `observability` entre las skills de técnica (TASK-041).
+- `qa-review` delega la verificación independiente en Antigravity con `TypeName: "self"` y documenta que citar `LL-XXX` en `task.sh reject` garantiza el registro de reincidencias (TD-004, TASK-041).
+- `devops-cloud-agent` y `.agents/templates/ci_workflow_template.yml` actualizados a Node 24 LTS (TASK-041).
+- Las skills de roles de código recuerdan ejecutar `./.agents/scripts/task.sh brain for TASK-XXX <rutas>` antes de editar (paridad con el hook `brain-context.sh` en Antigravity), y `e2e-testing` incorpora sección `## Prohibido` (TASK-041).
+
+### Corregido
+- Saldadas `TD-003` (`brain-context.sh` valida `IN_PROGRESS` antes de emitir/marcar vista, usa bloqueo de sesión seguro sin robar locks y purga sesiones `>7` días) y `TD-004` (`recurrence_for` compara causa raíz y plurales simples; `task.sh close` exige emisor `qa-security-agent`) (TASK-039, TASK-041).
+- `debt_sync()` integrado en `task.sh brain sync`, `debt` y `debt-resolve` con guarda de cabecera y `FILENAME` (evita borrado de `BRAIN.md` ante `tech_debt.md` vacío); `brain doctor` valida §6 de `BRAIN.md` y la tabla de `tech_debt.md` (TASK-039).
+- Endurecidos `task.sh` (`next_id`, `handoff` con `-z`/`quotePath=false`, `close` con `git for-each-ref`, `Última Actualización`), `init-project.sh` (`--stack`, permisos en `strip_examples`, aviso de drift en `AGENTS.md`) y `validate-state.sh` (IDs duplicados y agentes desconocidos) (TASK-039).
+
 ## [1.1.0] - 2026-11-11
 
 ### Añadido
