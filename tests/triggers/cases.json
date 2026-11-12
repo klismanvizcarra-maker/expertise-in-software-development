@@ -426,6 +426,21 @@
    "type": "entrada"
   },
   {
+   "id": "ini-02",
+   "prompt": "Acabamos de ejecutar init-project.sh en una carpeta nueva vacía; acuerda el stack conmigo, limpia las tareas de ejemplo de GLOBAL_STATE.md y planifica la fase 1",
+   "expect": [
+    "iniciar-proyecto"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "adoptar-proyecto",
+    "nueva-tarea"
+   ],
+   "type": "entrada"
+  },
+  {
    "id": "nt-01",
    "prompt": "Crea una tarea para añadir exportación a CSV del listado de clientes",
    "expect": [
@@ -453,6 +468,19 @@
    "type": "especialista"
   },
   {
+   "id": "ho-02",
+   "prompt": "Ya pasan todos los tests y el build de la TASK-012; deja lista la entrega para QA con los comandos de verificación",
+   "expect": [
+    "handoff"
+   ],
+   "accept": [],
+   "forbid": [
+    "qa-review",
+    "pr-review"
+   ],
+   "type": "especialista"
+  },
+  {
    "id": "apr-01",
    "prompt": "Recuerda esto para el futuro: el pool de Postgres se agotaba porque no cerrábamos las conexiones en los tests",
    "expect": [
@@ -461,6 +489,19 @@
    "accept": [],
    "forbid": [
     "bugfix"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "apr-02",
+   "prompt": "Anota esta lección en BRAIN.md para que no se repita: el hook fallaba cuando había espacios en la ruta",
+   "expect": [
+    "aprender"
+   ],
+   "accept": [],
+   "forbid": [
+    "bugfix",
+    "qa-review"
    ],
    "type": "especialista"
   },
@@ -753,6 +794,22 @@
    ]
   },
   {
+   "id": "be-04",
+   "type": "especialista",
+   "prompt": "Implementa el middleware de autenticación JWT, validación con Zod en el body y paginación por cursor para GET /api/v1/invoices",
+   "expect": [
+    "backend-agent"
+   ],
+   "accept": [
+    "stack-angular-express-postgres",
+    "security-hardening"
+   ],
+   "forbid": [
+    "frontend-agent",
+    "database-architect-agent"
+   ]
+  },
+  {
    "id": "db-04",
    "type": "especialista",
    "prompt": "Sigue con la TASK-006: añade la migración de Drizzle para la columna phone en users",
@@ -792,6 +849,19 @@
    "forbid": [
     "frontend-agent",
     "nueva-tarea"
+   ]
+  },
+  {
+   "id": "mob-03",
+   "type": "especialista",
+   "prompt": "Configura los permisos de cámara, biometría FaceID, deep links y almacenamiento seguro en Keychain en nuestra app Expo React Native",
+   "expect": [
+    "mobile-agent"
+   ],
+   "accept": [],
+   "forbid": [
+    "frontend-agent",
+    "backend-agent"
    ]
   },
   {

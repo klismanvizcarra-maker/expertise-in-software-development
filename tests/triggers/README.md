@@ -20,7 +20,7 @@ Requisito único: la CLI debe tener sesión iniciada (la de la app de escritorio
 ```
 Después:
 ```bash
-python3 tests/triggers/run_claude.py                     # los 74 casos
+python3 tests/triggers/run_claude.py                     # todos los casos (87 en cases.json)
 python3 tests/triggers/run_claude.py --only db-01,be-01  # solo algunos
 python3 tests/triggers/run_claude.py --model sonnet      # con otro modelo
 ```

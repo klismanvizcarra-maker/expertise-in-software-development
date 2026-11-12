@@ -27,7 +27,7 @@ Carga la referencia que corresponda al stack del proyecto (`GLOBAL_STATE.md` §2
 ## Protocolo
 
 1. **Medir línea base**: ejecuta Lighthouse móvil para Web Vitals / análisis de bundle en frontend y mide p95 + `EXPLAIN (ANALYZE, BUFFERS)` en endpoints/queries lentos.
-2. **Identificar el cuello real**: ataca la métrica en rojo; prohíbo optimizar código que ya cumple objetivos.
+2. **Identificar el cuello real**: ataca la métrica en rojo; prohibido optimizar código que ya cumple objetivos.
 3. **Aplicar un cambio cada vez**:
    - **Frontend**: code splitting por ruta y bajo el pliegue, imágenes LCP priorizadas y con dimensiones explícitas, fuentes autoalojadas con `swap`, trabajo pesado fuera del hilo principal y eliminación de dependencias redundantes.
    - **Backend y red**: compresión gzip/brotli, `Cache-Control` diferenciado (público inmutable vs privado `no-store`), paginación acotada, columnas explícitas, eliminación de N+1 y operaciones bloqueantes fuera del loop asíncrono.
