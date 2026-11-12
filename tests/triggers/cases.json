@@ -913,6 +913,81 @@
     "stack-nextjs-tailwind-prisma"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "ref-01",
+   "prompt": "Refactoriza el OrderService, tiene 600 líneas y mezcla cálculo de impuestos con acceso a base de datos",
+   "expect": [
+    "refactor"
+   ],
+   "accept": [
+    "domain-logic-agent",
+    "backend-agent",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "bugfix"
+   ],
+   "type": "flujo"
+  },
+  {
+   "id": "ref-02",
+   "prompt": "Quiero limpiar y reorganizar el módulo de usuarios sin cambiar lo que hace",
+   "expect": [
+    "refactor"
+   ],
+   "accept": [
+    "backend-agent",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "bugfix"
+   ],
+   "type": "flujo"
+  },
+  {
+   "id": "ref-03",
+   "prompt": "El cálculo del total sale negativo cuando hay descuento, arréglalo",
+   "expect": [
+    "bugfix"
+   ],
+   "accept": [
+    "domain-logic-agent"
+   ],
+   "forbid": [
+    "refactor"
+   ],
+   "type": "flujo"
+  },
+  {
+   "id": "fase-01",
+   "prompt": "Ya terminamos todas las tareas de esta fase, cerramos la fase y vemos qué sigue",
+   "expect": [
+    "cerrar-fase"
+   ],
+   "accept": [
+    "orchestrator-agent",
+    "estado"
+   ],
+   "forbid": [
+    "release"
+   ],
+   "type": "flujo"
+  },
+  {
+   "id": "fase-02",
+   "prompt": "Hagamos la retrospectiva del sprint: deuda técnica, lecciones y siguiente fase",
+   "expect": [
+    "cerrar-fase"
+   ],
+   "accept": [
+    "orchestrator-agent",
+    "aprender"
+   ],
+   "forbid": [
+    "release"
+   ],
+   "type": "flujo"
   }
  ],
  "_seed_tasks": [
