@@ -43,11 +43,19 @@ while [ $# -gt 0 ]; do
       shift
       ;;
     --stack)
+      if [ -z "${2:-}" ] || [ "${2#-}" != "$2" ]; then
+        echo "❌ ERROR: --stack requiere un valor (nextjs, angular o fastapi)." >&2
+        exit 1
+      fi
       SELECTED_STACK="$2"
       shift 2
       ;;
     --stack=*)
       SELECTED_STACK="${1#*=}"
+      if [ -z "$SELECTED_STACK" ]; then
+        echo "❌ ERROR: --stack= requiere un valor (nextjs, angular o fastapi)." >&2
+        exit 1
+      fi
       shift
       ;;
     *)
@@ -147,11 +155,14 @@ if [ "$IS_UPDATE" -eq 1 ]; then
     fi
   fi
 
-  # .claude/settings.json es del proyecto y no se sobrescribe: solo se avisa si le falta un hook nuevo
+  # .claude/settings.json y AGENTS.md son del proyecto y no se sobrescriben: solo se avisa de novedades
   if [ -f "$TARGET_DIR/.claude/settings.json" ] && ! grep -q 'brain-context.sh' "$TARGET_DIR/.claude/settings.json"; then
     echo "   (aviso: .claude/settings.json no registra el hook del cerebro; añade la entrada"
     echo "    'brain-context.sh' de .agents/templates/claude_settings_template.json para que"
     echo "    las lecciones se muestren al editar los archivos de su ámbito)"
+  fi
+  if [ -f "$SKILL_ROOT/AGENTS.md" ] && [ -f "$TARGET_DIR/AGENTS.md" ] && ! cmp -s "$SKILL_ROOT/AGENTS.md" "$TARGET_DIR/AGENTS.md"; then
+    echo "   (aviso: AGENTS.md del proyecto difiere del de la librería; revísalo si incorporas nuevas reglas de gobierno)"
   fi
 
   if [ -d "$TARGET_DIR/.git" ]; then
@@ -310,7 +321,7 @@ strip_examples() {
   local tmp
   tmp=$(mktemp)
   grep -vE '^\|[ \t]*`?(LL|TD)-[0-9]+' "$1" > "$tmp" || true
-  mv "$tmp" "$1"
+  cat "$tmp" > "$1" && rm -f "$tmp"
 }
 install_brain_file() {
   if [ -e "$2" ]; then

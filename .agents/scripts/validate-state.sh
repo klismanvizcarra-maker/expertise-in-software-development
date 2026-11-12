@@ -31,18 +31,25 @@ ROWS=$(awk -F'|' '
   }
 ' "$STATE_FILE")
 
-# 1. Filas mal formadas
+# 1. Filas mal formadas e IDs duplicados
 echo "-> Verificando formato del tablero..."
 BAD=$(printf '%s\n' "$ROWS" | awk -F'|' 'NF == 3 && ($2 !~ /^(BACKLOG|TODO|IN_PROGRESS|IN_REVIEW_QA|BLOCKED|DONE)$/ || $3 !~ /^[0-3]\/3$/) { print "   " $0 }')
+DUP_TASKS=$(printf '%s\n' "$ROWS" | awk -F'|' 'NF == 3 { c[$1]++ } END { for (id in c) if (c[id] > 1) print "   " id " (" c[id] " veces)" }' | sort || true)
 if [ -n "$BAD" ]; then
   echo "❌ Filas con estado o iteración inválidos (ID|ESTADO|ITERACIÓN):"
   echo "$BAD"
   ERRORS=$((ERRORS + 1))
-else
-  echo "   [OK] Todas las tareas tienen estado e iteración válidos."
+fi
+if [ -n "$DUP_TASKS" ]; then
+  echo "❌ IDs de tarea duplicados en el tablero:"
+  echo "$DUP_TASKS"
+  ERRORS=$((ERRORS + 1))
+fi
+if [ -z "$BAD" ] && [ -z "$DUP_TASKS" ]; then
+  echo "   [OK] Todas las tareas tienen ID único, estado e iteración válidos."
 fi
 
-# 2. Regla de 3 iteraciones
+# 2. Regla de 3 iteraciones y agentes conocidos
 echo "-> Verificando regla de 3 iteraciones..."
 DEADLOCKS=$(printf '%s\n' "$ROWS" | awk -F'|' '$3 == "3/3" || $2 == "BLOCKED" { print "   " $1 " (" $2 ", " $3 ")" }')
 if [ -n "$DEADLOCKS" ]; then
@@ -52,6 +59,27 @@ if [ -n "$DEADLOCKS" ]; then
   WARNINGS=$((WARNINGS + 1))
 else
   echo "   [OK] Ninguna tarea bloqueada por el límite de iteraciones."
+fi
+
+SKILLS_DIR="$(cd "$(dirname "$STATE_FILE")" 2>/dev/null && pwd)/.agents/skills"
+if [ -d "$SKILLS_DIR" ]; then
+  UNKNOWN_AGENTS=$(awk -F'|' '
+    /^\|/ {
+      id = $2; gsub(/[ \t`]/, "", id)
+      if (id !~ /^TASK-[0-9]+$/) next
+      ag = $4; gsub(/`/, "", ag); gsub(/^[ \t]+|[ \t]+$/, "", ag)
+      st = $5; gsub(/[ \t`]/, "", st)
+      if (st != "DONE" && ag != "" && ag != "Equipo") print id "|" ag
+    }
+  ' "$STATE_FILE" | while IFS='|' read -r tid tag; do
+    [ -d "$SKILLS_DIR/$tag" ] || printf '   %s -> %s\n' "$tid" "$tag"
+  done)
+  if [ -n "$UNKNOWN_AGENTS" ]; then
+    echo "⚠️  Tareas activas con agente sin skill en .agents/skills/:"
+    echo "$UNKNOWN_AGENTS"
+    N_UNK=$(printf '%s\n' "$UNKNOWN_AGENTS" | grep -c . || true)
+    WARNINGS=$((WARNINGS + N_UNK))
+  fi
 fi
 
 # 3. Resumen
