@@ -1,0 +1,27 @@
+{
+  "task_id": "TASK-044",
+  "summary": "Crear skills testing-strategy, async-jobs y pr-review con delimitacion estricta",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-12T05:31:23Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/async-jobs/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/async-jobs/references/queues-outbox.md" },
+    { "type": "file", "path": ".agents/skills/async-jobs/references/uploads-email.md" },
+    { "type": "file", "path": ".agents/skills/orchestrator-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/pr-review/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/testing-strategy/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/testing-strategy/references/unit-integration-contracts.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
