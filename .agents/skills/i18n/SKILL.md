@@ -1,75 +1,37 @@
 ---
 name: i18n
-description: Traduce e internacionaliza apps Angular + Express - textos traducibles con @angular/localize (atributo i18n, $localize, plurales ICU), extracción y archivos XLIFF por idioma, builds y rutas por idioma (/es/, /en/), fechas, números y monedas según el locale, mensajes de error de la API por código y emails en el idioma del usuario. Usar al traducir textos o pantallas a otro idioma (inglés, español...), cuando la app debe salir en más de un idioma o al añadir un idioma nuevo. No usar para apps de un solo idioma.
+description: Traduce e internacionaliza aplicaciones web y APIs - extracción y catálogos por idioma, plurales ICU, rutas y builds por locale (/es/, /en/), formato regional de fechas, números y monedas, códigos semánticos de error en API y emails en el idioma del usuario. Usar al traducir textos o pantallas a otro idioma (inglés, español...), cuando la app debe salir en más de un idioma o al añadir un idioma nuevo. No usar para apps de un solo idioma.
 ---
 
 # Internacionalización (i18n)
 
-Estrategia del sistema: **traducción en tiempo de compilación con `@angular/localize`** (oficial, sin dependencias externas y con cero sobrecoste en tiempo de ejecución). Cada idioma genera su propio build servido bajo su ruta dedicada (`/es/`, `/en/`). Verificado con Angular 22 + SSR.
+Principio del sistema: **el idioma fuente se marca con identificadores semánticos explícitos (`modulo.clave`), los textos nunca se concatenan, la API responde códigos máquina y las fechas/monedas viajan en formato neutro (UTC y céntimos enteros).**
+
+## Recetas por stack
+Carga la referencia que corresponda al stack del proyecto (`GLOBAL_STATE.md` §2):
+- **Angular + Express**: [references/angular-express.md](references/angular-express.md) (`@angular/localize`, `.xlf` y extracción en build)
+- **Next.js + Prisma**: [references/nextjs.md](references/nextjs.md) (rutas `[locale]`, catálogos JSON en servidor y `Intl`)
+- **FastAPI + PostgreSQL**: [references/fastapi.md](references/fastapi.md) (códigos de error, `Accept-Language`, perfil de usuario y correos localizados)
+- **Otro stack**: aplica este protocolo agnóstico y registra la elección de librería en un ADR (`docs-architecture-agent`).
 
 ## Protocolo
 
-1. **Configuración de Locales**: instala `@angular/localize` y declara el idioma fuente (`sourceLocale`) y los idiomas destino (`locales`) en `angular.json`.
-2. **Marcado de Contenidos**: etiqueta textos en plantillas con `i18n="@@modulo.clave"` y en TypeScript con `$localize\`:@@modulo.clave:Texto\``.
-3. **Extracción y Traducción**: extrae los mensajes fuente con `ng extract-i18n`, sincroniza los archivos `.xlf` de cada idioma y completa las etiquetas `<target>`.
-4. **Formateo y Dominio**: implementa pipes para fechas, monedas y números sensibles al locale; configura la API backend para retornar códigos semánticos de error en lugar de cadenas traducidas.
-5. **Enrutamiento y Redirección**: configura el proxy inverso o SSR para resolver el locale inicial (cookie → `Accept-Language` → idioma por defecto).
-6. **Compilación y Verificación**: valida que no existan unidades sin traducir con el script de comprobación y verifica los builds de cada idioma.
-
----
-
-## 1. Configuración Inicial
-```bash
-cd apps/web && npx ng add @angular/localize
-```
-En `angular.json` (proyecto web):
-```json
-"i18n": {
-  "sourceLocale": "es",
-  "locales": { "en": { "translation": "src/locale/messages.en.xlf" } }
-}
-```
-y en `architect.build.options`: `"localize": true` (genera `dist/web/browser/es` y `dist/web/browser/en`, y lo mismo para el servidor SSR). Para trabajar en un idioma concreto en desarrollo, añade la configuración de build `"en": { "localize": ["en"] }` y la de `serve` con `"buildTarget": "web:build:development,en"`, y ejecuta `ng serve --configuration=en`.
-
-## 2. Marcar Textos y Mensajes
-- **Plantillas HTML**: `<h1 i18n="@@home.title">Reserva en segundos</h1>`; atributos accesibles con `i18n-alt="@@home.heroAlt"`, `i18n-placeholder`, `i18n-aria-label`.
-- **TypeScript**: `$localize\`:@@orders.deleted:Pedido eliminado\``.
-- **Plurales y género con ICU**: `{count, plural, =0 {Sin reservas} =1 {Una reserva} other {{{count}} reservas}}`.
-- **IDs semánticos explícitos siempre** (`@@modulo.clave`): sin ellos, cambiar una coma del texto original rompe la asociación de traducción.
-- Prohibida la concatenación manual de cadenas (`"Hola " + nombre`). Usa siempre interpolación dentro del mensaje (`Hola {{nombre}}`).
-
-## 3. Flujo de Extracción y Sincronización
-```bash
-npx ng extract-i18n --output-path src/locale    # genera/actualiza src/locale/messages.xlf (fuente)
-```
-1. Copia las unidades nuevas de `messages.xlf` a cada `messages.<locale>.xlf` y completa el elemento `<target>`.
-2. **Comprobación obligatoria de etiquetas `<target>`**: Angular no advierte si una unidad existe sin `<target>`; simplemente emite el texto original sin aviso. Ejecuta:
-   ```bash
-   for f in src/locale/messages.*.xlf; do
-     u=$(grep -c '<trans-unit' "$f"); t=$(grep -c '<target' "$f")
-     [ "$u" = "$t" ] || { echo "❌ $f: $((u - t)) textos sin traducir"; exit 1; }
-   done
-   ```
-3. Versiona los archivos `.xlf` junto con los cambios de código correspondientes.
-
-## 4. Adaptación Backend y Formatos
-- La API REST **nunca devuelve textos traducidos**: devuelve códigos estructurados (`ERR_VALIDATION_FAILED`, `ERR_PLAN_REQUIRED`) y el cliente los localiza.
-- Las comunicaciones emitidas por el backend (correos electrónicos, PDFs, notificaciones push) utilizan el idioma guardado en el perfil del usuario (`users.locale`).
-- Fechas almacenadas siempre en UTC (`timestamptz`); formateadas en cliente mediante pipes (`date`). Monedas con céntimos enteros en API (`currency`).
-
-## 5. Rutas, SEO y Detección
-- El servidor (SSR o Nginx) redirige `/` según: cookie de preferencia → cabecera `Accept-Language` → idioma fuente.
-- Cada idioma cuenta con su URL canónica y etiquetas `hreflang` cruzadas (ver `seo-web`).
+1. **Configuración de locales**: define el idioma fuente (`sourceLocale`), la lista cerrada de idiomas soportados (`es`, `en`, ...) y el mecanismo de detección (`cookie` o `users.locale` → `Accept-Language` → idioma por defecto).
+2. **Marcado de contenidos**: etiqueta todos los textos visibles, notificaciones y atributos accesibles (`alt`, `placeholder`, `aria-label`) con IDs semánticos (`modulo.clave`), nunca con hashes dependientes del texto literal.
+3. **Plurales e interpolación**: usa sintaxis ICU o equivalentes locales para plurales y género; prohíbe concatenar frases traducidas con `+`.
+4. **Extracción y paridad de catálogos**: extrae o valida los archivos de traducción (`.xlf`, `.json`, `.po`) y verifica de forma automatizada que el 100 % de las claves tienen traducción en todos los idiomas.
+5. **Adaptación backend y formatos**: la API devuelve códigos de error (`ERR_VALIDATION_FAILED`, `ERR_PLAN_REQUIRED`) y guarda fechas en UTC (`timestamptz`) e importes en céntimos enteros; la capa de presentación formatea según el locale activo y el backend localiza emails o PDFs usando `users.locale`.
+6. **Rutas y SEO cruzado**: expone rutas dedicadas por idioma (`/es/`, `/en/`) con `<html lang>`, URL canónica por idioma y etiquetas `hreflang` cruzadas (ver skill `seo-web`).
 
 ## Checklist antes de `task.sh handoff`
-- [ ] Todo texto visible, atributo accesible (`aria-label`, `alt`, `placeholder`) y notificación toast cuenta con su identificador `i18n="@@id"`.
-- [ ] Ejecutado `ng extract-i18n` y verificado que el 100% de los `<trans-unit>` cuentan con su correspondiente `<target>`.
-- [ ] Build multilingüe (`npm run build`) compilado con éxito para todos los idiomas configurados.
-- [ ] La API devuelve códigos de error semánticos, sin cadenas fijas en lenguaje natural.
-- [ ] Formateo de fechas, números y monedas verificado en cada idioma soportado.
+- [ ] Todo texto visible, atributo accesible (`aria-label`, `alt`, `placeholder`) y toast usa clave de traducción explícita.
+- [ ] Comprobación automatizada de paridad del 100 % de traducciones entre idiomas en verde (sin claves vacías ni `<trans-unit>` sin `<target>`).
+- [ ] Build multilingüe o suite de i18n compilada/pasada para todos los idiomas configurados.
+- [ ] La API devuelve códigos de error semánticos, nunca texto libre traducido en JSON.
+- [ ] Formateo de fechas, números y monedas y etiquetas `hreflang` verificados en cada idioma.
 
 ## Prohibido
-- Concatenar fragmentos de texto traducidos con operadores `+` en TypeScript o plantillas.
-- Dejar textos visibles sin marcar con atributo `i18n` o `$localize`.
+- Concatenar fragmentos de texto traducidos con operadores `+` o plantillas partidas en lógica o vistas.
+- Dejar textos visibles o atributos accesibles sin marcar en el catálogo de idiomas.
 - Retornar cadenas traducidas en respuestas de error de la API (solo códigos semánticos).
-- Dejar unidades `<trans-unit>` sin etiqueta `<target>` en archivos `.xlf`.
+- Entregar archivos de idioma incompletos (claves faltantes o unidades `<trans-unit>` sin `<target>`).
