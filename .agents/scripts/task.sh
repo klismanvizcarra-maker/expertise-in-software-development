@@ -141,11 +141,23 @@ normalize_id() {
   printf '%s' "$id"
 }
 
-# Siguiente ID con prefijo (TASK, LL, TD) buscando en todos los archivos indicados
+# Siguiente ID con prefijo (TASK, LL, TD) inspeccionando solo la columna ID de tablas Markdown
 next_id() {
   local prefix="$1"; shift
-  local max
-  max=$(cat "$@" 2>/dev/null | grep -oE "${prefix}-[0-9]+" | sed "s/${prefix}-//" | sort -n | tail -1)
+  local files=() f max=0
+  for f in "$@"; do [ -f "$f" ] && files+=("$f"); done
+  if [ "${#files[@]}" -gt 0 ]; then
+    max=$(P="$prefix" awk -F'|' '
+      /^\|/ {
+        c = $2; gsub(/[ \t`]/, "", c)
+        if (c ~ ("^" ENVIRON["P"] "-[0-9]+$")) {
+          n = substr(c, length(ENVIRON["P"]) + 2) + 0
+          if (n > m) m = n
+        }
+      }
+      END { print m + 0 }
+    ' "${files[@]}" 2>/dev/null)
+  fi
   printf "%s-%03d" "$prefix" $((10#${max:-0} + 1))
 }
 
@@ -185,6 +197,18 @@ task_iteration() {
   printf '%s' "$it"
 }
 
+# Actualiza la fecha de "Última Actualización" en GLOBAL_STATE.md si existe la línea
+touch_state_date() {
+  [ -f "$STATE_FILE" ] || return 0
+  local tmp
+  tmp=$(mktemp)
+  TODAY="$TODAY" awk '
+    /^\- \*\*Última Actualización\*\*:/ { print "- **Última Actualización**: `" ENVIRON["TODAY"] "`"; next }
+    { print }
+  ' "$STATE_FILE" > "$tmp"
+  replace_file "$tmp" "$STATE_FILE"
+}
+
 # Reescribe estado (y opcionalmente iteración) solo en la fila de la tarea
 set_task() {
   local id="$1" status="$2" iteration="${3:-}"
@@ -201,6 +225,7 @@ set_task() {
     { print }
   ' "$STATE_FILE" > "$tmp"
   replace_file "$tmp" "$STATE_FILE"
+  touch_state_date
 }
 
 # Añade ROW al final de la tabla cuyo encabezado coincide con HDR (regex awk)
@@ -271,6 +296,7 @@ case "$COMMAND" in
     NEXT_ID=$(next_id TASK "$STATE_FILE")
     append_to_table "$STATE_FILE" "$HDR_TASKS" \
       "| \`$NEXT_ID\` | $(cell "$DESC") | $(cell "$AGENT") | \`TODO\` | \`0/$MAX_ITERATIONS\` | $(cell "$CRITERIA") |"
+    touch_state_date
     say "${GREEN}✅ Tarea agregada:${NC} $NEXT_ID -> $DESC ($AGENT)"
     ;;
 
@@ -306,6 +332,10 @@ case "$COMMAND" in
         git -C "$PROJECT_ROOT" checkout "$BRANCH" >/dev/null 2>&1 \
           || say "${YELLOW}⚠️  No se pudo cambiar a $BRANCH (¿cambios sin guardar?). Cámbiala manualmente.${NC}"
       else
+        CUR_BRANCH=$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null || true)
+        if [ -n "$CUR_BRANCH" ] && [ "$CUR_BRANCH" != "main" ] && [ "$CUR_BRANCH" != "master" ]; then
+          say "${YELLOW}⚠️  Creando rama desde '$CUR_BRANCH' en lugar de main/master.${NC}"
+        fi
         git -C "$PROJECT_ROOT" checkout -b "$BRANCH" >/dev/null 2>&1 \
           || say "${YELLOW}⚠️  No se pudo crear la rama $BRANCH. Créala manualmente.${NC}"
       fi
@@ -413,7 +443,7 @@ case "$COMMAND" in
     ITERATION=$(( $(task_iteration "$TASK_ID") + 1 ))
     TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-    # Archivos entregados: cambios de la rama respecto a main/master + cambios sin commitear
+    # Archivos entregados: cambios de la rama respecto a main/master + cambios sin commitear (rutas con -z para caracteres no ASCII, comillas o espacios)
     FILES=""
     if in_git; then
       BASE=""
@@ -422,9 +452,19 @@ case "$COMMAND" in
       done
       if [ -n "$BASE" ] && [ "$(git -C "$PROJECT_ROOT" branch --show-current)" != "$BASE" ]; then
         MB=$(git -C "$PROJECT_ROOT" merge-base HEAD "$BASE" 2>/dev/null || true)
-        [ -n "$MB" ] && FILES=$(git -C "$PROJECT_ROOT" diff --name-only "$MB" HEAD)
+        if [ -n "$MB" ]; then
+          while IFS= read -r -d '' p; do
+            [ -n "$p" ] && FILES="${FILES}${p}"$'\n'
+          done < <(git -C "$PROJECT_ROOT" -c core.quotePath=false diff -z --name-only "$MB" HEAD 2>/dev/null)
+        fi
       fi
-      UNCOMMITTED=$(git -C "$PROJECT_ROOT" status --porcelain --untracked-files=all | cut -c4- | sed 's/.* -> //')
+      UNCOMMITTED=""
+      while IFS= read -r -d '' entry; do
+        st="${entry:0:2}"
+        p="${entry:3}"
+        case "$st" in R*|C*|?R|?C) IFS= read -r -d '' _old || true ;; esac
+        [ -n "$p" ] && UNCOMMITTED="${UNCOMMITTED}${p}"$'\n'
+      done < <(git -C "$PROJECT_ROOT" -c core.quotePath=false status --porcelain -z --untracked-files=all 2>/dev/null)
       FILES=$(printf '%s\n%s\n' "$FILES" "$UNCOMMITTED" | grep -v '^$' | grep -v '^\.agents/handoffs/' | sort -u || true)
     fi
 
@@ -559,7 +599,11 @@ EOF
     # salir de BLOCKED, y una tarea que llegó a bloquearse es la que más tiene que enseñar
     NEEDS_LESSON=""
     REJECTIONS=$(TID="$TASK_ID" awk -F'|' '
-      /^\|/ { id = $5; gsub(/[ \t`]/, "", id); if (id == ENVIRON["TID"] && $6 ~ /^[ \t]*Rechazo [0-9]+\/[0-9]+/) n++ }
+      /^\|/ {
+        em = $3; gsub(/[ \t`]/, "", em)
+        id = $5; gsub(/[ \t`]/, "", id)
+        if (em == "qa-security-agent" && id == ENVIRON["TID"] && $6 ~ /^[ \t]*Rechazo [0-9]+\/[0-9]+/) n++
+      }
       END { print n + 0 }' "$STATE_FILE")
     [ "$(task_iteration "$TASK_ID")" -gt "$REJECTIONS" ] && REJECTIONS=$(task_iteration "$TASK_ID")
     [ "$REJECTIONS" -ge 1 ] && NEEDS_LESSON="tuvo $REJECTIONS rechazo(s) de QA"
@@ -568,7 +612,7 @@ EOF
         bug[:\ ]*|fix[:\ ]*|hotfix[:\ ]*) NEEDS_LESSON="corrige un defecto" ;;
       esac
     fi
-    if [ -z "$NEEDS_LESSON" ] && in_git && [ -n "$(git -C "$PROJECT_ROOT" branch --list "fix/$TASK_ID-*" 2>/dev/null)" ]; then
+    if [ -z "$NEEDS_LESSON" ] && in_git && [ -n "$(git -C "$PROJECT_ROOT" for-each-ref --format='%(refname:short)' "refs/heads/fix/$TASK_ID-*" "refs/heads/fix/$TASK_ID" 2>/dev/null)" ]; then
       NEEDS_LESSON="corrige un defecto (rama fix/)"
     fi
     LESSON_NOTE=""
@@ -591,7 +635,7 @@ EOF
     log_history "$REVIEWER" "orchestrator-agent" "$TASK_ID" "Aprobada por QA -> DONE.$LESSON_NOTE"
     say "${GREEN}✅ $TASK_ID aprobada y cerrada (DONE).${NC}"
     if in_git; then
-      BRANCH=$(git -C "$PROJECT_ROOT" branch --list "*$TASK_ID*" 2>/dev/null | tr -d '* ' | head -n1)
+      BRANCH=$(git -C "$PROJECT_ROOT" for-each-ref --format='%(refname:short)' "refs/heads/*/$TASK_ID-*" "refs/heads/$TASK_ID-*" "refs/heads/*/$TASK_ID" 2>/dev/null | head -n1)
       if [ -n "$BRANCH" ]; then
         say "${CYAN}💡 Comando de fusión y limpieza:${NC}"
         say "   git checkout main && git merge --no-ff $BRANCH && git branch -d $BRANCH"
@@ -737,6 +781,7 @@ EOF
     NEXT_ID=$(next_id TD "$DEBT_FILE")
     append_to_table "$DEBT_FILE" "$HDR_DEBT" \
       "| \`$NEXT_ID\` | \`$TASK_ID\` | $TODAY | General | $(cell "$DESC") | Workaround temporal | $(cell "$ACTION") | \`$PRIORITY\` |"
+    debt_sync
     say "${YELLOW}📋 Deuda técnica registrada:${NC} $NEXT_ID -> $DESC (vinculada a $TASK_ID)"
     ;;
 
@@ -747,7 +792,7 @@ EOF
     require_file "$DEBT_FILE" "Créalo desde .agents/templates/tech_debt_template.md."
     grep -qE "^\|[[:space:]]*\`?$TD_ID\`?[[:space:]]*\|" "$DEBT_FILE" || die "$TD_ID no existe en $DEBT_FILE."
     # tech_debt.md conserva la fila marcada SALDADA (así el ID no se reutiliza y queda la traza);
-    # del resumen de BRAIN.md se elimina
+    # del resumen de BRAIN.md se retira al sincronizar §6
     if awk -F'|' -v id="$TD_ID" '/^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { p = $(NF-1); gsub(/[ \t`]/, "", p); if (p == "SALDADA") f = 1 } } END { exit !f }' "$DEBT_FILE"; then
       die "$TD_ID ya estaba marcada como SALDADA."
     fi
@@ -755,9 +800,7 @@ EOF
       /^\|/ { c = $2; gsub(/[ \t`]/, "", c); if (c == id) { $(NF-1) = " `SALDADA` " } }
       { print }
     ' "$DEBT_FILE" > "$DEBT_FILE.tmp" && replace_file "$DEBT_FILE.tmp" "$DEBT_FILE"
-    if [ -f "$BRAIN_FILE" ]; then
-      awk -F'|' -v id="$TD_ID" '{ c = $2; gsub(/[ \t`]/, "", c); if (/^\|/ && c == id) next; print }' "$BRAIN_FILE" > "$BRAIN_FILE.tmp" && replace_file "$BRAIN_FILE.tmp" "$BRAIN_FILE"
-    fi
+    debt_sync
     say "${GREEN}✅ Deuda técnica saldada:${NC} $TD_ID marcada SALDADA en tech_debt.md y retirada de BRAIN.md."
     ;;
 

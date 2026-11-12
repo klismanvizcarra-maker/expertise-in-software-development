@@ -63,17 +63,62 @@ case "$FILE" in
   *) REL="${FILE#./}" ;;
 esac
 
+# Si aplica "Cero Código sin Tarea" y no hay tarea IN_PROGRESS, no emitir ni marcar vista (TD-003)
+if [ -f "$STATE_FILE" ] && [ "${MAESTRO_ALLOW_UNTRACKED:-0}" != "1" ]; then
+  case "$REL" in
+    *.md|docs/*|specs/*|.agents/*|.claude/*) ;;
+    *)
+      ACTIVE=$(awk -F'|' '
+        /^\|/ {
+          id = $2; gsub(/[ \t`]/, "", id)
+          st = $5; gsub(/[ \t`]/, "", st)
+          if (id ~ /^TASK-[0-9]+$/ && st == "IN_PROGRESS") { print id; exit }
+        }
+      ' "$STATE_FILE" 2>/dev/null)
+      [ -n "$ACTIVE" ] || exit 0
+      ;;
+  esac
+fi
+
 # Lecciones activas cuyo ámbito cubre la ruta (sin categoría ni texto de tarea)
 HITS=$(relevant_lessons "" "" "$REL" 2>/dev/null)
 [ -n "$HITS" ] || exit 0
 
-# Una vez por lección y sesión
+# Una vez por lección y sesión (registro atómico + limpieza >7 días)
 SEEN_FILE=""
+SEEN_LOCK=""
 if [ -n "$SESSION" ]; then
   SEEN_DIR="${TMPDIR:-/tmp}/maestro-brain-context"
-  mkdir -p "$SEEN_DIR" 2>/dev/null && SEEN_FILE="$SEEN_DIR/$SESSION"
+  if mkdir -p "$SEEN_DIR" 2>/dev/null; then
+    find "$SEEN_DIR" -maxdepth 1 -type f \( -name 'seen_*' -o ! -name '.*' \) -mtime +7 -delete 2>/dev/null || true
+    SEEN_FILE="$SEEN_DIR/seen_$SESSION"
+    SEEN_LOCK="$SEEN_DIR/.lock_$SESSION"
+  fi
 fi
+
+LOCK_HELD=0
+cleanup_seen_lock() {
+  if [ "${LOCK_HELD:-0}" -eq 1 ] && [ -n "${SEEN_LOCK:-}" ]; then
+    rmdir "$SEEN_LOCK" 2>/dev/null || true
+    LOCK_HELD=0
+  fi
+}
+trap 'cleanup_seen_lock' EXIT INT TERM
+
+if [ -n "$SEEN_LOCK" ]; then
+  tries=0
+  while [ "$tries" -lt 20 ]; do
+    if mkdir "$SEEN_LOCK" 2>/dev/null; then
+      LOCK_HELD=1
+      break
+    fi
+    tries=$((tries + 1))
+    sleep 0.02 2>/dev/null || break
+  done
+fi
+
 NEW=""
+NEW_IDS=""
 while IFS= read -r line; do
   [ -n "$line" ] || continue
   id="${line%%$'\t'*}"
@@ -81,8 +126,19 @@ while IFS= read -r line; do
     continue
   fi
   NEW="${NEW}${line}"$'\n'
-  [ -n "$SEEN_FILE" ] && printf '%s\n' "$id" >> "$SEEN_FILE" 2>/dev/null
+  NEW_IDS="${NEW_IDS}${id}"$'\n'
 done <<< "$HITS"
+
+if [ -n "$NEW" ] && [ -n "$SEEN_FILE" ] && [ "$LOCK_HELD" -eq 1 ]; then
+  TMP_SEEN="$SEEN_DIR/.tmp.$$.$SESSION"
+  {
+    [ -f "$SEEN_FILE" ] && cat "$SEEN_FILE" 2>/dev/null || true
+    printf '%s' "$NEW_IDS"
+  } > "$TMP_SEEN" 2>/dev/null && mv -f "$TMP_SEEN" "$SEEN_FILE" 2>/dev/null || rm -f "$TMP_SEEN" 2>/dev/null
+fi
+
+cleanup_seen_lock
+
 [ -n "$NEW" ] || exit 0
 
 HITS_NEW="$NEW" REL="$REL" python3 -c '

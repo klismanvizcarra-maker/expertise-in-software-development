@@ -21,6 +21,9 @@
 BRAIN_HDR_LESSONS='^\|[ \t]*ID[ \t]*\|[ \t]*Fecha[ \t]*\|[ \t]*Categor'
 BRAIN_LL_HEADER='| ID | Fecha | Categoría | Problema Encontrado | Causa Raíz | Solución Aplicada (Antídoto) | Ámbito | Estado |'
 BRAIN_LL_SEP='| :---: | :---: | :---: | :--- | :--- | :--- | :--- | :---: |'
+BRAIN_HDR_DEBT='^\|[ \t]*ID[ \t]*\|[ \t]*Tarea Vinculada'
+BRAIN_DEBT_HEADER='| ID | Tarea Vinculada | Descripción de la Deuda | Solución Temporal Aplicada | Acción Definitiva Pendiente | Prioridad |'
+BRAIN_DEBT_SEP='| :---: | :---: | :--- | :--- | :--- | :---: |'
 
 # Minúsculas y sin tildes, línea a línea (tolower de awk BSD no baja Á/Ó en locale C)
 norm_text() {
@@ -172,21 +175,25 @@ ensure_lessons_schema() {
   replace_file "$tmp" "$LL_FILE"
 }
 
-# Regenera la tabla de lecciones de BRAIN.md a partir de lessons_learned.md (fuente única)
-brain_sync() {
-  ensure_lessons_file
-  grep -qE "$BRAIN_HDR_LESSONS" "$LL_FILE" || die "No se encontró la tabla de lecciones en $LL_FILE; no se modifica BRAIN.md."
-  ensure_lessons_schema
-  [ -f "$BRAIN_FILE" ] || return 0
-  # Antes de regenerar BRAIN.md, ninguna lección suya puede faltar en la fuente
-  adopt_brain_lessons
-  grep -qE "$BRAIN_HDR_LESSONS" "$BRAIN_FILE" || return 0
+# Regenera el resumen de deuda pendiente de BRAIN.md (§6) a partir de tech_debt.md
+debt_sync() {
+  [ -f "$DEBT_FILE" ] && [ -f "$BRAIN_FILE" ] || return 0
+  grep -qE "$BRAIN_HDR_DEBT" "$DEBT_FILE" || return 0
+  grep -qE "$BRAIN_HDR_DEBT" "$BRAIN_FILE" || return 0
   local tmp
   tmp=$(mktemp)
-  HDR="$BRAIN_HDR_LESSONS" NEWHDR="$BRAIN_LL_HEADER" NEWSEP="$BRAIN_LL_SEP" awk -F'|' '
-    FNR == NR {
-      c = $2; gsub(/[ \t`]/, "", c)
-      if ($0 ~ /^\|/ && c ~ /^LL-[0-9]+$/) rows[++n] = $0
+  DF="$DEBT_FILE" HDR="$BRAIN_HDR_DEBT" NEWHDR="$BRAIN_DEBT_HEADER" NEWSEP="$BRAIN_DEBT_SEP" awk -F'|' '
+    function trim(x) { gsub(/^[ \t]+|[ \t]+$/, "", x); return x }
+    FILENAME == ENVIRON["DF"] {
+      id = trim($2); gsub(/`/, "", id)
+      if ($0 ~ /^\|/ && id ~ /^TD-[0-9]+$/) {
+        pr = trim($(NF-1)); gsub(/`/, "", pr)
+        if (pr != "SALDADA") {
+          task = trim($3); gsub(/`/, "", task)
+          desc = trim($6); work = trim($7); act = trim($8)
+          rows[++n] = "| `" id "` | `" task "` | " desc " | " work " | " act " | `" pr "` |"
+        }
+      }
       next
     }
     !done && $0 ~ ENVIRON["HDR"] {
@@ -196,11 +203,42 @@ brain_sync() {
     }
     skipping { if ($0 ~ /^\|/) next; skipping = 0 }
     { print }
-  ' "$LL_FILE" "$BRAIN_FILE" > "$tmp" || { rm -f "$tmp"; die "No se pudo sincronizar $BRAIN_FILE."; }
+  ' "$DEBT_FILE" "$BRAIN_FILE" > "$tmp" || { rm -f "$tmp"; die "No se pudo sincronizar deuda en $BRAIN_FILE."; }
   replace_file "$tmp" "$BRAIN_FILE"
 }
 
-# Lecciones como "LL-NNN<TAB>CATEGORIA<TAB>problema<TAB>ámbito<TAB>solución<TAB>estado".
+# Regenera la tabla de lecciones de BRAIN.md a partir de lessons_learned.md (fuente única)
+# y sincroniza también la tabla resumen de deuda técnica (§6) si existe tech_debt.md
+brain_sync() {
+  ensure_lessons_file
+  grep -qE "$BRAIN_HDR_LESSONS" "$LL_FILE" || die "No se encontró la tabla de lecciones en $LL_FILE; no se modifica BRAIN.md."
+  ensure_lessons_schema
+  [ -f "$BRAIN_FILE" ] || return 0
+  # Antes de regenerar BRAIN.md, ninguna lección suya puede faltar en la fuente
+  adopt_brain_lessons
+  if grep -qE "$BRAIN_HDR_LESSONS" "$BRAIN_FILE"; then
+    local tmp
+    tmp=$(mktemp)
+    LF="$LL_FILE" HDR="$BRAIN_HDR_LESSONS" NEWHDR="$BRAIN_LL_HEADER" NEWSEP="$BRAIN_LL_SEP" awk -F'|' '
+      FILENAME == ENVIRON["LF"] {
+        c = $2; gsub(/[ \t`]/, "", c)
+        if ($0 ~ /^\|/ && c ~ /^LL-[0-9]+$/) rows[++n] = $0
+        next
+      }
+      !done && $0 ~ ENVIRON["HDR"] {
+        print ENVIRON["NEWHDR"]; print ENVIRON["NEWSEP"]
+        for (i = 1; i <= n; i++) print rows[i]
+        done = 1; skipping = 1; next
+      }
+      skipping { if ($0 ~ /^\|/) next; skipping = 0 }
+      { print }
+    ' "$LL_FILE" "$BRAIN_FILE" > "$tmp" || { rm -f "$tmp"; die "No se pudo sincronizar $BRAIN_FILE."; }
+    replace_file "$tmp" "$BRAIN_FILE"
+  fi
+  debt_sync
+}
+
+# Lecciones como "LL-NNN<TAB>CATEGORIA<TAB>problema<TAB>ámbito<TAB>solución<TAB>estado<TAB>causa".
 # Lee la fuente única; si aún tiene el esquema antiguo, cae a BRAIN.md (solo lectura, sin migrar).
 all_lessons() {
   if lessons_schema_ok; then
@@ -210,11 +248,12 @@ all_lessons() {
         if (id !~ /^LL-[0-9]+$/) next
         cat = $4; gsub(/[ \t`\[\]]/, "", cat)
         p = $5; gsub(/^[ \t]+|[ \t]+$/, "", p)
+        c = $6; gsub(/^[ \t]+|[ \t]+$/, "", c)
         s = $7; gsub(/^[ \t]+|[ \t]+$/, "", s)
         sc = $8; gsub(/`/, "", sc); gsub(/^[ \t]+|[ \t]+$/, "", sc)
         st = $(NF-1); gsub(/[ \t`]/, "", st)
-        gsub(/\t/, " ", p); gsub(/\t/, " ", s); gsub(/\t/, " ", sc)
-        print id "\t" cat "\t" p "\t" sc "\t" s "\t" st
+        gsub(/\t/, " ", p); gsub(/\t/, " ", c); gsub(/\t/, " ", s); gsub(/\t/, " ", sc)
+        print id "\t" cat "\t" p "\t" sc "\t" s "\t" st "\t" c
       }
     ' "$LL_FILE"
   elif [ -f "$BRAIN_FILE" ]; then
@@ -224,10 +263,11 @@ all_lessons() {
         if (id !~ /^LL-[0-9]+$/) next
         cat = $4; gsub(/[ \t`\[\]]/, "", cat)
         p = $5; gsub(/^[ \t]+|[ \t]+$/, "", p)
+        c = $6; gsub(/^[ \t]+|[ \t]+$/, "", c)
         s = $7; gsub(/^[ \t]+|[ \t]+$/, "", s)
         st = $(NF-1); gsub(/[ \t`]/, "", st)
-        gsub(/\t/, " ", p); gsub(/\t/, " ", s)
-        print id "\t" cat "\t" p "\t*\t" s "\t" st
+        gsub(/\t/, " ", p); gsub(/\t/, " ", c); gsub(/\t/, " ", s)
+        print id "\t" cat "\t" p "\t*\t" s "\t" st "\t" c
       }
     ' "$BRAIN_FILE"
   fi
@@ -378,22 +418,33 @@ rec_file() { printf '%s' "$(dirname "$LL_FILE")/recurrences.md"; }
 
 # Lección activa que un motivo de rechazo repite: "LL-NNN<TAB>problema", o vacío.
 # Coincide si el motivo cita el ID de una lección activa, o si comparte 3 o más palabras
-# significativas (5+ letras, sin palabras genéricas) con su problema y su antídoto. El umbral
-# es deliberadamente alto: una reincidencia falsa ensucia el historial y las métricas.
+# significativas (5+ letras, sin palabras genéricas y agrupando plurales simples) con su
+# problema, causa raíz o antídoto (TD-004).
 recurrence_for() {
   local lessons norm
   lessons=$(active_lessons)
   [ -n "$lessons" ] || return 0
   norm=$(printf '%s\n' "$lessons" | norm_text)
   LESSONS="$lessons" NORM="$norm" REASON="$(printf '%s\n' "$1" | norm_text)" awk '
+    function stem(w) {
+      if (length(w) >= 7 && w ~ /(ad|or|on|al|ar|er|an|en|in|un|iz|uz)es$/) sub(/es$/, "", w)
+      else if (length(w) >= 6 && w ~ /s$/ && w !~ /(ss|is|us)$/) sub(/s$/, "", w)
+      return w
+    }
     function words(str, arr,    n, i, w, parts, c) {
       gsub(/[^a-z0-9]+/, " ", str); n = split(str, parts, " "); c = 0
-      for (i = 1; i <= n; i++) { w = parts[i]; if (length(w) >= 5 && !(w in stop) && !(w in arr)) { arr[w] = 1; c++ } }
+      for (i = 1; i <= n; i++) {
+        w = parts[i]
+        if (length(w) >= 5 && !(w in stop)) {
+          w = stem(w)
+          if (!(w in stop) && !(w in arr)) { arr[w] = 1; c++ }
+        }
+      }
       return c
     }
     BEGIN {
       ns = split("antes despues cuando donde sobre entre desde hasta todos todas todo cada tiene tienen hacer hacia falta faltan falla fallan fallo fallos error errores tests prueba pruebas suite completa completo ejecutar ejecuta enviar envia valida validar codigo archivo archivos tarea tareas debe deben puede pueden usar usando siempre nunca nuevo nueva nuevos nuevas mismo misma aunque porque mientras tambien solo cualquier correcto correcta incorrecto incorrecta criterio criterios aceptacion cumple cumplen funciona funcionan devuelve devolver salida entrada valor valores datos sistema proyecto script scripts comando comandos linea lineas", sw, " ")
-      for (i = 1; i <= ns; i++) stop[sw[i]] = 1
+      for (i = 1; i <= ns; i++) stop[stem(sw[i])] = 1
       nl = split(ENVIRON["LESSONS"], raw, "\n"); split(ENVIRON["NORM"], nrm, "\n")
       reason = ENVIRON["REASON"]; words(reason, rw)
       best = 0; bi = 0
@@ -402,7 +453,7 @@ recurrence_for() {
         split(raw[k], f, "\t"); split(nrm[k], g, "\t")
         if (reason ~ ("(^|[^a-z0-9])" tolower(f[1]) "([^0-9]|$)")) { bi = k; best = 99; break }
         for (w in ow) delete ow[w]
-        words(g[3] " " g[5], ow); c = 0
+        words(g[3] " " g[5] " " g[7], ow); c = 0
         for (w in rw) if (w in ow) c++
         if (c >= 3 && c > best) { best = c; bi = k }
       }
@@ -476,18 +527,30 @@ brain_doctor() {
     fi
   fi
   if [ -f "$DEBT_FILE" ]; then
-    out="${out}${out:+$'\n'}$(awk -F'|' '
-      function trim(x) { gsub(/^[ \t`]+|[ \t`]+$/, "", x); return x }
-      /^\|/ {
-        id = trim($2)
-        if (id !~ /^TD-[0-9]+$/) next
-        if (id in seen) print "ERROR: " id " está duplicada en tech_debt.md"
-        seen[id] = 1
-        pr = trim($(NF-1))
-        if (pr != "ALTA" && pr != "MEDIA" && pr != "BAJA" && pr != "SALDADA") print "ERROR: " id " tiene una prioridad inválida: \"" pr "\""
-        if (trim($3) !~ /^TASK-[0-9]+$/) print "AVISO: " id " no está vinculada a una TASK-XXX"
-      }
-    ' "$DEBT_FILE")"
+    if ! grep -qE "$BRAIN_HDR_DEBT" "$DEBT_FILE"; then
+      out="${out}${out:+$'\n'}ERROR: tech_debt.md no tiene la tabla de deuda técnica (cabecera '| ID | Tarea Vinculada | ...')"
+    else
+      out="${out}${out:+$'\n'}$(awk -F'|' '
+        function trim(x) { gsub(/^[ \t`]+|[ \t`]+$/, "", x); return x }
+        /^\|/ {
+          id = trim($2)
+          if (id !~ /^TD-[0-9]+$/) next
+          if (id in seen) print "ERROR: " id " está duplicada en tech_debt.md"
+          seen[id] = 1
+          pr = trim($(NF-1))
+          if (pr != "ALTA" && pr != "MEDIA" && pr != "BAJA" && pr != "SALDADA") print "ERROR: " id " tiene una prioridad inválida: \"" pr "\""
+          if (trim($3) !~ /^TASK-[0-9]+$/) print "AVISO: " id " no está vinculada a una TASK-XXX"
+        }
+      ' "$DEBT_FILE")"
+      if [ -f "$BRAIN_FILE" ] && grep -qE "$BRAIN_HDR_DEBT" "$BRAIN_FILE"; then
+        local td_pend td_brain
+        td_pend=$(pending_debts | awk -F'\t' '{ print $1 ":" $4 }' | sort)
+        td_brain=$(awk -F'|' '/^\|/ { id = $2; gsub(/[ \t`]/, "", id); if (id ~ /^TD-[0-9]+$/) { pr = $(NF-1); gsub(/[ \t`]/, "", pr); print id ":" pr } }' "$BRAIN_FILE" | sort)
+        if [ "$td_pend" != "$td_brain" ]; then
+          out="${out}${out:+$'\n'}ERROR: la tabla de deuda técnica de BRAIN.md no coincide con tech_debt.md; ejecuta: task.sh brain sync"
+        fi
+      fi
+    fi
   fi
   out=$(printf '%s\n' "$out" | grep -v '^$' || true)
   [ -n "$out" ] && printf '%s\n' "$out"

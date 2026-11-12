@@ -1,0 +1,28 @@
+{
+  "task_id": "TASK-039",
+  "summary": "Saldar TD-003 y TD-004 y endurecer scripts (task.sh, brain-lib.sh, brain-context.sh, init-project.sh, validate-state.sh)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-12T03:49:48Z",
+  "iteration": 2,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/brain/tech_debt.md" },
+    { "type": "file", "path": ".agents/reviews/qa_TASK-039.md" },
+    { "type": "file", "path": ".agents/scripts/brain-context.sh" },
+    { "type": "file", "path": ".agents/scripts/brain-lib.sh" },
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": ".agents/scripts/validate-state.sh" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-flow.sh",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/task.sh brain doctor",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

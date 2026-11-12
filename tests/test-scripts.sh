@@ -74,6 +74,8 @@ for st in nextjs angular fastapi; do
 done
 check "--stack fastapi instala la skill del stack" '[ -f "$WORK/fastapi-app/.agents/skills/stack-fastapi-postgres/SKILL.md" ]'
 check "--stack con valor desconocido sale con exit 1" '! bash "$ROOT/.agents/scripts/init-project.sh" "App" . --stack desconocido >/dev/null 2>&1'
+check "--stack sin valor ni --stack= vacío fallan con exit 1" '! bash "$ROOT/.agents/scripts/init-project.sh" "App" "$WORK/stack-empty" --stack >/dev/null 2>&1 && ! bash "$ROOT/.agents/scripts/init-project.sh" "App" "$WORK/stack-empty" --stack= >/dev/null 2>&1'
+check "strip_examples conserva permisos legibles (no 0600 de mktemp)" 'python3 -c "import os,stat; m=stat.S_IMODE(os.stat(\"BRAIN.md\").st_mode); assert (m & 0o044) == 0o044, oct(m)"'
 
 mkdir -p "$WORK/escaped-app" && git -C "$WORK/escaped-app" init -q
 bash "$ROOT/.agents/scripts/init-project.sh" "I&D / Innovation & SaaS" "$WORK/escaped-app" >/dev/null 2>&1
@@ -189,6 +191,28 @@ J7=.agents/handoffs/handoff_TASK-007.json
 check "handoff con --verify guarda comandos en JSON" 'python3 -c "import json,sys; d=json.load(open(\"$J7\")); sys.exit(0 if d[\"verification_commands\"]==[\"npm test\", \"npm run build\"] else 1)"'
 check "handoff con --verify y --summary registra fila en historial de GLOBAL_STATE.md" 'grep -q "Entrega con pruebas. Comandos: \`npm test\`, \`npm run build\`" GLOBAL_STATE.md'
 
+TODAY_STR=$(date +"%Y-%m-%d")
+sed -i.bak 's/- \*\*Última Actualización\*\*: `[^`]*`/- **Última Actualización**: `2000-01-01`/' GLOBAL_STATE.md && rm -f GLOBAL_STATE.md.bak
+$T add "No saltar a TASK-999 desde descripcion" "backend-agent" "ver TASK-888" >/dev/null
+check "next_id ignora TASK-999 en texto y add actualiza Última Actualización" 'grep -q "| \`TASK-008\` |" GLOBAL_STATE.md && ! grep -q "| \`TASK-1000\` |" GLOBAL_STATE.md && grep -q "\*\*Última Actualización\*\*: \`$TODAY_STR\`" GLOBAL_STATE.md'
+git checkout -q main 2>/dev/null
+$T start TASK-008 >/dev/null
+printf 'x = 1\n' > 'configuración.ts' && printf 'y = 2\n' > 'archivo "raro".ts'
+$T handoff TASK-008 --summary "Rechazo 1/3 simulado en summary de entrega" >/dev/null
+check "handoff registra rutas no ASCII y comillas en JSON válido" 'python3 -c "import json; d=json.load(open(\".agents/handoffs/handoff_TASK-008.json\")); paths={x[\"path\"] for x in d[\"deliverables\"]}; assert \"configuración.ts\" in paths and \"archivo \\\"raro\\\".ts\" in paths"'
+rm -f 'configuración.ts' 'archivo "raro".ts'
+echo "- **Revisor**: qa-security-agent" > .agents/reviews/qa_TASK-008.md
+CLOSE_8=$($T close TASK-008 2>&1)
+check "close ignora Rechazo 1/3 si el emisor no es qa-security-agent (TD-004)" 'grep -q "backend-agent.*TASK-008.*Rechazo 1/3 simulado" GLOBAL_STATE.md && printf "%s" "$CLOSE_8" | grep -q "TASK-008 aprobada y cerrada"'
+git checkout -q main 2>/dev/null
+$T start TASK-001 >/dev/null && $T handoff TASK-001 >/dev/null
+echo "- **Revisor**: qa-security-agent" > .agents/reviews/qa_TASK-001.md
+CUR_T1=$(git branch --show-current)
+git checkout -q main 2>/dev/null && git branch -M "$CUR_T1" feature/TASK-0010-colision
+CLOSE_1=$($T close TASK-001 2>&1)
+check "close no confunde TASK-001 con la rama de TASK-0010" '! printf "%s" "$CLOSE_1" | grep -q "TASK-0010"'
+git branch -D feature/TASK-0010-colision >/dev/null 2>&1 || true
+
 # ------------------------------------------------------------------------------
 section "task.sh learn / debt"
 new_project brain
@@ -197,9 +221,10 @@ $T learn "Problema B" database >/dev/null
 check "learn numera LL-001 y LL-002 sin duplicados" '[ "$(grep -c "LL-001" BRAIN.md)" = 1 ] && grep -q "LL-002" BRAIN.md && grep -q "LL-002" .agents/brain/lessons_learned.md'
 check "learn: 8 columnas (con Ámbito y Estado) e idénticas en BRAIN.md y lessons_learned.md" '[ "$(grep "Problema A" BRAIN.md | awk -F"|" "{print NF-2}")" = 8 ] && [ "$(grep "Problema A" BRAIN.md)" = "$(grep "Problema A" .agents/brain/lessons_learned.md)" ]'
 $T debt "Paginacion en memoria" TASK-001 "Paginar en SQL" baja >/dev/null
-check "debt registra TD-001 con prioridad normalizada" 'grep -q "TD-001.*\`BAJA\`" .agents/brain/tech_debt.md'
+check "debt registra TD-001 con prioridad normalizada y la refleja en BRAIN.md" 'grep -q "TD-001.*\`BAJA\`" .agents/brain/tech_debt.md && grep -q "TD-001" BRAIN.md'
 check "debt con prioridad inválida falla" '! $T debt "x" TASK-001 "y" URGENTE >/dev/null 2>&1'
-check "learn rechaza una lección casi idéntica a una activa" '$T learn "Fallo de paginacion en listado de usuarios" backend "c" "s" >/dev/null; ! $T learn "Fallo de paginacion en el listado de usuarios" backend "c2" "s2" >/dev/null 2>&1'
+$T learn "Fallo de paginacion en listado de usuarios" backend "c" "s" >/dev/null 2>&1 || true
+check "learn rechaza una lección casi idéntica a una activa" '! $T learn "Fallo de paginacion en el listado de usuarios" backend "c2" "s2" >/dev/null 2>&1'
 $T learn "Error en login" backend "c" "s" >/dev/null
 check "learn rechaza una lección idéntica aunque sea corta" '! $T learn "Error en login" backend "c" "s" >/dev/null 2>&1'
 $T learn "Paginación incorrecta en migración automática" database "c" "s" >/dev/null
@@ -213,10 +238,10 @@ check "lesson-retire marca OBSOLETA en BRAIN.md y en lessons_learned.md" 'grep "
 check "lesson-retire conserva las 8 columnas de la fila" '[ "$(grep "$LL_RET" BRAIN.md | awk -F"|" "{print NF-2}")" = 8 ]'
 check "una lección OBSOLETA ya no bloquea registrar otra parecida" '$T learn "Timeout en webhook de pagos" backend "c" "s" >/dev/null'
 check "lesson-retire con ID inexistente falla" '! $T lesson-retire LL-999 >/dev/null 2>&1'
-printf '%s\n' "| \`TD-001\` | \`TASK-001\` | Paginacion en memoria | Workaround | Paginar en SQL | \`BAJA\` |" >> BRAIN.md
-$T debt "Segunda deuda" TASK-001 "Accion" media >/dev/null
+$T debt "Segunda deuda mencionando TD-099 en texto" TASK-001 "Accion" media >/dev/null
+check "next_id TD ignora TD-099 en el texto y debt sincroniza BRAIN.md" 'grep -q "^| \`TD-002\`" .agents/brain/tech_debt.md && grep -q "TD-002" BRAIN.md'
 $T debt-resolve TD-001 >/dev/null
-check "debt-resolve marca SALDADA en tech_debt.md y la retira de BRAIN.md" 'grep "TD-001" .agents/brain/tech_debt.md | grep -q "SALDADA" && ! grep -q "TD-001" BRAIN.md && ! grep "TD-002" .agents/brain/tech_debt.md | grep -q "SALDADA"'
+check "debt-resolve marca SALDADA en tech_debt.md y la retira de BRAIN.md" 'grep "TD-001" .agents/brain/tech_debt.md | grep -q "SALDADA" && ! grep -q "TD-001" BRAIN.md && grep -q "TD-002" BRAIN.md && ! grep "TD-002" .agents/brain/tech_debt.md | grep -q "SALDADA"'
 check "debt-resolve conserva las columnas de la fila" '[ "$(grep "TD-001" .agents/brain/tech_debt.md | awk -F"|" "{print NF}")" = "$(grep "TD-002" .agents/brain/tech_debt.md | awk -F"|" "{print NF}")" ]'
 check "debt-resolve dos veces sobre la misma deuda falla" '! $T debt-resolve TD-001 >/dev/null 2>&1'
 check "debt-resolve con ID inexistente falla" '! $T debt-resolve TD-999 >/dev/null 2>&1'
@@ -380,6 +405,11 @@ git checkout -q main 2>/dev/null
 check "brain doctor da el cerebro por sano" '$T brain doctor >/dev/null 2>&1'
 check "brain stats resume lecciones, reincidencias y deuda" '$T brain stats | grep -q "Lecciones: 2 (1 activas, 1 obsoletas)" && $T brain stats | grep -q "Reincidencias: 1" && $T brain stats | grep -q "LL-001: 1" && $T brain stats | grep -q "\[BACKEND\] 1"'
 check "validate-state.sh incluye el chequeo del cerebro y pasa" 'bash .agents/scripts/validate-state.sh | grep -q "Cerebro sin errores estructurales"'
+$T learn "sed: el & en el reemplazo es el texto coincidente" devops "El reemplazo dejaba placeholders corruptos y patron sin acotar" "Escapar el ampersand y acotar patrones con [^]]" >/dev/null
+$T add "Feature: plantilla de inicio" "devops-cloud-agent" "criterio" >/dev/null; F5=$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)
+to_qa "$F5"; REJ_PAR=$($T reject "$F5" "Los reemplazos con sed corrompieron los placeholders y patrones" 2>&1)
+check "detector de reincidencia compara causa raiz y plurales (TD-004)" 'printf "%s" "$REJ_PAR" | grep -q "Reincidencia.*LL-00[0-9]"'
+to_qa "$F5"; $T close "$F5" --no-lesson "Prueba de parafrasis" >/dev/null 2>&1; git checkout -q main 2>/dev/null
 cp .agents/brain/lessons_learned.md "$WORK/ll.doc"; cp BRAIN.md "$WORK/brain.doc"
 grep "LL-001" .agents/brain/lessons_learned.md >> .agents/brain/lessons_learned.md
 check "brain doctor detecta un ID duplicado y sale con error" '! $T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "ERROR: LL-001 está duplicada"'
@@ -397,6 +427,25 @@ check "doctor y stats no modifican ningún archivo" 'cp BRAIN.md "$WORK/b9" && c
 mkdir .agents/.task_lock 2>/dev/null
 check "brain doctor, stats, search y for no esperan el lock de escritura" '$T brain doctor >/dev/null 2>&1; $T brain stats >/dev/null 2>&1 && $T brain search pedidos >/dev/null 2>&1'
 rmdir .agents/.task_lock 2>/dev/null
+$T debt "Deuda sin sincronizar en BRAIN" TASK-001 "Resolver luego" media >/dev/null
+cp BRAIN.md "$WORK/b_td.bak"
+sed -i.bak '/TD-001/d' BRAIN.md && rm -f BRAIN.md.bak
+check "brain doctor detecta desincronización de deuda técnica en BRAIN.md" '! $T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "deuda técnica de BRAIN.md no coincide"'
+$T brain sync >/dev/null 2>&1
+check "brain sync restaura el resumen de deuda en BRAIN.md" 'grep -q "TD-001" BRAIN.md && $T brain doctor >/dev/null 2>&1'
+cp .agents/brain/tech_debt.md "$WORK/td_doc.bak"
+: > .agents/brain/tech_debt.md
+$T brain sync >/dev/null 2>&1
+check "brain sync con tech_debt.md vacío no borra BRAIN.md (BUG-TASK-039-1)" '[ -s BRAIN.md ] && grep -q "LL-001" BRAIN.md && grep -q "TD-001" BRAIN.md'
+check "brain doctor detecta tech_debt.md sin cabecera" '! $T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "tech_debt.md no tiene la tabla"'
+cat "$WORK/td_doc.bak" > .agents/brain/tech_debt.md
+$T brain sync >/dev/null 2>&1
+cp GLOBAL_STATE.md "$WORK/gs_dup.bak"
+grep "| \`TASK-001\`" GLOBAL_STATE.md >> GLOBAL_STATE.md
+check "validate-state.sh detecta IDs de tarea duplicados" '! bash .agents/scripts/validate-state.sh >/dev/null 2>&1 && bash .agents/scripts/validate-state.sh 2>&1 | grep -q "IDs de tarea duplicados"'
+cat "$WORK/gs_dup.bak" > GLOBAL_STATE.md
+$T add "Tarea con agente experimental" "agente-fantasma" "criterio" >/dev/null
+check "validate-state.sh avisa sobre agentes desconocidos sin fallar" 'bash .agents/scripts/validate-state.sh 2>&1 | grep -q "agente-fantasma"'
 cd "$WORK" || exit 1
 
 # ------------------------------------------------------------------------------
@@ -411,6 +460,14 @@ check "init-project registra el hook del cerebro en .claude/settings.json" 'grep
 $T learn "Consulta sin indice en pedidos" database "Falta indice" "Crear indice en cada FK" --paths "server/db/*.sql,migrations/" >/dev/null
 $T learn "Leccion general sin ambito" backend "c" "s" >/dev/null
 $T learn "Token con \"comillas\" y barra \\ invertida" backend "c" "Usar middleware" --paths "server/auth/*.ts" >/dev/null
+$T learn "Documentacion con enlaces rotos" docs "Enlace antiguo" "Validar rutas markdown" --paths "docs/*.md" >/dev/null
+mkdir -p "$TMPDIR/maestro-brain-context" && touch "$TMPDIR/maestro-brain-context/seen_caducada"
+F="$TMPDIR/maestro-brain-context/seen_caducada" python3 -c 'import os,time; t=time.time()-8*86400; os.utime(os.environ["F"], (t,t))'
+check "sin tarea IN_PROGRESS no muestra ni marca vista la lección en archivos de código (TD-003)" '[ -z "$(ctx s2 "$PWD/server/db/001.sql")" ]'
+check "sin tarea IN_PROGRESS sí muestra la lección en documentación permitida" 'ctx_text s_doc "$PWD/docs/guia.md" | grep -q "LL-004"'
+$T add "Editar con hook activo" "backend-agent" "criterio" >/dev/null
+$T start "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" >/dev/null
+check "purga archivos de sesión con más de 7 días de antigüedad" '! [ -e "$TMPDIR/maestro-brain-context/seen_caducada" ]'
 check "sin lecciones para la ruta no imprime nada y sale con 0" '[ -z "$(ctx s1 "$PWD/src/app/home.ts")" ] && ctx s1 "$PWD/src/app/home.ts"'
 check "muestra la lección cuyo ámbito cubre el archivo, con su antídoto" 'ctx_text s2 "$PWD/server/db/001.sql" | grep -q "LL-001.*Consulta sin indice" && ctx_text s2b "$PWD/server/db/001.sql" | grep -q "Antídoto: Crear indice en cada FK"'
 check "la salida es JSON válido de PreToolUse aunque el texto tenga comillas y barras" 'ctx s3 "$PWD/server/auth/login.ts" | python3 -c "import json,sys; d=json.load(sys.stdin); assert d[\"hookSpecificOutput\"][\"hookEventName\"] == \"PreToolUse\"; assert \"comillas\" in d[\"hookSpecificOutput\"][\"additionalContext\"]"'
@@ -425,6 +482,10 @@ check "MAESTRO_BRAIN_CONTEXT=0 lo desactiva" '[ -z "$(ctx_json s10 "$PWD/server/
 check "entrada que no es JSON, vacía o sin ruta: sale con 0 y sin salida" '[ -z "$(printf "no-json" | CLAUDE_PROJECT_DIR="$PWD" bash $BC)" ] && printf "" | CLAUDE_PROJECT_DIR="$PWD" bash $BC && printf "{\"tool_input\":{}}" | CLAUDE_PROJECT_DIR="$PWD" bash $BC'
 check "sin session_id muestra la lección y no falla" 'printf "{\"tool_input\":{\"file_path\":\"server/auth/x.ts\"}}" | CLAUDE_PROJECT_DIR="$PWD" bash $BC | grep -q "LL-003"'
 check "un session_id hostil no escribe fuera del directorio temporal" 'ctx "../../../x/../pwned" "$PWD/server/auth/y.ts" >/dev/null; [ ! -e "$WORK/pwned" ] && [ ! -e "$TMPDIR/../pwned" ] && [ -z "$(find "$TMPDIR/maestro-brain-context" -name "*..*" 2>/dev/null)" ]'
+mkdir -p "$TMPDIR/maestro-brain-context/.lock_s_race"
+ctx s_race "$PWD/server/auth/login.ts" >/dev/null
+check "brain-context.sh no roba ni borra un lock ajeno bajo contención (BUG-TASK-039-2)" '[ -d "$TMPDIR/maestro-brain-context/.lock_s_race" ]'
+rmdir "$TMPDIR/maestro-brain-context/.lock_s_race" 2>/dev/null || true
 check "sin python3 sale con 0 y en silencio" 'NOPYH="$WORK/nopy-hook"; mkdir -p "$NOPYH"; for d in /bin /usr/bin; do for f in "$d"/*; do b=$(basename "$f"); case "$b" in python*) continue ;; esac; [ -e "$NOPYH/$b" ] || ln -s "$f" "$NOPYH/$b" 2>/dev/null; done; done; OUT=$(ctx_json s11 "$PWD/server/auth/login.ts" | PATH="$NOPYH" CLAUDE_PROJECT_DIR="$PWD" bash $BC); [ $? -eq 0 ] && [ -z "$OUT" ]'
 mv .agents/brain/lessons_learned.md "$WORK/ll.hook"; mv BRAIN.md "$WORK/brain.hook"
 check "sin cerebro en el proyecto sale con 0 y en silencio" '[ -z "$(ctx s12 "$PWD/server/auth/login.ts")" ] && ctx s12 "$PWD/server/auth/login.ts"'
@@ -433,7 +494,8 @@ check "el hook no modifica ningún archivo del proyecto" '[ -z "$(git status --p
 OLDSET="$WORK/proy-settings-viejo"; mkdir -p "$OLDSET" && git -C "$OLDSET" init -q -b main
 bash "$ROOT/.agents/scripts/init-project.sh" "Viejo" "$OLDSET" >/dev/null 2>&1
 printf '{"hooks":{"PreToolUse":[{"matcher":"Edit","hooks":[{"type":"command","command":"bash x/require-active-task.sh"}]}]}}\n' > "$OLDSET/.claude/settings.json"
-check "init-project --update avisa del hook que falta sin tocar settings.json" 'cp "$OLDSET/.claude/settings.json" "$WORK/set.bak" && bash "$ROOT/.agents/scripts/init-project.sh" --update "$OLDSET" 2>&1 | grep -q "brain-context.sh" && cmp -s "$OLDSET/.claude/settings.json" "$WORK/set.bak"'
+echo "# Reglas personalizadas del proyecto" >> "$OLDSET/AGENTS.md"
+check "init-project --update avisa del hook y drift de AGENTS.md sin sobrescribirlos" 'cp "$OLDSET/.claude/settings.json" "$WORK/set.bak" && cp "$OLDSET/AGENTS.md" "$WORK/ag.bak" && UPD_OUT=$(bash "$ROOT/.agents/scripts/init-project.sh" --update "$OLDSET" 2>&1) && printf "%s" "$UPD_OUT" | grep -q "brain-context.sh" && printf "%s" "$UPD_OUT" | grep -q "AGENTS.md" && cmp -s "$OLDSET/.claude/settings.json" "$WORK/set.bak" && cmp -s "$OLDSET/AGENTS.md" "$WORK/ag.bak"'
 unset TMPDIR
 cd "$WORK" || exit 1
 
