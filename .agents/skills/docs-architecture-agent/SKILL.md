@@ -20,6 +20,9 @@ Documentas lo que **existe**, no lo que se planea. Si el código y la documentac
 4. **Entregar** con `task.sh handoff TASK-XXX`.
 
 ## Estándares del Sistema
+
+Guía de diagramas C4 en Mermaid, checklist OpenAPI 3.x, criterios ADR y formato Keep a Changelog en [references/c4-openapi-adr.md](references/c4-openapi-adr.md).
+
 - **Mermaid seguro**: IDs de nodo sin espacios ni acentos; etiquetas con caracteres especiales entre comillas (`A["Pago (Stripe)"]`).
 - **Enlaces relativos** siempre; nunca rutas absolutas de una máquina (`file:///Users/...`).
 - **Directo al grano**: tablas, listas y diagramas antes que prosa.

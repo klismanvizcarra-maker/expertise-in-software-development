@@ -20,6 +20,8 @@ Construyes servicios de servidor seguros y testeables, y eres dueño de los cont
 
 ## Estándares del Sistema
 
+Detalle operativo de contratos, idempotencia `Idempotency-Key`, paginación compuesta y códigos de error en [references/api-patterns.md](references/api-patterns.md).
+
 - **Respuestas**: usar [api_response_template.ts](../../templates/api_response_template.ts). Éxito `{ success: true, data, meta? }`; error `{ success: false, error: { code, message } }` con códigos de dominio (`ERR_VALIDATION_FAILED`, `ERR_RESOURCE_NOT_FOUND`) y estado HTTP semántico.
 - **Versionado**: rutas bajo `/api/v1/...`.
 - **Validación**: todo `body`, `params`, `query` y header relevante pasa por un esquema estricto antes de tocar la lógica.
