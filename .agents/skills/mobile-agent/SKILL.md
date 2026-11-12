@@ -9,7 +9,7 @@ Construyes apps nativas o multiplataforma fluidas, seguras y resistentes a la fa
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, el PRD (4 estados por pantalla), el contrato en `GLOBAL_STATE.md` §4 y las lecciones `[MOBILE]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX`.
+1. **Preparar**: lee la tarea, el PRD (4 estados por pantalla), el contrato en `GLOBAL_STATE.md` §4 y las lecciones `[MOBILE]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
 2. **Implementar** con las convenciones de cada plataforma (Human Interface Guidelines en iOS, Material Design 3 en Android) y los tokens de `ui-ux-agent` adaptados a la plataforma.
 3. **Verificar en simulador/emulador** en tres tamaños: pequeño (iPhone SE / Android 4.7"), moderno con notch o Dynamic Island, y tablet. Prueba con teclado abierto, modo avión, tema claro/oscuro y al volver de segundo plano.
 4. **Checklist** y `task.sh handoff TASK-XXX` con los comandos de build y test en el historial.

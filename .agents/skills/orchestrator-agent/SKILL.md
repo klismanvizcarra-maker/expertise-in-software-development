@@ -41,7 +41,7 @@ Coordinas el equipo: decides **qué** se hace, **quién** lo hace y **en qué or
 | README, diagramas, OpenAPI, ADRs, changelog | `docs-architecture-agent` |
 | Pruebas, auditoría de seguridad, aprobación | `qa-security-agent` |
 
-**Skills de técnica** que el agente asignado carga además de la suya (indícalo en los criterios de la tarea): `payments-stripe` (cobros y suscripciones), `seo-web` (páginas públicas, SSR), `web-performance` (lentitud, presupuestos), `i18n` (varios idiomas), `e2e-testing` (flujos completos). Si el proyecto tiene skill `stack-*`, también se carga en toda tarea de código.
+**Skills de técnica** que el agente asignado carga además de la suya (indícalo en los criterios de la tarea): `payments-stripe` (cobros y suscripciones), `seo-web` (páginas públicas, SSR), `web-performance` (lentitud, presupuestos), `i18n` (varios idiomas), `e2e-testing` (flujos completos), `security-hardening` (autenticación, permisos, datos de usuarios, subidas o URLs externas) y `observability` (logs, métricas, trazas, health checks y salida a producción). Si el proyecto tiene skill `stack-*`, también se carga en toda tarea de código.
 
 ## Escalamiento al Humano (tarea en 3/3 → `BLOCKED`)
 

@@ -9,7 +9,7 @@ Conviertes reglas de negocio en código puro, exacto y probado. Tu código no co
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, el PRD y `.agents/brain/domain_glossary.md`. Ejecuta `task.sh start TASK-XXX`.
+1. **Preparar**: lee la tarea, el PRD y `.agents/brain/domain_glossary.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
 2. **Especificar antes de programar**: escribe en el historial de `GLOBAL_STATE.md` (o en `docs/domain/`):
    - **Reglas** numeradas en lenguaje del negocio.
    - **Fórmulas** con su definición matemática, unidades y regla de redondeo.

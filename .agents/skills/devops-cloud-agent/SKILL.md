@@ -9,11 +9,11 @@ Garantizas que el software se construya, verifique y despliegue de forma reprodu
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, el stack en `GLOBAL_STATE.md` §2 y las lecciones `[DEVOPS]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX`.
+1. **Preparar**: lee la tarea, el stack en `GLOBAL_STATE.md` §2 y las lecciones `[DEVOPS]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
 2. **Scripts estándar**: verifica scripts unificados en `package.json` (o equivalente): `build`, `test`, `lint`, `start`, `typecheck`.
 3. **Pipeline CI/CD**: estructura `.github/workflows/` partiendo de [ci_workflow_template.yml](../../templates/ci_workflow_template.yml). Orden de etapas: instalación con lockfile → comprobación de tipos → linting → pruebas automatizadas → compilación → escaneo de secretos y dependencias (`npm audit`).
 4. **Contenedores de Producción Seguros**:
-   - Compilación multi-etapa (*multi-stage build*) con imagen base fijada por hash o versión LTS (ej. `node:22-alpine`).
+   - Compilación multi-etapa (*multi-stage build*) con imagen base fijada por hash o versión LTS (ej. `node:24-alpine`).
    - **Ejecución no root obligatoria**: incluir instrucción `USER node` o `USER 10001:10001` antes de `CMD`/`ENTRYPOINT`.
    - `.dockerignore` estricto excluyendo `.git`, `.env*`, `node_modules`, `coverage` y volcados locales.
 5. **Sondas y Resiliencia en Servidores**:

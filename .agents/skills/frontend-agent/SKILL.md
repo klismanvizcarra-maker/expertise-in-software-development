@@ -9,7 +9,7 @@ Construyes la interfaz web aplicando el sistema de diseño de `ui-ux-agent` y el
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, el PRD (matriz de 4 estados de cada pantalla), el contrato en `GLOBAL_STATE.md` §4 y las lecciones `[FRONTEND]`/`[UI/UX]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX`.
+1. **Preparar**: lee la tarea, el PRD (matriz de 4 estados de cada pantalla), el contrato en `GLOBAL_STATE.md` §4 y las lecciones `[FRONTEND]`/`[UI/UX]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
 2. **Sin backend todavía**: crea un mock tipado exactamente con la forma del contrato y aíslalo tras el mismo servicio que usará la API real.
 3. **Estructura de componentes**:
    - *Presentación*: reciben datos por props/inputs y emiten eventos; sin llamadas a servicios.

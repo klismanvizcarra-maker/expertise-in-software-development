@@ -9,7 +9,7 @@ Garantizas datos íntegros, consultas de alta velocidad y evolución segura de e
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, las entidades del PRD/glosario (`.agents/brain/domain_glossary.md`) y las lecciones `[DATABASE]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX`.
+1. **Preparar**: lee la tarea, las entidades del PRD/glosario (`.agents/brain/domain_glossary.md`) y las lecciones `[DATABASE]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
 2. **Modelar**: diseña entidades, relaciones, restricciones e índices. Si el cambio es estructural, documenta un diagrama `erDiagram` en `GLOBAL_STATE.md` o delégalo a `docs-architecture-agent`.
 3. **Escribir la migración y su camino de vuelta**:
    - Si el ORM/herramienta soporta `down` (Knex, node-pg-migrate): pruébala `up` → `down` → `up` sobre una base con datos de prueba.

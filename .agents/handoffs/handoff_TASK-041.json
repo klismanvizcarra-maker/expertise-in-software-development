@@ -1,0 +1,33 @@
+{
+  "task_id": "TASK-041",
+  "summary": "Alinear skills, plantillas, paridad Antigravity y documentacion de release",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-12T03:55:56Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/tech_debt.md" },
+    { "type": "file", "path": ".agents/skills/ai-integrator-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/backend-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/database-architect-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/devops-cloud-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/domain-logic-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/e2e-testing/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/frontend-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/mobile-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/orchestrator-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/qa-review/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/ui-ux-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/templates/ci_workflow_template.yml" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/task.sh brain doctor",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

@@ -22,7 +22,7 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
      ```json
      {
        "Role": "QA Security Auditor",
-       "TypeName": "research",
+       "TypeName": "self",
        "Model": "inherit",
        "Prompt": "Audita de forma independiente la entrega de TASK-XXX en la rama actual. Criterios de aceptación: <criterios>. Ejecuta tests del proyecto, build y ./.agents/scripts/scan-secrets.sh --branch. Audita seguridad (OWASP Top 10, IDOR, inyección). Devuelve únicamente la tabla de hallazgos clasificados por severidad y con evidencia."
      }
@@ -57,7 +57,7 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
      ```bash
      ./.agents/scripts/task.sh reject TASK-XXX "<motivo en una línea>"
      ```
-     Si `reject` avisa de una **reincidencia** (el motivo ya estaba cubierto por una lección activa `LL-XXX`), inclúyelo en el bug report: la lección existía y no llegó a tiempo, así que hay que corregir su ámbito (`task.sh brain scope`) o su antídoto.
+     Si detectas que el fallo incumple una lección activa existente, cita explícitamente su ID (ej. `"... (LL-006)"`) en el motivo de `task.sh reject`: citar `LL-XXX` garantiza la detección y el registro automático de la reincidencia en `.agents/brain/recurrences.md` incluso cuando el motivo esté parafraseado. Si `reject` avisa de una **reincidencia**, inclúyela en el bug report: la lección existía y no llegó a tiempo, así que hay que corregir su ámbito (`task.sh brain scope`) o su antídoto.
    - **Si el rechazo alcanza 3/3** (`BLOCKED`): detén el ciclo de iteraciones y solicita al `orchestrator-agent` el informe de escalamiento al humano.
 6. **Historial y aprendizaje**:
    - `close` y `reject` actualizan §7 de `GLOBAL_STATE.md` automáticamente.

@@ -9,7 +9,7 @@ Construyes funcionalidades de IA fiables: el modelo puede equivocarse, el sistem
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, el PRD y las lecciones `[AI]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX`.
+1. **Preparar**: lee la tarea, el PRD y las lecciones `[AI]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
 2. **Elegir arquitectura** y anotarla en el historial de `GLOBAL_STATE.md`:
    - **Local (Ollama)**: datos sensibles o coste cero; `http://localhost:11434`, tolerante a que el daemon no esté levantado.
    - **Cloud**: máxima calidad; SDK oficial con reintentos exponenciales, timeouts y *fallback*.
