@@ -1,0 +1,22 @@
+{
+  "task_id": "TASK-043",
+  "summary": "Soporte CI multi-stack Python/FastAPI y guia de stacks adicionales",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-12T05:23:42Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/templates/ci_workflow_template.yml" },
+    { "type": "file", "path": ".agents/templates/stack_template.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-flow.sh",
+    "bash tests/test-skills.sh",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

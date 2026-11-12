@@ -1,11 +1,18 @@
 ---
 name: stack-[nombre-del-stack]
-description: Convenciones, arquitectura, comandos canónicos y trampas conocidas del stack [Tecnología Frontend] + [Tecnología Backend] + [Base de Datos]. Usar siempre que se desarrolle, pruebe o despliegue código en un proyecto con este stack tecnológico.
+description: Convenciones, arquitectura, comandos canónicos y trampas conocidas del stack [Tecnología Frontend] + [Tecnología Backend] + [Base de Datos]. Usar siempre que se desarrolle, pruebe o despliegue código en un proyecto con este stack tecnológico. No usar para [otros stacks, ej. stack-nextjs-tailwind-prisma].
 ---
 
 # Stack: [Nombre del Stack Tecnológico]
 
 Esta skill fija el **cómo concreto de la implementación**; las skills de los roles especialistas (`frontend-agent`, `backend-agent`, etc.) definen el proceso. Si una convención específica de este stack contradice una regla genérica de rol, prevalece la de este archivo. Cualquier excepción debe registrarse como un ADR en `GLOBAL_STATE.md` §6.
+
+> **Guía rápida para crear un stack adicional (`stack-<nombre>`)**:
+> 1. Copia esta plantilla a `.agents/skills/stack-<nombre>/SKILL.md` (por ejemplo, `stack-go-gin-postgres` o `stack-django-postgres`) y sustituye `name:` en el frontmatter para que coincida con el directorio.
+> 2. Rellena `description` indicando cuándo activarse (`Usar siempre que...`) y delimita frente a otros stacks (`No usar para...`).
+> 3. Declara las rutas reales por rol en `AGENTS.md` §8 (matriz de propiedad de código) y actualiza el stack activo en `GLOBAL_STATE.md` §2.
+> 4. Si tu toolchain es distinto de Node 24 o Python 3.12 (`pyproject.toml`/`requirements.txt`), adapta `.github/workflows/audit.yml` (o `.agents/templates/ci_workflow_template.yml`) añadiendo los pasos equivalentes de lint, tipos, tests y build con Actions fijadas por SHA.
+> 5. Valida la nueva skill con `bash tests/test-skills.sh` (y `python3 tests/triggers/lint_descriptions.py` tras añadir casos en `tests/triggers/cases.json`).
 
 ---
 
