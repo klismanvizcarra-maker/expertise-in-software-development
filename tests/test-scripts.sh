@@ -433,6 +433,13 @@ sed -i.bak '/TD-001/d' BRAIN.md && rm -f BRAIN.md.bak
 check "brain doctor detecta desincronización de deuda técnica en BRAIN.md" '! $T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "deuda técnica de BRAIN.md no coincide"'
 $T brain sync >/dev/null 2>&1
 check "brain sync restaura el resumen de deuda en BRAIN.md" 'grep -q "TD-001" BRAIN.md && $T brain doctor >/dev/null 2>&1'
+cp .agents/brain/tech_debt.md "$WORK/td_doc.bak"
+: > .agents/brain/tech_debt.md
+$T brain sync >/dev/null 2>&1
+check "brain sync con tech_debt.md vacío no borra BRAIN.md (BUG-TASK-039-1)" '[ -s BRAIN.md ] && grep -q "LL-001" BRAIN.md && grep -q "TD-001" BRAIN.md'
+check "brain doctor detecta tech_debt.md sin cabecera" '! $T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "tech_debt.md no tiene la tabla"'
+cat "$WORK/td_doc.bak" > .agents/brain/tech_debt.md
+$T brain sync >/dev/null 2>&1
 cp GLOBAL_STATE.md "$WORK/gs_dup.bak"
 grep "| \`TASK-001\`" GLOBAL_STATE.md >> GLOBAL_STATE.md
 check "validate-state.sh detecta IDs de tarea duplicados" '! bash .agents/scripts/validate-state.sh >/dev/null 2>&1 && bash .agents/scripts/validate-state.sh 2>&1 | grep -q "IDs de tarea duplicados"'
@@ -475,6 +482,10 @@ check "MAESTRO_BRAIN_CONTEXT=0 lo desactiva" '[ -z "$(ctx_json s10 "$PWD/server/
 check "entrada que no es JSON, vacía o sin ruta: sale con 0 y sin salida" '[ -z "$(printf "no-json" | CLAUDE_PROJECT_DIR="$PWD" bash $BC)" ] && printf "" | CLAUDE_PROJECT_DIR="$PWD" bash $BC && printf "{\"tool_input\":{}}" | CLAUDE_PROJECT_DIR="$PWD" bash $BC'
 check "sin session_id muestra la lección y no falla" 'printf "{\"tool_input\":{\"file_path\":\"server/auth/x.ts\"}}" | CLAUDE_PROJECT_DIR="$PWD" bash $BC | grep -q "LL-003"'
 check "un session_id hostil no escribe fuera del directorio temporal" 'ctx "../../../x/../pwned" "$PWD/server/auth/y.ts" >/dev/null; [ ! -e "$WORK/pwned" ] && [ ! -e "$TMPDIR/../pwned" ] && [ -z "$(find "$TMPDIR/maestro-brain-context" -name "*..*" 2>/dev/null)" ]'
+mkdir -p "$TMPDIR/maestro-brain-context/.lock_s_race"
+ctx s_race "$PWD/server/auth/login.ts" >/dev/null
+check "brain-context.sh no roba ni borra un lock ajeno bajo contención (BUG-TASK-039-2)" '[ -d "$TMPDIR/maestro-brain-context/.lock_s_race" ]'
+rmdir "$TMPDIR/maestro-brain-context/.lock_s_race" 2>/dev/null || true
 check "sin python3 sale con 0 y en silencio" 'NOPYH="$WORK/nopy-hook"; mkdir -p "$NOPYH"; for d in /bin /usr/bin; do for f in "$d"/*; do b=$(basename "$f"); case "$b" in python*) continue ;; esac; [ -e "$NOPYH/$b" ] || ln -s "$f" "$NOPYH/$b" 2>/dev/null; done; done; OUT=$(ctx_json s11 "$PWD/server/auth/login.ts" | PATH="$NOPYH" CLAUDE_PROJECT_DIR="$PWD" bash $BC); [ $? -eq 0 ] && [ -z "$OUT" ]'
 mv .agents/brain/lessons_learned.md "$WORK/ll.hook"; mv BRAIN.md "$WORK/brain.hook"
 check "sin cerebro en el proyecto sale con 0 y en silencio" '[ -z "$(ctx s12 "$PWD/server/auth/login.ts")" ] && ctx s12 "$PWD/server/auth/login.ts"'

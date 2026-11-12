@@ -97,14 +97,24 @@ if [ -n "$SESSION" ]; then
 fi
 
 LOCK_HELD=0
+cleanup_seen_lock() {
+  if [ "${LOCK_HELD:-0}" -eq 1 ] && [ -n "${SEEN_LOCK:-}" ]; then
+    rmdir "$SEEN_LOCK" 2>/dev/null || true
+    LOCK_HELD=0
+  fi
+}
+trap 'cleanup_seen_lock' EXIT INT TERM
+
 if [ -n "$SEEN_LOCK" ]; then
   tries=0
-  while ! mkdir "$SEEN_LOCK" 2>/dev/null; do
+  while [ "$tries" -lt 20 ]; do
+    if mkdir "$SEEN_LOCK" 2>/dev/null; then
+      LOCK_HELD=1
+      break
+    fi
     tries=$((tries + 1))
-    [ "$tries" -ge 20 ] && break
     sleep 0.02 2>/dev/null || break
   done
-  [ -d "$SEEN_LOCK" ] && LOCK_HELD=1
 fi
 
 NEW=""
@@ -119,7 +129,7 @@ while IFS= read -r line; do
   NEW_IDS="${NEW_IDS}${id}"$'\n'
 done <<< "$HITS"
 
-if [ -n "$NEW" ] && [ -n "$SEEN_FILE" ]; then
+if [ -n "$NEW" ] && [ -n "$SEEN_FILE" ] && [ "$LOCK_HELD" -eq 1 ]; then
   TMP_SEEN="$SEEN_DIR/.tmp.$$.$SESSION"
   {
     [ -f "$SEEN_FILE" ] && cat "$SEEN_FILE" 2>/dev/null || true
@@ -127,9 +137,7 @@ if [ -n "$NEW" ] && [ -n "$SEEN_FILE" ]; then
   } > "$TMP_SEEN" 2>/dev/null && mv -f "$TMP_SEEN" "$SEEN_FILE" 2>/dev/null || rm -f "$TMP_SEEN" 2>/dev/null
 fi
 
-if [ "$LOCK_HELD" -eq 1 ]; then
-  rmdir "$SEEN_LOCK" 2>/dev/null || true
-fi
+cleanup_seen_lock
 
 [ -n "$NEW" ] || exit 0
 

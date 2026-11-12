@@ -178,12 +178,13 @@ ensure_lessons_schema() {
 # Regenera el resumen de deuda pendiente de BRAIN.md (§6) a partir de tech_debt.md
 debt_sync() {
   [ -f "$DEBT_FILE" ] && [ -f "$BRAIN_FILE" ] || return 0
+  grep -qE "$BRAIN_HDR_DEBT" "$DEBT_FILE" || return 0
   grep -qE "$BRAIN_HDR_DEBT" "$BRAIN_FILE" || return 0
   local tmp
   tmp=$(mktemp)
-  HDR="$BRAIN_HDR_DEBT" NEWHDR="$BRAIN_DEBT_HEADER" NEWSEP="$BRAIN_DEBT_SEP" awk -F'|' '
+  DF="$DEBT_FILE" HDR="$BRAIN_HDR_DEBT" NEWHDR="$BRAIN_DEBT_HEADER" NEWSEP="$BRAIN_DEBT_SEP" awk -F'|' '
     function trim(x) { gsub(/^[ \t]+|[ \t]+$/, "", x); return x }
-    FNR == NR {
+    FILENAME == ENVIRON["DF"] {
       id = trim($2); gsub(/`/, "", id)
       if ($0 ~ /^\|/ && id ~ /^TD-[0-9]+$/) {
         pr = trim($(NF-1)); gsub(/`/, "", pr)
@@ -218,8 +219,8 @@ brain_sync() {
   if grep -qE "$BRAIN_HDR_LESSONS" "$BRAIN_FILE"; then
     local tmp
     tmp=$(mktemp)
-    HDR="$BRAIN_HDR_LESSONS" NEWHDR="$BRAIN_LL_HEADER" NEWSEP="$BRAIN_LL_SEP" awk -F'|' '
-      FNR == NR {
+    LF="$LL_FILE" HDR="$BRAIN_HDR_LESSONS" NEWHDR="$BRAIN_LL_HEADER" NEWSEP="$BRAIN_LL_SEP" awk -F'|' '
+      FILENAME == ENVIRON["LF"] {
         c = $2; gsub(/[ \t`]/, "", c)
         if ($0 ~ /^\|/ && c ~ /^LL-[0-9]+$/) rows[++n] = $0
         next
@@ -526,24 +527,28 @@ brain_doctor() {
     fi
   fi
   if [ -f "$DEBT_FILE" ]; then
-    out="${out}${out:+$'\n'}$(awk -F'|' '
-      function trim(x) { gsub(/^[ \t`]+|[ \t`]+$/, "", x); return x }
-      /^\|/ {
-        id = trim($2)
-        if (id !~ /^TD-[0-9]+$/) next
-        if (id in seen) print "ERROR: " id " está duplicada en tech_debt.md"
-        seen[id] = 1
-        pr = trim($(NF-1))
-        if (pr != "ALTA" && pr != "MEDIA" && pr != "BAJA" && pr != "SALDADA") print "ERROR: " id " tiene una prioridad inválida: \"" pr "\""
-        if (trim($3) !~ /^TASK-[0-9]+$/) print "AVISO: " id " no está vinculada a una TASK-XXX"
-      }
-    ' "$DEBT_FILE")"
-    if [ -f "$BRAIN_FILE" ] && grep -qE "$BRAIN_HDR_DEBT" "$BRAIN_FILE"; then
-      local td_pend td_brain
-      td_pend=$(pending_debts | awk -F'\t' '{ print $1 ":" $4 }' | sort)
-      td_brain=$(awk -F'|' '/^\|/ { id = $2; gsub(/[ \t`]/, "", id); if (id ~ /^TD-[0-9]+$/) { pr = $(NF-1); gsub(/[ \t`]/, "", pr); print id ":" pr } }' "$BRAIN_FILE" | sort)
-      if [ "$td_pend" != "$td_brain" ]; then
-        out="${out}${out:+$'\n'}ERROR: la tabla de deuda técnica de BRAIN.md no coincide con tech_debt.md; ejecuta: task.sh brain sync"
+    if ! grep -qE "$BRAIN_HDR_DEBT" "$DEBT_FILE"; then
+      out="${out}${out:+$'\n'}ERROR: tech_debt.md no tiene la tabla de deuda técnica (cabecera '| ID | Tarea Vinculada | ...')"
+    else
+      out="${out}${out:+$'\n'}$(awk -F'|' '
+        function trim(x) { gsub(/^[ \t`]+|[ \t`]+$/, "", x); return x }
+        /^\|/ {
+          id = trim($2)
+          if (id !~ /^TD-[0-9]+$/) next
+          if (id in seen) print "ERROR: " id " está duplicada en tech_debt.md"
+          seen[id] = 1
+          pr = trim($(NF-1))
+          if (pr != "ALTA" && pr != "MEDIA" && pr != "BAJA" && pr != "SALDADA") print "ERROR: " id " tiene una prioridad inválida: \"" pr "\""
+          if (trim($3) !~ /^TASK-[0-9]+$/) print "AVISO: " id " no está vinculada a una TASK-XXX"
+        }
+      ' "$DEBT_FILE")"
+      if [ -f "$BRAIN_FILE" ] && grep -qE "$BRAIN_HDR_DEBT" "$BRAIN_FILE"; then
+        local td_pend td_brain
+        td_pend=$(pending_debts | awk -F'\t' '{ print $1 ":" $4 }' | sort)
+        td_brain=$(awk -F'|' '/^\|/ { id = $2; gsub(/[ \t`]/, "", id); if (id ~ /^TD-[0-9]+$/) { pr = $(NF-1); gsub(/[ \t`]/, "", pr); print id ":" pr } }' "$BRAIN_FILE" | sort)
+        if [ "$td_pend" != "$td_brain" ]; then
+          out="${out}${out:+$'\n'}ERROR: la tabla de deuda técnica de BRAIN.md no coincide con tech_debt.md; ejecuta: task.sh brain sync"
+        fi
       fi
     fi
   fi
