@@ -79,24 +79,29 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | [`/estado`](.agents/skills/estado/SKILL.md) | Resumen: progreso, bloqueos, pendientes de QA y siguiente paso (solo lectura) | — |
 | [`/nueva-tarea`](.agents/skills/nueva-tarea/SKILL.md) | Descompone un requerimiento y registra las `TASK-XXX` tras tu confirmación | Orchestrator |
 | [`/bugfix`](.agents/skills/bugfix/SKILL.md) | Reproduce, escribe un test que falle, corrige la causa raíz y entrega a QA | Especialista |
+| [`/refactor`](.agents/skills/refactor/SKILL.md) | Reestructura sin cambiar el comportamiento: tests de caracterización y pasos pequeños con la suite en verde | Especialista |
 | [`/handoff`](.agents/skills/handoff/SKILL.md) | Verifica el checklist y los tests, y pasa la tarea a `IN_REVIEW_QA` | Especialista |
 | [`/qa-review`](.agents/skills/qa-review/SKILL.md) | Verificación independiente y veredicto: `close` o `reject` con bug report | QA & Security |
-| [`/aprender`](.agents/skills/aprender/SKILL.md) | Registra problema, causa y solución en el cerebro (o deuda técnica) | — |
+| [`/aprender`](.agents/skills/aprender/SKILL.md) | Registra problema, causa, solución y ámbito de rutas en el cerebro (o deuda técnica) | — |
+| [`/cerrar-fase`](.agents/skills/cerrar-fase/SKILL.md) | Cierra la fase: tareas fusionadas, salud del cerebro, deuda, hito y propuesta de la fase siguiente | Orchestrator |
 | [`/release`](.agents/skills/release/SKILL.md) | Batería completa, CHANGELOG, versión, tag, despliegue (con tu confirmación) y prueba de humo | DevOps + Docs + QA |
 
-Flujo típico: `/iniciar-proyecto` → `/nueva-tarea` → *(especialista trabaja)* → `/handoff` → `/qa-review` → `/release`. Para errores: `/bugfix` → `/handoff` → `/qa-review` → `/aprender`. Usa `/estado` en cualquier momento.
+Flujo típico: `/iniciar-proyecto` → `/nueva-tarea` → *(especialista trabaja)* → `/handoff` → `/qa-review` → `/release`. Para errores: `/bugfix` → `/aprender` → `/handoff` → `/qa-review` (la lección se registra antes del cierre). Al terminar una fase: `/cerrar-fase`. Usa `/estado` en cualquier momento.
 
 ### Skills de Stack y de Técnica
 
 | Skill | Qué aporta |
 | :--- | :--- |
 | [`stack-angular-express-postgres`](.agents/skills/stack-angular-express-postgres/SKILL.md) | Convenciones verificadas de Angular 22 + Node 24/Express 5 + PostgreSQL 18 con Drizzle, JWT propio y monorepo npm. Se carga junto a la skill del rol. |
+| [`stack-fastapi-postgres`](.agents/skills/stack-fastapi-postgres/SKILL.md) | Convenciones de una API Python 3.12 con FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic y PostgreSQL. |
 | [`stack-nextjs-tailwind-prisma`](.agents/skills/stack-nextjs-tailwind-prisma/SKILL.md) | Convenciones verificadas de React 19 + Next.js 15 (App Router, Server Components y Actions) + Tailwind CSS + PostgreSQL con Prisma ORM y Zod. |
 | [`e2e-testing`](.agents/skills/e2e-testing/SKILL.md) | Pruebas end-to-end con Playwright a partir de los escenarios Gherkin del PRD. |
 | [`payments-stripe`](.agents/skills/payments-stripe/SKILL.md) | Suscripciones y pagos con Stripe Checkout, portal de cliente y webhooks idempotentes (Stripe 23). |
 | [`seo-web`](.agents/skills/seo-web/SKILL.md) | SSR y prerender por ruta, metadatos, canonical/hreflang, JSON-LD, sitemap y hosts permitidos. |
 | [`web-performance`](.agents/skills/web-performance/SKILL.md) | Core Web Vitals, presupuestos, análisis del bundle, imágenes, caché y latencia de la API. |
 | [`i18n`](.agents/skills/i18n/SKILL.md) | Varios idiomas con `@angular/localize`, builds por idioma y comprobación de traducciones. |
+| [`security-hardening`](.agents/skills/security-hardening/SKILL.md) | Seguridad desde el diseño: STRIDE por funcionalidad, autenticación, autorización por objeto, cabeceras, archivos subidos, SSRF y dependencias. |
+| [`observability`](.agents/skills/observability/SKILL.md) | Logs JSON con `request_id`, métricas RED y de negocio, OpenTelemetry, reporte de errores, `/healthz` y `/readyz`, alertas con runbook. |
 
 ---
 
