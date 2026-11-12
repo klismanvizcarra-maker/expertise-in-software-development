@@ -27,3 +27,4 @@
 | `bash tests/test-scripts.sh` | `Resultado: 265 OK, 0 fallidas` |
 | `bash tests/test-flow.sh` | `Resultado: 25 OK, 0 fallidas` |
 | `./.agents/scripts/task.sh brain doctor` | `🧠 Cerebro sano.` |
+

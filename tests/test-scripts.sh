@@ -84,6 +84,18 @@ check "nombres de proyecto con & o / se sustituyen literalmente" 'grep -q "I&D /
 mkdir -p "$WORK/ci-app" && git -C "$WORK/ci-app" init -q
 bash "$ROOT/.agents/scripts/init-project.sh" "Mi App CI" "$WORK/ci-app" --ci >/dev/null 2>&1
 check "init-project --ci instala .github/workflows/audit.yml" '[ -f "$WORK/ci-app/.github/workflows/audit.yml" ] && grep -q "Audit" "$WORK/ci-app/.github/workflows/audit.yml"'
+check "ci_workflow_template soporta Node 24 (lint, typecheck, test, build)" 'grep -q "package.json" "$WORK/ci-app/.github/workflows/audit.yml" && grep -q "node-version: 24" "$WORK/ci-app/.github/workflows/audit.yml" && grep -q "npm run typecheck --if-present" "$WORK/ci-app/.github/workflows/audit.yml"'
+check "ci_workflow_template soporta Python 3.12 (pyproject/requirements, ruff, pytest)" 'grep -q "pyproject.toml" "$WORK/ci-app/.github/workflows/audit.yml" && grep -q "requirements.txt" "$WORK/ci-app/.github/workflows/audit.yml" && grep -q "python-version: .3\.12." "$WORK/ci-app/.github/workflows/audit.yml" && grep -q "ruff check" "$WORK/ci-app/.github/workflows/audit.yml" && grep -q "pytest" "$WORK/ci-app/.github/workflows/audit.yml"'
+check "ci_workflow_template fija todas las GitHub Actions a SHA de 40 hex y sin tabuladores" 'python3 -c "
+import re, sys
+txt = open(sys.argv[1], encoding=\"utf-8\").read()
+assert \"\\t\" not in txt, \"YAML contiene tabuladores\"
+uses = re.findall(r\"uses:[ \t]+(\\S+)\", txt)
+assert len(uses) >= 4, uses
+for u in uses:
+    assert re.search(r\"@[0-9a-f]{40}$\", u), f\"Action sin SHA inmutable: {u}\"
+" "$WORK/ci-app/.github/workflows/audit.yml"'
+check "QUICKSTART y stack_template documentan stacks adicionales" 'grep -q "stack-<nombre>" "$ROOT/QUICKSTART.md" && grep -q "stack-<nombre>" "$ROOT/.agents/templates/stack_template.md"'
 echo "# personalizado" > "$WORK/ci-app/.github/workflows/audit.yml"
 bash "$ROOT/.agents/scripts/init-project.sh" "Mi App CI" "$WORK/ci-app" --ci >/dev/null 2>&1
 check "init-project --ci no sobrescribe workflow existente" 'grep -q "# personalizado" "$WORK/ci-app/.github/workflows/audit.yml"'

@@ -39,8 +39,8 @@ cd ../MI-NUEVO-PROYECTO && ./.agents/scripts/install-hooks.sh
 ```
 El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.md`, `.mcp.json`, `.claude/settings.json`, `.gitignore` ni workflows existentes si ya existen.
 - Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows).
-- Usa `--stack nextjs`, `--stack angular` o `--stack fastapi` para preconfigurar la arquitectura sin placeholders.
-- Usa `--ci` para instalar automáticamente el pipeline de GitHub Actions (`.github/workflows/audit.yml`) desde la plantilla.
+- Usa `--stack nextjs`, `--stack angular` o `--stack fastapi` para preconfigurar la arquitectura sin placeholders (para otros stacks como Go, Django o Rust, crea una skill propia desde [`stack_template.md`](.agents/templates/stack_template.md)).
+- Usa `--ci` para instalar automáticamente el pipeline de GitHub Actions (`.github/workflows/audit.yml`) con soporte multi-stack para Node 24 (`package.json`) y Python 3.12 (`pyproject.toml` / `requirements.txt`).
 - Usa `--update` (o `-u`) en proyectos existentes para sincronizar scripts, plantillas, hooks y skills retirando obsoletas, sin tocar `GLOBAL_STATE.md`, `BRAIN.md` ni `.agents/brain/`.
 Luego ejecuta `install-hooks.sh` para activar la validación de commits y escaneo de secretos.
 
@@ -102,6 +102,15 @@ Flujo típico: `/iniciar-proyecto` → `/nueva-tarea` → *(especialista trabaja
 | [`i18n`](.agents/skills/i18n/SKILL.md) | Varios idiomas con `@angular/localize`, builds por idioma y comprobación de traducciones. |
 | [`security-hardening`](.agents/skills/security-hardening/SKILL.md) | Seguridad desde el diseño: STRIDE por funcionalidad, autenticación, autorización por objeto, cabeceras, archivos subidos, SSRF y dependencias. |
 | [`observability`](.agents/skills/observability/SKILL.md) | Logs JSON con `request_id`, métricas RED y de negocio, OpenTelemetry, reporte de errores, `/healthz` y `/readyz`, alertas con runbook. |
+
+#### Cómo añadir un stack adicional (`stack-<nombre>`)
+
+Los presets `--stack nextjs|angular|fastapi` cubren los tres stacks preempaquetados; para cualquier otro stack (Go, Django, Laravel, NestJS, Rust, etc.):
+1. Copia [`.agents/templates/stack_template.md`](.agents/templates/stack_template.md) en `.agents/skills/stack-<nombre>/SKILL.md` e iguala el `name:` del YAML frontmatter al nombre de la carpeta.
+2. Documenta las versiones, estructura de carpetas, comandos canónicos, *gotchas* y añade `No usar para...` en la descripción para no solaparse con los stacks existentes.
+3. Añade la correspondencia de directorios por rol en [`AGENTS.md`](AGENTS.md) §8 y declara el stack en `GLOBAL_STATE.md` §2.
+4. Si usas un toolchain distinto de Node 24 o Python 3.12, añade su bloque de lint/test/build en `.github/workflows/audit.yml` partiendo de [`ci_workflow_template.yml`](.agents/templates/ci_workflow_template.yml).
+5. Valida con `bash tests/test-skills.sh` (y `python3 tests/triggers/lint_descriptions.py` si registras casos en `tests/triggers/cases.json`).
 
 ---
 
@@ -194,7 +203,7 @@ Instala los hooks con un solo comando:
 ```bash
 bash tests/test-scripts.sh
 ```
-Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (265 comprobaciones).
+Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (269 comprobaciones).
 
 ---
 
@@ -204,7 +213,7 @@ Instala el sistema en proyectos temporales y verifica el ciclo completo de `task
   - `web-tester-playwright` (`npx @playwright/mcp`): Frontend y QA interactúan con la UI en un navegador real.
   - Base de datos, HTTP y Git se usan desde la terminal (`psql`/`sqlite3`, `curl`/supertest, `git`/`gh`): no requieren servidores MCP ni `uvx`. Si quieres uno más, añádelo a la plantilla y vuelve a copiarla a los dos destinos.
 * **Pipeline GitHub Actions ([`.agents/templates/ci_workflow_template.yml`](.agents/templates/ci_workflow_template.yml))**:
-  Se instala automáticamente indicando la opción `--ci` en `init-project.sh` como `.github/workflows/audit.yml` (o copiando manualmente la plantilla) para validar commits convencionales, escaneo de secretos y consistencia del estado en cada Pull Request.
+  Se instala automáticamente indicando la opción `--ci` en `init-project.sh` como `.github/workflows/audit.yml` (o copiando manualmente la plantilla) para validar commits convencionales, escaneo de secretos, consistencia de `GLOBAL_STATE.md` y ejecutar lint, tipos, pruebas y build tanto para Node 24 (`package.json`) como para Python 3.12 (`pyproject.toml` o `requirements.txt`, con `ruff`, `mypy`, `pytest` y `compileall`).
 
 ---
 
