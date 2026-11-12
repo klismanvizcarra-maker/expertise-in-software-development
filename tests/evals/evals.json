@@ -112,6 +112,82 @@
           "grep -E '^\\| *`?LL-' BRAIN.md | grep -q 'express.raw'"
         ]
       ]
+    },
+    {
+      "id": "handoff-verificacion",
+      "skill": "handoff",
+      "setup": "bash \"$FIXTURES/handoff.sh\"",
+      "prompt": "/handoff TASK-003 Haz la entrega formal completa a QA ejecutando los checks correspondientes sin pedirme confirmación.",
+      "checks": [
+        [
+          "la tarea pasa a IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ],
+        [
+          "existe handoff JSON valido con entregables y comandos de verificacion",
+          "python3 -c 'import json; d=json.load(open(\".agents/handoffs/handoff_TASK-003.json\")); assert d.get(\"task_id\")==\"TASK-003\" and d.get(\"verification_commands\") and d.get(\"deliverables\")'"
+        ],
+        [
+          "GLOBAL_STATE.md documenta la entrega de TASK-003",
+          "grep -qE 'handoff_TASK-003\\.json|TASK-003.*QA|node --test' GLOBAL_STATE.md"
+        ],
+        [
+          "la suite sigue pasando",
+          "node --test >/dev/null 2>&1"
+        ]
+      ]
+    },
+    {
+      "id": "refactor-caracterizacion",
+      "skill": "refactor",
+      "setup": "bash \"$FIXTURES/invoice.sh\"",
+      "prompt": "/refactor Extrae la lógica duplicada de cálculo de impuestos en src/invoice.js sin cambiar el comportamiento público ni romper tests. Haz el flujo completo hasta dejar la tarea en QA sin pedirme confirmación.",
+      "checks": [
+        [
+          "comportamiento publico identico tras refactor",
+          "node -e 'import(\"./src/invoice.js\").then(m => process.exit(m.calculateInvoiceTotal([{price:100,qty:2}], \"ES\") === 242 && m.calculateInvoiceTotal([{price:50,qty:1}], \"US\") === 55 && m.calculateInvoiceTotal([{price:50,qty:1}], \"OTHER\") === 50 ? 0 : 1))'"
+        ],
+        [
+          "la suite pasa",
+          "node --test >/dev/null 2>&1"
+        ],
+        [
+          "se trabajo en una rama refactor/",
+          "git branch --format='%(refname:short)' | grep -q '^refactor/TASK-'"
+        ],
+        [
+          "commit con la convencion refactor(TASK-XXX)",
+          "git log --all --format=%s | grep -qE '^refactor\\(TASK-[0-9]+\\): '"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "awk -F'|' '/^\\| *`?TASK-/ { s=$5; gsub(/[ `]/,\"\",s); if (s==\"IN_REVIEW_QA\") f=1 } END { exit !f }' GLOBAL_STATE.md"
+        ]
+      ]
+    },
+    {
+      "id": "security-hardening-sql-idor",
+      "skill": "security-hardening",
+      "setup": "bash \"$FIXTURES/search_sql.sh\"",
+      "prompt": "/security-hardening Endurece src/search.js para la tarea en curso TASK-003: usa siempre authUserId (nunca params.userId) y consulta parametrizada, añade tests de seguridad y pasa la tarea a IN_REVIEW_QA sin pedirme confirmación.",
+      "checks": [
+        [
+          "consulta parametrizada vinculada a authUserId y sin IDOR",
+          "node -e 'import(\"./src/search.js\").then(m => { let q=\"\", p=[]; const db={query:(s,a)=>{q=s;p=a;return []}}; m.searchInvoices(db,\"u1\",{userId:\"u2\",status:\"OR1=1\"}); process.exit((q.includes(\"$1\")||q.includes(\"?\")) && !q.includes(\"OR1=1\") && p.includes(\"u1\") && !p.includes(\"u2\") ? 0 : 1); })'"
+        ],
+        [
+          "sin concatenacion ni interpolacion SQL en src/search.js",
+          "! grep -E 'SELECT .*(user_id.*\\+|\\$\\{)' src/search.js"
+        ],
+        [
+          "la suite pasa",
+          "node --test >/dev/null 2>&1"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
     }
   ]
 }

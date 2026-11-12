@@ -673,16 +673,87 @@ check "el proyecto sembrado queda en main" '[ "$(git -C "$SEEDED" branch --show-
 section "test-flow.sh (ciclo completo de una tarea)"
 check "el flujo add -> handoff -> reject x3 -> close -> merge pasa de punta a punta" 'bash "$ROOT/tests/test-flow.sh" >/dev/null'
 
-section "test-skills.sh (linter estructural de skills)"
+section "test-skills.sh y evals (linters y cobertura)"
+run_skills_lint() {
+  local name="$1" content="$2" extra_file="${3:-}"
+  local fake; fake="$(mktemp -d "$WORK/skills.XXXXXX")"
+  mkdir -p "$fake/.agents/skills/$name" "$fake/tests"
+  cp "$ROOT/tests/test-skills.sh" "$fake/tests/test-skills.sh"
+  [ -n "$extra_file" ] && touch "$fake/$extra_file"
+  printf '%s\n' "$content" > "$fake/.agents/skills/$name/SKILL.md"
+  bash "$fake/tests/test-skills.sh" >/dev/null 2>&1
+}
+
 check "auditoría estructural de skills sin errores" 'bash "$ROOT/tests/test-skills.sh" >/dev/null'
-check "test-skills.sh sale con exit 1 ante errores" 'bash -c "FAKE=\$(mktemp -d); cp -r \"$ROOT/tests\" \"\$FAKE/\"; mkdir -p \"\$FAKE/.agents/skills/broken-agent\"; cat > \"\$FAKE/.agents/skills/broken-agent/SKILL.md\" <<\"EOF\"
----
+check "linter de descripciones (lint_descriptions.py) sin problemas" 'python3 "$ROOT/tests/triggers/lint_descriptions.py" >/dev/null'
+check "test-skills.sh sale con exit 1 ante errores" '! run_skills_lint broken-agent "---
 name: broken-agent
 description: corta
 ---
-# broken
-EOF
-bash \"\$FAKE/tests/test-skills.sh\" >/dev/null 2>&1; ret=\$?; rm -rf \"\$FAKE\"; exit \$ret"; [ $? -eq 1 ]'
+# broken"'
+check "test-skills.sh rechaza YAML sin cierre ---" '! run_skills_lint no-close "---
+name: no-close
+description: Skill de prueba completa. Usar en regresion.
+# Sin cierre YAML
+## Pasos
+- [ ] paso
+## Prohibido
+- Nada"'
+check "test-skills.sh rechaza description sin Usar" '! run_skills_lint no-usar "---
+name: no-usar
+description: Skill de prueba suficientemente larga sin trigger valido.
+---
+# Sin Usar
+## Pasos
+- [ ] paso
+## Prohibido
+- Nada"'
+check "test-skills.sh exige Prohibido en skills de flujo y técnica" '! run_skills_lint fake-flow "---
+name: fake-flow
+description: Skill de flujo de prueba. Usar en tests.
+---
+# Fake Flow
+## Pasos
+- [ ] paso"'
+check "test-skills.sh valida stack-* sin exigir Pasos ni Prohibido" 'run_skills_lint stack-fake "---
+name: stack-fake
+description: Convenciones de stack falso. Usar en pruebas.
+---
+# Stack Fake
+## Convenciones
+Solo texto."'
+check "test-skills.sh detecta enlaces rotos a raíz" '! run_skills_lint bad-link "---
+name: bad-link
+description: Skill con enlace roto. Usar en pruebas.
+---
+# Bad Link
+## Pasos
+Ver [falta](../../../NO_EXISTE.md)
+- [ ] paso
+## Prohibido
+- Nada"'
+check "test-skills.sh acepta enlaces relativos válidos a raíz" 'run_skills_lint good-link "---
+name: good-link
+description: Skill con enlace valido. Usar en pruebas.
+---
+# Good Link
+## Pasos
+Ver [AGENTS](../../../AGENTS.md)
+- [ ] paso
+## Prohibido
+- Nada" "AGENTS.md"'
+check "evals.json es válido y referencia skills y fixtures existentes" 'python3 - "$ROOT" <<'"'"'PY'"'"'
+import json, pathlib, re, sys
+root = pathlib.Path(sys.argv[1])
+data = json.loads((root / "tests/evals/evals.json").read_text(encoding="utf-8"))
+evals = data.get("evals", [])
+assert len(evals) >= 8, f"se esperaban >=8 evals, hay {len(evals)}"
+for ev in evals:
+    assert (root / ".agents/skills" / ev["skill"] / "SKILL.md").is_file(), ev["skill"]
+    assert ev.get("checks"), ev["id"]
+    for fx in re.findall(r"\$FIXTURES/([A-Za-z0-9_.-]+)", ev.get("setup", "")):
+        assert (root / "tests/evals/fixtures" / fx).is_file(), fx
+PY'
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
