@@ -1063,6 +1063,97 @@
     "web-performance"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "tst-01",
+   "prompt": "Nuestros tests unitarios de servicios están acoplados a mocks internos y son muy frágiles, diseña cómo aislarlos con fakes y BD de pruebas",
+   "expect": [
+    "testing-strategy"
+   ],
+   "accept": [
+    "backend-agent",
+    "domain-logic-agent"
+   ],
+   "forbid": [
+    "e2e-testing",
+    "qa-review"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "tst-02",
+   "prompt": "La suite de integración falla de forma intermitente según el orden porque los tests comparten datos en PostgreSQL",
+   "expect": [
+    "testing-strategy"
+   ],
+   "accept": [
+    "backend-agent",
+    "database-architect-agent",
+    "bugfix"
+   ],
+   "forbid": [
+    "e2e-testing",
+    "release"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "async-01",
+   "prompt": "Al confirmar un pedido queremos enviar el email de confirmación en segundo plano con reintentos, Outbox y sin perder mensajes si cae el servidor",
+   "expect": [
+    "async-jobs"
+   ],
+   "accept": [
+    "backend-agent",
+    "observability",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "payments-stripe"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "async-02",
+   "prompt": "Los usuarios deben poder subir PDFs grandes directo a almacenamiento con URL pre-firmada y validación asíncrona de archivo",
+   "expect": [
+    "async-jobs"
+   ],
+   "accept": [
+    "security-hardening",
+    "backend-agent",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "seo-web"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "pr-01",
+   "prompt": "Revisa técnicamente este diff de la rama feature/TASK-015 respecto a main y redacta la descripción del Pull Request antes de fusionar",
+   "expect": [
+    "pr-review"
+   ],
+   "accept": [],
+   "forbid": [
+    "handoff",
+    "refactor"
+   ],
+   "type": "flujo"
+  },
+  {
+   "id": "pr-02",
+   "prompt": "Tengo conflictos de rebase con main en mi Pull Request; ayúdame a resolverlos sin romper contratos ni tests",
+   "expect": [
+    "pr-review"
+   ],
+   "accept": [],
+   "forbid": [
+    "qa-review",
+    "refactor"
+   ],
+   "type": "flujo"
   }
  ],
  "_seed_tasks": [
