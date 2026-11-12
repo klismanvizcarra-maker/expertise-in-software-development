@@ -4,8 +4,8 @@
 - **Fecha**: 2026-11-11
 - **Revisor**: `qa-security-agent`
 - **Especialista Asignado**: `docs-architecture-agent`
-- **Resultado**: `RECHAZADA`
-- **Iteración**: `1/3` tras la reapertura (revisión acotada con contexto limpio del commit `b63762c`; el historial previo llegó a 3/3 por BUG-TASK-033-6)
+- **Resultado**: `APROBADA`
+- **Iteración**: revisión 2 tras la reapertura (contador `1/3` tras el rechazo por BUG-TASK-033-7); revisión acotada con contexto limpio del commit `1ee822e`
 
 ---
 
@@ -13,39 +13,30 @@
 
 | Criterio / Control | Resultado | Evidencia |
 | :--- | :---: | :--- |
-| Skills con referencias, Checklist y Prohibido; AGENTS.md §2.7; casos de activación | ✅ | Sin cambios en esta iteración (`git diff HEAD~1 --stat`); dados por buenos en el veredicto anterior |
+| Skills con referencias, Checklist y Prohibido; AGENTS.md §2.7; casos de activación | ✅ | Sin cambios en esta iteración salvo la sección SSRF (`git diff HEAD~1 --stat`); dados por buenos en veredictos anteriores |
 | `test-skills.sh` | ✅ | Ejecutado: 32 skills auditadas sin errores |
 | `lint_descriptions.py` | ✅ | Ejecutado: "Sin problemas" |
 | `test-scripts.sh` | ✅ | Ejecutado: 239 OK, 0 fallidas |
 | `validate-state.sh` | ✅ | Ejecutado: 0 advertencias |
-| Escaneo de secretos | ✅ | Ejecutado `scan-secrets.sh --branch`: sin hallazgos |
-| BUG-1 a BUG-5 | ✅ | El diff de `b63762c` solo toca la sección SSRF, LL-011 y estado; nada reintroduce la vía "no alcanzable → ADR" (grep `alcanzable\|no aplica` en la skill: solo la prohibición en `checklist.md:58`). Rutas de salud y rate limit intactos (leído) |
-| BUG-6: IPv4 literal en Node | ✅ | Ejecutado Node 24.21 con `http.Agent({ lookup })` + validación del literal tras `new URL()`: `127.0.0.1`, `2130706433`, `0177.0.0.1`, `0x7f.1`, `169.254.169.254` bloqueadas antes de conectar (`lookupCalls=0`, confirma que `lookup` no se ejecuta) |
-| BUG-6: nombres con `lookup` y `{ all: true }` | ✅ | Ejecutado: `localhost` bloqueado por el `lookup` propio (1 llamada) |
-| BUG-6: redirección a IP literal seguida a mano | ✅ (IPv4) / ❌ (IPv6) | Ejecutado: `Location: http://127.0.0.1:<p>/` bloqueada; `Location: http://[::1]:<p>/` pasa (200) si el literal se comprueba con `net.isIP(u.hostname)` |
-| IPv6 literal en Node (`[::1]`, `[::ffff:127.0.0.1]`) | ❌ MEDIA | BUG-TASK-033-7 |
-| Python: nota sobre `ipaddress` y formas decimales | ❌ MEDIA (texto inexacto) | BUG-TASK-033-7 (parte Python) |
-| Python: transporte con `server_hostname`, nunca `verify=False`; `is_global` + `not is_multicast` + IPv4 incrustada | ✅ | Leído; afirmaciones ya verificadas por ejecución en el veredicto anterior |
-| LL-011 recoge el hueco de la IP literal | ✅ | Antídoto: "un gancho de DNS (lookup) no ve las URLs con IP literal: validar tambien la IP literal tras normalizar la URL"; `task.sh brain search rebinding` y `brain search SSRF` la encuentran (ejecutado) |
+| Escaneo de secretos | ✅ | Ejecutado `scan-secrets.sh --branch` (respecto a `main` 984d0fb): sin hallazgos |
+| BUG-7 Node: IPv6 literal entre corchetes | ✅ | Ejecutado Node 24.21, receta implementada tal como la escribe `checklist.md` (`new URL()`, quitar corchetes, `net.isIP`, `http.Agent({ lookup })` que respeta `{ all: true }`, redirecciones seguidas a mano por todo el proceso). Servidor local en `::`. Bloqueados sin conectar (`lookup` 0 llamadas): `127.0.0.1`, `2130706433`, `0177.0.0.1`, `0x7f.1`, `169.254.169.254`, `[::1]`, `[::ffff:127.0.0.1]`, `0.0.0.0`, `0`, `127.1`, `[::]`, `[0:0:0:0:0:ffff:7f00:1]`, `[64:ff9b::7f00:1]`, `[2002:7f00:1::]`, `127.0.0.1.`, `0x7F000001`, `017700000001`, `[::ffff:a9fe:a9fe]`. `localhost`, `LOCALHOST`, `localhost.` bloqueados por el `lookup` (1 llamada). Zona `%25` (`[fe80::1%25lo0]`, `[::1%25lo0]`): `new URL()` lanza `ERR_INVALID_URL` |
+| Redirección a cada IP literal interna | ✅ | Ejecutado: origen `pub.test` (lookup falso → `93.184.216.34`) responde 302 a `127.0.0.1`, `2130706433`, `0177.0.0.1`, `0x7f.1`, `169.254.169.254`, `[::1]`, `[::ffff:127.0.0.1]`, `0.0.0.0`: las 8 bloqueadas como literal en el segundo salto |
+| Destino público simulado | ✅ | Ejecutado: `pub.test` → `93.184.216.34` pasa la validación (200; un adaptador de test redirige la conexión al servidor local tras validar) |
+| BUG-7 Python: normalización y camino `getaddrinfo` | ✅ | Ejecutado Python 3.9.6 solo stdlib: `urlsplit` quita corchetes y pasa a minúsculas, pero deja `2130706433`, `0x7f.1`, `0177.0.0.1` y `127.0.0.1.` tal cual (confirma el texto). Literales con `ip_address` bloqueados (`127.0.0.1`, `169.254.169.254`, `::1`, `::ffff:127.0.0.1`, `0.0.0.0`, `::`, NAT64, 6to4, `fe80::1%25lo0`, `ff02::1`, `224.0.0.1`); si `ip_address` falla, `getaddrinfo` + validación bloquea `2130706433`, `0x7f.1`, `0`, `127.1`, `0x7F000001`, `017700000001`, `127.0.0.1.`, `localhost`, `LOCALHOST`, `localhost.`. `0177.0.0.1` → macOS lo lee como `177.0.0.1` (pública): pasa, pero se conecta a esa IP validada, no a loopback; es justo la advertencia del texto. `pub.test` falso → pasa |
+| Coherencia con el resto de la tarea (`git diff main...HEAD`) | ✅ | Leído: `SKILL.md` paso 6 resume ahora "host de IP literal validado directamente" y tests IPv4 e IPv6; la línea "Comprobación" añade `[::ffff:127.0.0.1]` y `0x7f.1`; ninguna otra skill del diff (observability, devops, qa-security, web-performance, triggers) habla de SSRF. `seo-web` §5 trata hosts permitidos del SSR, no contradice |
+| LL-011 recoge los casos | ✅ | Leído y ejecutado `task.sh brain search corchetes`: antídoto incluye corchetes de `URL.hostname` en Node y "urllib no normaliza 2130706433: si ipaddress falla, resolver con getaddrinfo y validar" |
 
 ## 2. Bugs
-
-### BUG-TASK-033-7 (MEDIA, seguridad) — La receta del literal falla con IPv6 en Node y la nota de Python es inexacta
-- **Observado** (`checklist.md:42`): "pásala por el parser de URL estándar (`new URL()` en Node, `urllib.parse` más `ipaddress` en Python) y, si el host es una IP literal, valídala directamente […] `ipaddress` de Python, en cambio, rechaza esas formas, así que normaliza con el parser de URL antes."
-- **Node (ejecutado, Node 24.21)**: `new URL('http://[::1]/').hostname` es `"[::1]"` (con corchetes) y `net.isIP('[::1]')` devuelve `0`. La forma directa de aplicar la receta (`net.isIP(u.hostname)`) no reconoce el literal IPv6, lo trata como nombre, y como `net.connect` recibe `::1` (sin corchetes) tampoco llama a `lookup`. Resultado: `http://[::1]:<p>/` → 200 y `http://[::ffff:127.0.0.1]:<p>/` (hostname `[::ffff:7f00:1]`) → 200, `lookupCalls=0`; igual con una redirección a `http://[::1]/`. Quitando los corchetes antes de `net.isIP` las tres quedan bloqueadas. Es la misma clase de hueco que BUG-6 (el literal se salta los dos controles), ahora en IPv6.
-- **Python (ejecutado, Python 3.9.6)**: `urllib.parse.urlsplit('http://2130706433/').hostname` es `'2130706433'`; el parser de URL de Python **no** normaliza `2130706433`, `0177.0.0.1` ni `0x7f.1`, así que "normaliza con el parser de URL antes" no es cierto en Python. Lo que sí las convierte es `getaddrinfo` (`2130706433` → `127.0.0.1`, `0x7f.1` → `127.0.0.1`; en macOS `0177.0.0.1` → `177.0.0.1`, distinto de Node, que da `127.0.0.1`). No abre un hueco si se valida la IP que devuelve `getaddrinfo` y se conecta a ella, pero el texto induce a buscar una normalización que no existe. En Python los corchetes sí se quitan (`urlsplit('http://[::1]/').hostname == '::1'`).
-- **Corrección recomendada** (dos frases en la viñeta "Primero, la URL ya normalizada"):
-  - Node: "`URL.hostname` conserva los corchetes de IPv6 (`[::1]`): quítalos antes de `net.isIP` o la IPv6 literal se salta la validación."
-  - Python: "`urllib.parse` no normaliza formas como `2130706433`: si `ipaddress.ip_address` falla, trata el host como nombre, resuélvelo con `getaddrinfo`, valida las IPs resultantes y conecta a ellas; nunca decidas por el texto."
-  - Opcional: en `SKILL.md` paso 6, añadir "IP literal validada tras normalizar la URL" al resumen de SSRF, que hoy solo menciona la IP resuelta.
+Ninguno bloqueante.
 
 ## 3. Observaciones BAJA (no bloqueantes)
-- El handoff afirma "`[::1]` rechazada" en Node 24.21; solo es cierto si el especialista quitó los corchetes, algo que la receta no dice. Conviene que los comandos de verificación del handoff incluyan el script usado.
+- **Prefijos IPv6 con IPv4 incrustada no listados**: `::127.0.0.1` (IPv4-compatible, `::/96`, obsoleto) y `::ffff:0:127.0.0.1` (SIIT, `::ffff:0:0:0/96`) dan `is_global=True` en Python 3.9 y no están en la lista de ejemplo del texto. Ejecutado: en macOS ni Node ni Python llegan a loopback (timeout de conexión), así que no hay explotación demostrada; no verificado en Linux. Sugerencia para una tarea futura: añadir ambos prefijos a la lista de ejemplo o validar también su IPv4 incrustada.
+- El arnés de QA sustituyó `ipaddr.js` (no integrado) por `net.BlockList` con los rangos del texto; nota: un `BlockList` con `::ffff:0:0/96` bloquea también toda IPv4 al comprobarla como `ipv4`, por lo que hay que usar listas separadas por familia si alguien lo imita.
 
 ## 4. Lección
-- No se cierra. Al cerrar: ampliar LL-011 (o LL nueva) con "probar cada receta con las variantes de formato de la entrada (IPv6 entre corchetes, formas decimales) en cada lenguaje; el parser de URL de Node y el de Python no devuelven lo mismo".
+- `LL-011` (ampliada en este commit con corchetes IPv6 en Node y el camino `getaddrinfo` en Python). Cierre con `task.sh close TASK-033 --lesson LL-011`.
 
 ## 5. Conclusión y Veredicto Final
 
-- **Estado**: `RECHAZADA` → `IN_PROGRESS` (1/3).
-- **Siguiente paso**: el especialista retoma con `task.sh start TASK-033` y aplica las dos frases de BUG-TASK-033-7. Scripts de reproducción de QA: `recipe.js` y `probe.js` en el scratchpad de la sesión de QA (se pueden reescribir: servidor en `::`, `http.Agent({ lookup })`, validación del literal con y sin quitar corchetes).
+- **Estado**: `APROBADA` → `DONE`.
+- **Siguiente paso**: fusión a `main` con `--no-ff` y borrado de la rama por el especialista o el `orchestrator-agent` (QA no fusiona). Scripts de QA: `recipe.js`, `probe.js` y `recipe.py` en `/private/tmp/claude-501/-Users-klismanvizcarra-Desktop-PROYECTOS-SKILL--MAESTRO/93d4f4ac-7cb6-4e0f-9815-84fb011827e5/scratchpad/qa033/`.

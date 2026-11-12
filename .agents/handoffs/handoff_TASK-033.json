@@ -3,8 +3,8 @@
   "summary": "Skills de tecnica security-hardening y observability",
   "source_agent": "docs-architecture-agent",
   "target_agent": "qa-security-agent",
-  "timestamp": "2026-11-12T02:32:52Z",
-  "iteration": 1,
+  "timestamp": "2026-11-12T02:37:59Z",
+  "iteration": 2,
   "deliverables": [
     { "type": "file", "path": ".agents/brain/lessons_learned.md" },
     { "type": "file", "path": ".agents/reviews/qa_TASK-033.md" },
