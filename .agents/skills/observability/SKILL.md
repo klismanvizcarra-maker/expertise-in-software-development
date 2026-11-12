@@ -11,11 +11,11 @@ Si no se puede ver, no se puede operar. Cada funcionalidad que llega a producci�
 
 1. **Decidir qué hay que ver**: para la funcionalidad, anota en la tarea la señal de que funciona (métrica de negocio: pedidos creados, pagos confirmados), la señal de que falla (tasa de error, latencia p95) y qué datos necesitarías para diagnosticar un fallo.
 2. **Logs estructurados**: una línea JSON por evento con `timestamp`, `level`, `message`, `service`, `request_id` y contexto útil (`user_id`, `order_id`). Nada de datos sensibles. Niveles con criterio: `error` solo para lo que requiere acción. Detalle: [logs-metrics-traces.md](references/logs-metrics-traces.md#logs).
-3. **Correlación**: genera o propaga un `request_id` (cabecera `X-Request-Id` o `traceparent` de W3C) en cada petición, inclúyelo en todos los logs de esa petición y en las respuestas de error, y pásalo a los servicios que llames.
+3. **Correlación**: cada petición lleva un `request_id` (propio, o el `X-Request-Id` de un servicio interno de confianza, validado si viene de un cliente público) en todos sus logs y en las respuestas de error, y se pasa a los servicios que llames. Si hay trazas, registra también el `trace_id` del `traceparent` de W3C, que identifica la traza distribuida, no la petición.
 4. **Métricas**: RED por endpoint (peticiones, errores, duración en histograma) y las métricas de negocio del paso 1. Etiquetas de baja cardinalidad: ruta con plantilla (`/orders/:id`), nunca el ID real ni el usuario.
 5. **Trazas** (cuando hay varios servicios, colas o llamadas externas lentas): instrumenta con OpenTelemetry y exporta por OTLP; propaga el contexto entre servicios y colas.
 6. **Errores**: captura las excepciones no controladas con un servicio de reporte (Sentry, Rollbar o el del proveedor) con versión de release, entorno y `request_id`, filtrando datos sensibles antes de enviar.
-7. **Salud**: `GET /health` (vivo, sin dependencias) y `GET /ready` (puede atender: base de datos y dependencias críticas), sin información sensible en la respuesta.
+7. **Salud**: `GET /healthz` (vivo, sin dependencias) y `GET /readyz` (puede atender: base de datos y dependencias críticas), sin información sensible en la respuesta. Son las mismas rutas que usan `devops-cloud-agent` y las skills `stack-*`; si el stack del proyecto define otras, mandan las del stack.
 8. **Alertas accionables**: alerta sobre síntomas que afectan al usuario (tasa de error, latencia p95, cola atascada), no sobre causas sueltas (CPU al 80 %). Cada alerta tiene umbral, duración y un runbook corto: qué significa, cómo confirmarlo y qué hacer. Ver [alerts-runbook.md](references/alerts-runbook.md).
 
 ## Checklist antes de `task.sh handoff`
@@ -23,7 +23,7 @@ Si no se puede ver, no se puede operar. Cada funcionalidad que llega a producci�
 - [ ] Logs JSON con `request_id` en todos los eventos de la petición; ningún dato sensible (verificado con un test o una búsqueda en la salida).
 - [ ] Métricas RED y de negocio emitidas con etiquetas de baja cardinalidad.
 - [ ] Excepciones no controladas llegan al servicio de errores con release, entorno y `request_id`.
-- [ ] `/health` y `/ready` responden y `/ready` falla si cae la base de datos.
+- [ ] `/healthz` y `/readyz` responden y `/readyz` falla si cae la base de datos.
 - [ ] Cada alerta nueva tiene umbral, duración y runbook.
 
 ## Prohibido

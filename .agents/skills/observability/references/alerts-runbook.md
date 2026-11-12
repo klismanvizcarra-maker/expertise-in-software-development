@@ -12,12 +12,12 @@
 | :--- | :--- | :--- |
 | Tasa de error alta | errores 5xx > 2 % de las peticiones durante 5 min | Página (urgente) |
 | Latencia degradada | p95 > 1 s durante 10 min en rutas principales | Ticket o página según impacto |
-| Servicio no listo | `/ready` falla durante 2 min | Página |
+| Servicio no listo | `/readyz` falla durante 2 min | Página |
 | Negocio parado | `orders_created_total` sin incrementos en 30 min en horario de actividad | Página |
 | Cola atascada | mensajes pendientes crecen durante 15 min o el más antiguo supera 10 min | Ticket |
 | Certificado TLS | caduca en menos de 14 días | Ticket |
 
-Los umbrales se ajustan con datos reales tras las primeras semanas. Si hay SLO definidos (p. ej. 99,5 % de peticiones correctas al mes), alerta por consumo rápido del presupuesto de error en lugar de umbrales fijos.
+Los umbrales se ajustan con datos reales tras las primeras semanas, y las alertas por porcentaje exigen un mínimo de tráfico (p. ej. 50 peticiones en la ventana) para no saltar con dos errores de madrugada. Si hay SLO definidos (p. ej. 99,5 % de peticiones correctas al mes), alerta por consumo del presupuesto de error en varias ventanas (rápida: 1 h y 5 min; lenta: 6 h y 30 min) en lugar de umbrales fijos.
 
 ## Plantilla de runbook
 
@@ -34,4 +34,4 @@ Los umbrales se ajustan con datos reales tras las primeras semanas. Si hay SLO d
 **Después**: registrar el incidente; si la causa fue un defecto, abrir `/bugfix` y su lección con `/aprender`.
 ```
 
-Guarda los runbooks en `docs/runbooks/` y enlaza cada uno desde la definición de su alerta.
+Guarda los runbooks en `docs/runbooks/` y enlaza cada uno desde la definición de su alerta. Los redacta quien define la alerta (backend o devops) y los mantiene `docs-architecture-agent`, dueño de `docs/` (`AGENTS.md` §8).

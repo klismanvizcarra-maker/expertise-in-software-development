@@ -14,9 +14,9 @@ QA **detecta** vulnerabilidades; esta skill las **evita** mientras se construye.
 3. **Autorización en cada acceso**: toda consulta de un recurso filtra por el usuario o el tenant que lo posee, en el servidor. Un recurso ajeno responde `404`, no `403`. Los roles se comprueban en el servidor, nunca solo ocultando botones.
 4. **Entrada no confiable**: valida con esquema estricto en la frontera (Zod, Pydantic) y rechaza campos desconocidos; consultas parametrizadas siempre; nada de entrada del usuario en `eval`, comandos de shell, rutas de archivo ni plantillas sin escapar.
 5. **Superficie HTTP**: cabeceras de seguridad (CSP, HSTS, `X-Content-Type-Options`, `frame-ancestors`), CORS con lista explícita de orígenes, límites de tamaño de cuerpo, protección CSRF si la sesión va en cookies, y errores genéricos hacia el cliente.
-6. **Casos especiales** cuando apliquen: subida de archivos (tipo verificado por contenido, tamaño máximo, nombre generado, almacenamiento fuera del webroot), SSRF en llamadas a URLs que da el usuario (lista de destinos permitidos, bloqueo de IPs internas y de metadatos), webhooks (firma verificada). Ver [checklist.md](references/checklist.md).
-7. **Secretos y dependencias**: secretos solo en variables de entorno y `.env.example` sin valores reales; ejecuta la auditoría de dependencias del ecosistema (`npm audit --omit=dev`, `pip-audit`) y corrige o documenta como deuda (`task.sh debt`) las vulnerabilidades altas sin parche.
-8. **Probar los controles**: cada control importante lleva un test que demuestra que bloquea (acceso a recurso ajeno → 404, login con 11 intentos → 429, campo extra → 400, cabeceras presentes). Ejecuta `./.agents/scripts/scan-secrets.sh --branch` antes del handoff.
+6. **Casos especiales** cuando apliquen: subida de archivos (tipo verificado por contenido, tamaño máximo, nombre generado, almacenamiento fuera del webroot), SSRF en llamadas a URLs que da el usuario (esquema http/https, destinos permitidos, IP resuelta una vez, validada y usada para conectar, rangos internos IPv4/IPv6 bloqueados, redirecciones validadas), webhooks (firma verificada). Ver [checklist.md](references/checklist.md).
+7. **Secretos y dependencias**: secretos solo en variables de entorno y `.env.example` sin valores reales; ejecuta la auditoría de dependencias del ecosistema (`npm audit --omit=dev`, `pip-audit`) y corrige toda vulnerabilidad alta o crítica (actualizar, sustituir la librería o eliminar el uso afectado). Una vulnerabilidad de seguridad **nunca** se acepta como deuda técnica (`tech_debt.md` solo admite deuda media o baja sin riesgo de seguridad): si no hay parche ni alternativa, la tarea no se entrega y el `orchestrator-agent` escala la decisión al usuario.
+8. **Probar los controles**: cada control importante lleva un test que demuestra que bloquea (acceso a recurso ajeno → 404, primer intento por encima del límite de login → 429, campo extra → 400, cabeceras presentes). Ejecuta `./.agents/scripts/scan-secrets.sh --branch` antes del handoff.
 
 ## Checklist antes de `task.sh handoff`
 - [ ] Amenazas STRIDE de la funcionalidad anotadas en la tarea, cada una con su control.
@@ -24,12 +24,13 @@ QA **detecta** vulnerabilidades; esta skill las **evita** mientras se construye.
 - [ ] Entrada validada con esquema estricto; consultas parametrizadas; sin `eval` ni shell con datos del usuario.
 - [ ] Contraseñas con argon2id/bcrypt; rate limiting en autenticación; JWT con algoritmo fijado y expiración corta.
 - [ ] Cabeceras de seguridad y CORS explícito configurados; errores sin trazas ni detalles internos.
-- [ ] Auditoría de dependencias sin vulnerabilidades altas sin tratar; escaneo de secretos limpio.
+- [ ] Auditoría de dependencias sin vulnerabilidades altas ni críticas (corregidas, nunca aplazadas como deuda); escaneo de secretos limpio.
 
 ## Prohibido
 - Confiar en el cliente para autorizar (ocultar un botón no es un control de acceso).
 - Guardar contraseñas con MD5, SHA-1, SHA-256 simples o cifrado reversible.
 - Aceptar `alg: none` o no fijar el algoritmo al verificar un JWT.
-- `Access-Control-Allow-Origin: *` junto con credenciales.
+- Reflejar el `Origin` recibido en CORS junto con credenciales.
 - Concatenar entrada del usuario en SQL, comandos de shell, rutas de archivo o HTML.
 - Desactivar un control de seguridad para que pase un test o una demo.
+- Registrar una vulnerabilidad como deuda técnica (`task.sh debt`) para entregar antes: la deuda nunca es de seguridad.
