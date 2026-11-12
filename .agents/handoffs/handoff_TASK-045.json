@@ -1,0 +1,29 @@
+{
+  "task_id": "TASK-045",
+  "summary": "Profundizar las 6 skills base con references operativas verificables",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-12T05:39:12Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/backend-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/backend-agent/references/api-patterns.md" },
+    { "type": "file", "path": ".agents/skills/database-architect-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/database-architect-agent/references/migrations-zero-downtime.md" },
+    { "type": "file", "path": ".agents/skills/docs-architecture-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/docs-architecture-agent/references/c4-openapi-adr.md" },
+    { "type": "file", "path": ".agents/skills/domain-logic-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/domain-logic-agent/references/money-and-state-machines.md" },
+    { "type": "file", "path": ".agents/skills/frontend-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/frontend-agent/references/ui-states-patterns.md" },
+    { "type": "file", "path": ".agents/skills/mobile-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/mobile-agent/references/mobile-stores-checklist.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
