@@ -9,10 +9,13 @@ La batería de `tests/triggers/` mide **qué skill se carga**. Estas evals miden
 | `bugfix-threshold` | `bugfix` | Corrige un error de umbral con test de regresión, rama `fix/`, commit `fix(TASK-XXX)` y entrega a QA |
 | `nueva-tarea-reset-password` | `nueva-tarea` | Descompone en ≥ 2 tareas con agentes reales, backend + frontend y criterios verificables |
 | `aprender-stripe` | `aprender` | Registra la lección con causa raíz y solución, no solo el síntoma |
+| `handoff-verificacion` | `handoff` | Pasa a `IN_REVIEW_QA`, genera `handoff_TASK-003.json` con entregables/comandos y deja registro en `GLOBAL_STATE.md` |
+| `refactor-caracterizacion` | `refactor` | Extrae lógica duplicada preservando el comportamiento público y los tests en rama `refactor/` |
+| `security-hardening-sql-idor` | `security-hardening` | Sustituye SQL concatenado e IDOR por consulta parametrizada vinculada a `authUserId` |
 
 ## Ejecutar
 ```bash
-python3 tests/evals/run_evals.py                          # todas (~5 sesiones)
+python3 tests/evals/run_evals.py                          # todas (~8 sesiones)
 python3 tests/evals/run_evals.py --only qa-reject-idor    # una
 python3 tests/evals/run_evals.py --keep                   # conserva los proyectos temporales para inspeccionarlos
 ```

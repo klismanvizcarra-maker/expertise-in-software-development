@@ -4,6 +4,10 @@ Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Ke
 
 ## [Unreleased]
 
+### Añadido
+- `tests/test-skills.sh` endurecido para exigir cierre YAML `---`, palabra clave `Usar`, secciones obligatorias por tipo de skill y enlaces relativos a raíz, plantillas y referencias (TASK-040).
+- `tests/evals/evals.json` ampliado de 5 a 8 evals deterministas con `handoff-verificacion`, `refactor-caracterizacion` y `security-hardening-sql-idor` (fixtures en `tests/evals/fixtures/`), cubiertos junto a los nuevos linters en `tests/test-scripts.sh` (265 comprobaciones) y alineados en `QUICKSTART.md` (TASK-040).
+
 ### Cambiado
 - `orchestrator-agent` lista también `security-hardening` y `observability` entre las skills de técnica (TASK-041).
 - `qa-review` delega la verificación independiente en Antigravity con `TypeName: "self"` y documenta que citar `LL-XXX` en `task.sh reject` garantiza el registro de reincidencias (TD-004, TASK-041).

@@ -1,0 +1,31 @@
+{
+  "task_id": "TASK-040",
+  "summary": "Endurecer linters y cobertura de pruebas (test-skills.sh, test-scripts.sh y evals.json)",
+  "source_agent": "qa-security-agent",
+  "target_agent": "devops-cloud-agent",
+  "timestamp": "2026-11-12T04:22:13Z",
+  "iteration": 3,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "tests/evals/README.md" },
+    { "type": "file", "path": "tests/evals/evals.json" },
+    { "type": "file", "path": "tests/evals/fixtures/handoff.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/invoice.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/search_sql.sh" },
+    { "type": "file", "path": "tests/test-scripts.sh" },
+    { "type": "file", "path": "tests/test-skills.sh" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-flow.sh",
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch",
+    "./.agents/scripts/task.sh brain doctor && ./.agents/scripts/task.sh brain stats"
+  ]
+}
