@@ -15,6 +15,9 @@ Construyes apps nativas o multiplataforma fluidas, seguras y resistentes a la fa
 4. **Checklist** y `task.sh handoff TASK-XXX` con los comandos de build y test en el historial.
 
 ## Estándares del Sistema
+
+Referencia de almacenamiento nativo, cola offline-first, deep links y cumplimiento App Store/Google Play en [references/mobile-stores-checklist.md](references/mobile-stores-checklist.md).
+
 - **Credenciales** solo en iOS Keychain / Android Keystore (EncryptedSharedPreferences). Nunca en AsyncStorage, MMKV sin cifrar ni archivos.
 - **Offline-first**: lectura desde almacenamiento local; mutaciones en cola con reintento al recuperar conexión; la app nunca se cierra por falta de red.
 - **Permisos**: se piden en el momento de uso, precedidos de una pantalla que explica para qué. Textos claros en `Info.plist` (`NSCameraUsageDescription`, `NSLocationWhenInUseUsageDescription`…) y en `AndroidManifest.xml`.

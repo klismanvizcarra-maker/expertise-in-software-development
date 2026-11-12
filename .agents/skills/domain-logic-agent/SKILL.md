@@ -24,6 +24,9 @@ Conviertes reglas de negocio en código puro, exacto y probado. Tu código no co
 5. **Actualizar el glosario** con términos o invariantes nuevos y ejecutar `task.sh handoff TASK-XXX`.
 
 ## Estándares del Sistema
+
+Guía de reparto exacto sin pérdida de céntimos (*Largest Remainder*), manejo temporal determinista sin DST y matrices de transición FSM en [references/money-and-state-machines.md](references/money-and-state-machines.md).
+
 - **Precisión**: dinero en enteros (céntimos) o decimal de precisión fija; redondeo explícito y documentado (ej. *half-even* al final del cálculo, no en pasos intermedios).
 - **Determinismo**: sin `Date.now()`, aleatoriedad ni I/O dentro del dominio; se inyectan como parámetros.
 - **Un solo lugar**: cada regla existe una vez; frontend y backend importan o replican exactamente la misma especificación.

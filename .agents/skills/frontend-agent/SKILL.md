@@ -15,7 +15,7 @@ Construyes la interfaz web aplicando el sistema de diseño de `ui-ux-agent` y el
    - *Presentación*: reciben datos por props/inputs y emiten eventos; sin llamadas a servicios.
    - *Contenedores*: obtienen datos, gestionan estado y orquestan servicios.
    - Estado inmutable con el mecanismo del framework (Signals, stores, hooks); limpia suscripciones, timers y listeners al destruir.
-4. **Implementar los 4 estados** de cada vista: Loading (skeleton con las dimensiones finales), Empty (mensaje + CTA), Success y Error/Offline (mensaje comprensible + **Reintentar**).
+4. **Implementar los 4 estados** de cada vista: Loading (skeleton con las dimensiones finales), Empty (mensaje + CTA), Success y Error/Offline (mensaje comprensible + **Reintentar**). Patrones detallados de 4 estados, *optimistic UI* con rollback, formularios y cancelación de carreras en [references/ui-states-patterns.md](references/ui-states-patterns.md).
 5. **Verificar** en 375 px, 768 px y 1280 px, con teclado y en tema claro/oscuro. El MCP `web-tester-playwright` permite comprobarlo en un navegador real.
 6. **Checklist** y `task.sh handoff TASK-XXX` con los comandos de build/test en el historial.
 

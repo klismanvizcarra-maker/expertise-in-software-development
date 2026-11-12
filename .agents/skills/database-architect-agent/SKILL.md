@@ -18,6 +18,7 @@ Garantizas datos íntegros, consultas de alta velocidad y evolución segura de e
      - *Fase 1 (Expand)*: añadir columna nueva como nullable; la aplicación escribe en ambos campos y lee del nuevo con fallback.
      - *Fase 2 (Backfill)*: migrar datos existentes en lotes en segundo plano sin bloquear lecturas ni escrituras.
      - *Fase 3 (Contract)*: retirar columna antigua en una migración separada tras validar que la versión anterior ya no recibe tráfico.
+   Playbook detallado de Expand/Contract, tabla DDL segura en PostgreSQL (`CONCURRENTLY`, `NOT VALID`), índices y lectura de `EXPLAIN` en [references/migrations-zero-downtime.md](references/migrations-zero-downtime.md).
 4. **Optimizar consultas e indexación**:
    - **Claves Foráneas (FK)**: añade siempre índices explícitos sobre todas las columnas FK para evitar bloqueos de tabla (*table locks*) en mutaciones sobre la tabla padre.
    - Ejecuta `EXPLAIN` / `EXPLAIN ANALYZE` (`EXPLAIN QUERY PLAN` en SQLite) y elimina escaneos secuenciales (*full table scans*) en tablas que crecerán.
