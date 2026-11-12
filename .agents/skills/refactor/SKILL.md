@@ -10,13 +10,13 @@ Un refactor cambia **la forma** del código, nunca **lo que hace**. Si durante e
 ## Pasos
 
 1. **Delimitar el objetivo**: escribe en una frase qué mejora y cómo se medirá (ej. "extraer el cálculo de impuestos de `OrderService` a `domain/tax.ts`; `OrderService` baja de 600 a menos de 250 líneas"). Sin objetivo medible no hay refactor, hay reescritura.
-2. **Consultar el cerebro**: ejecuta `./.agents/scripts/task.sh brain for TASK-XXX <rutas que vas a tocar>` y revisa la deuda técnica vinculada (`.agents/brain/tech_debt.md`). Si el refactor salda una deuda `TD-XXX`, cítala en la tarea.
-3. **Registrar la tarea** (si no existe), con el prefijo que crea la rama `refactor/`:
+2. **Registrar la tarea** (si no existe), con el prefijo que crea la rama `refactor/`:
    ```bash
    ./.agents/scripts/task.sh add "Refactor: <qué y dónde>" "<agente dueño de esas rutas>" "Comportamiento idéntico: suite y tests de caracterización en verde antes y después; <objetivo medible>"
    ./.agents/scripts/task.sh start TASK-XXX
    ```
    El agente asignado es el dueño de las rutas según `AGENTS.md` §8. Si el refactor cruza capas, divídelo en una tarea por especialista.
+3. **Consultar el cerebro**: con la tarea ya registrada, ejecuta `./.agents/scripts/task.sh brain for TASK-XXX <rutas que vas a tocar>` y revisa la deuda técnica vinculada (`.agents/brain/tech_debt.md`). Si el refactor salda una deuda `TD-XXX`, cítala en la tarea.
 4. **Fijar el comportamiento actual (red de seguridad)**: antes de mover una línea, ejecuta la suite y anota el resultado. Si el código a tocar no tiene tests suficientes, escribe **tests de caracterización**: llaman al código real con entradas representativas (incluidos casos límite y errores) y comprueban la salida **que produce hoy**, aunque parezca rara. Haz commit de estos tests solos (`task.sh commit TASK-XXX "anadir tests de caracterizacion de <modulo>" test`).
 5. **Cambiar en pasos pequeños**: un movimiento por paso (extraer función, renombrar, mover archivo, invertir una dependencia). Tras **cada** paso la suite completa sigue en verde; si se pone en rojo, deshaz ese paso en lugar de arreglar hacia delante. Un commit por paso significativo.
 6. **Verificar la equivalencia**:
