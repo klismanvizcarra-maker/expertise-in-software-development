@@ -13,7 +13,9 @@ Modelos mínimos:
 
 ```ts
 import { NextResponse } from 'next/server';
+import type Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
+import { stripe } from '@/lib/stripe';
 
 export const runtime = 'nodejs'; // necesario para SDK/crypto y conexión DB estándar
 
@@ -22,18 +24,27 @@ export async function POST(req: Request) {
   if (!sig) return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
 
   const rawBody = await req.text(); // NUNCA req.json(): altera formato/bytes
-  let event;
+  let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(rawBody, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
+  if (await prisma.stripeEvent.findUnique({ where: { eventId: event.id } })) {
+    return NextResponse.json({ received: true }); // evento ya procesado
+  }
+
+  // Re-consultar suscripción en Stripe fuera de prisma.$transaction (evita I/O de red dentro de locks DB)
+  const sub = event.type.startsWith('customer.subscription.')
+    ? await stripe.subscriptions.retrieve((event.data.object as Stripe.Subscription).id)
+    : null;
+
   await prisma.$transaction(async (tx) => {
     const existing = await tx.stripeEvent.findUnique({ where: { eventId: event.id } });
     if (existing) return;
     await tx.stripeEvent.create({ data: { eventId: event.id, type: event.type } });
-    // Sincronizar suscripción consultando stripe.subscriptions.retrieve(subId)
+    // Sincronizar suscripción usando `sub`
   });
 
   return NextResponse.json({ received: true });

@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_session
 from app.core.config import settings
+from app.models.billing import StripeEvent
 
 router = APIRouter(prefix="/api/v1/webhooks", tags=["webhooks"])
 
@@ -41,6 +42,10 @@ async def stripe_webhook(
     except (ValueError, stripe.SignatureVerificationError):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="ERR_INVALID_SIGNATURE")
 
+    # Re-consultar en Stripe fuera de transacciones de escritura en BD
+    # if event["type"].startswith("customer.subscription."):
+    #     sub = await asyncio.to_thread(stripe.Subscription.retrieve, event["data"]["object"]["id"])
+
     stmt = (
         pg_insert(StripeEvent)
         .values(event_id=event["id"], type=event["type"])
@@ -51,8 +56,7 @@ async def stripe_webhook(
     if inserted is None:
         return {"received": True}  # evento ya procesado
 
-    # Ejemplo: re-leer suscripción sin bloquear el loop
-    # sub = await asyncio.to_thread(stripe.Subscription.retrieve, sub_id)
+    # Persistir actualización de suscripción usando `sub` y confirmar transacción
     await session.commit()
     return {"received": True}
 ```

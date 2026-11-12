@@ -20,7 +20,7 @@ app.post(
   stripeWebhookHandler
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
 ```
 
 Si `express.json()` se ejecuta antes que `express.raw()`, `req.body` deja de ser un `Buffer` sin parsear y `stripe.webhooks.constructEvent(...)` fallará siempre.
@@ -28,8 +28,9 @@ Si `express.json()` se ejecuta antes que `express.raw()`, `req.body` deja de ser
 ## 3. Verificación, idempotencia y Checkout en Node
 
 ```ts
+// apps/api/src/modules/billing/billing.controller.ts
 import Stripe from 'stripe';
-import { BadRequestException } from '../utils/apiResponse';
+import { BadRequestException } from '../../lib/api-response.ts';
 
 const sig = req.header('stripe-signature');
 if (!sig) throw new BadRequestException('Falta cabecera stripe-signature');
@@ -43,6 +44,12 @@ try {
   throw new BadRequestException('Firma Stripe inválida');
 }
 
+// Re-consultar suscripción en Stripe FUERA de db.transaction para no retener conexiones/locks en I/O HTTP
+const sub =
+  event.type.startsWith('customer.subscription.')
+    ? await stripe.subscriptions.retrieve((event.data.object as Stripe.Subscription).id)
+    : null;
+
 await db.transaction(async (tx) => {
   const inserted = await tx
     .insert(stripeEvents)
@@ -51,7 +58,7 @@ await db.transaction(async (tx) => {
     .returning({ id: stripeEvents.eventId });
   if (inserted.length === 0) return; // evento repetido: responder 200
 
-  // Procesar evento (para suscripciones, re-consultar con stripe.subscriptions.retrieve)
+  // Persistir estado de sub / evento dentro de la transacción
 });
 ```
 

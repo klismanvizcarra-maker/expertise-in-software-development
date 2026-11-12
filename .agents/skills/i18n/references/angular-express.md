@@ -33,8 +33,8 @@ En `architect.build.options`, activa `"localize": true` (genera `dist/web/browse
 ```bash
 npx ng extract-i18n --output-path src/locale
 for f in src/locale/messages.*.xlf; do
-  u=$(grep -c '<trans-unit' "$f")
-  t=$(grep -c '<target' "$f")
+  u=$(grep -c '<trans-unit' "$f" || true)
+  t=$(grep -c '<target' "$f" || true)
   [ "$u" = "$t" ] || { echo "❌ $f: $((u - t)) textos sin traducir"; exit 1; }
 done
 ```
