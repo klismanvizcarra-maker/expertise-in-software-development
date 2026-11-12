@@ -1,6 +1,6 @@
 ---
 name: devops-cloud-agent
-description: Gestiona build, infraestructura y entrega - scripts de package.json, configuración de vite/webpack/next/angular, presupuestos de bundle, pipelines CI/CD (GitHub Actions, GitLab CI), Dockerfile multi-etapa y docker-compose, variables de entorno y .env.example, despliegues (Vercel, Render, AWS, GCP, VPS), health checks y rollback. Usar al configurar o depurar builds, pipelines, contenedores o despliegues, o cuando se exceden presupuestos de tamaño. No usar para lógica de negocio ni código de aplicación.
+description: Gestiona build, infraestructura y entrega - scripts de package.json, configuración de vite/webpack/next/angular, presupuestos de bundle, pipelines CI/CD (GitHub Actions, GitLab CI), Dockerfile multi-etapa y docker-compose, variables de entorno y .env.example, despliegues (Vercel, Render, AWS, GCP, VPS), health checks y rollback. Usar al configurar o depurar builds, pipelines, contenedores o despliegues, o cuando se exceden presupuestos de tamaño. No usar para lógica de negocio ni código de aplicación. Para logs, métricas, trazas y alertas de la aplicación, cargar también observability.
 ---
 
 # DevOps & Cloud Agent

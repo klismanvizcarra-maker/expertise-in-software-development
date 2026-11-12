@@ -1,6 +1,6 @@
 ---
 name: web-performance
-description: Mide y mejora el rendimiento de apps web Angular + Express - Core Web Vitals (LCP, INP, CLS), presupuestos de bundle, análisis del bundle, carga diferida con @defer, imágenes optimizadas con NgOptimizedImage, fuentes, caché HTTP, compresión, latencia de la API y consultas lentas, con Lighthouse CI y métricas de campo. Usar cuando una página o endpoint es lento, se exceden presupuestos de build, antes de un lanzamiento o al auditar rendimiento. No usar para optimizar sin una medición previa.
+description: Mide y mejora el rendimiento de apps web Angular + Express - Core Web Vitals (LCP, INP, CLS), presupuestos de bundle, análisis del bundle, carga diferida con @defer, imágenes optimizadas con NgOptimizedImage, fuentes, caché HTTP, compresión, latencia de la API y consultas lentas, con Lighthouse CI y métricas de campo. Usar cuando una página o endpoint es lento, se exceden presupuestos de build, antes de un lanzamiento o al auditar rendimiento. No usar para optimizar sin una medición previa. No usar para logs, métricas o alertas de producción (observability).
 ---
 
 # Rendimiento Web
