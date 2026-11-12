@@ -988,6 +988,81 @@
     "release"
    ],
    "type": "flujo"
+  },
+  {
+   "id": "sec-01",
+   "prompt": "Voy a implementar el login y la recuperación de contraseña, ¿cómo lo hago seguro desde el principio?",
+   "expect": [
+    "security-hardening"
+   ],
+   "accept": [
+    "backend-agent",
+    "stack-angular-express-postgres",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "qa-review"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "sec-02",
+   "prompt": "Necesito un endpoint que descargue una imagen desde una URL que manda el usuario, evita SSRF",
+   "expect": [
+    "security-hardening"
+   ],
+   "accept": [
+    "backend-agent",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "qa-review"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "sec-03",
+   "prompt": "Audita la TASK-012 que está en revisión y dime si tiene vulnerabilidades OWASP",
+   "expect": [
+    "qa-review",
+    "qa-security-agent"
+   ],
+   "accept": [],
+   "forbid": [
+    "security-hardening"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "obs-01",
+   "prompt": "En producción no sabemos por qué fallan los pagos, añade logs estructurados y métricas",
+   "expect": [
+    "observability"
+   ],
+   "accept": [
+    "backend-agent",
+    "bugfix",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "web-performance"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "obs-02",
+   "prompt": "Configura alertas y health checks antes de salir a producción, con su runbook",
+   "expect": [
+    "observability"
+   ],
+   "accept": [
+    "devops-cloud-agent",
+    "nueva-tarea"
+   ],
+   "forbid": [
+    "web-performance"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
