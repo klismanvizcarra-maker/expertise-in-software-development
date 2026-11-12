@@ -105,6 +105,8 @@ check "segundo handoff pasa a IN_REVIEW_QA" '[ "$(state $ID)" = "IN_REVIEW_QA" ]
 check "scan-secrets --branch limpio en la entrega" 'bash .agents/scripts/scan-secrets.sh --branch >/dev/null'
 write_review $ID qa-security-agent APROBADA
 $T close $ID >/dev/null 2>&1
+check "tras haber sido rechazada, close exige lección o justificación" '[ "$(state $ID)" = "IN_REVIEW_QA" ]'
+$T close $ID --no-lesson "Tarea de ejemplo del flujo" >/dev/null 2>&1
 check "close con revisor independiente pasa a DONE" '[ "$(state $ID)" = "DONE" ]'
 git add -A >/dev/null
 git commit -qm "docs($ID): aprobar veredicto de QA y cierre a DONE" --no-verify

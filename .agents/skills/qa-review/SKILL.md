@@ -49,6 +49,7 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
      ```bash
      git checkout main && git merge --no-ff <rama> && git branch -d <rama>
      ```
+     **Lección obligatoria**: si la tarea tuvo algún rechazo o corrige un defecto (rama `fix/` o descripción `Bug:`/`Fix:`/`Hotfix:`), `close` no la cierra sin lección. Registra primero lo aprendido con `/aprender` (`task.sh learn ... --paths "<globs>"`) y cierra con `./.agents/scripts/task.sh close TASK-XXX --lesson LL-XXX`; si de verdad no hay nada que aprender (errata, cambio trivial), justifícalo con `--no-lesson "<motivo>"`. Anótalo en el campo **Lección** del veredicto.
      Si se acepta deuda técnica de severidad MEDIA sin riesgo de seguridad:
      `./.agents/scripts/task.sh debt "<descripción>" TASK-XXX "<acción definitiva>" MEDIA`
    - **Rechazado** (falla ≥ 1 criterio de aceptación, test roto, vulnerabilidad o secreto expuesto):
@@ -56,10 +57,11 @@ Actúas como `qa-security-agent` (carga su skill: contiene el protocolo detallad
      ```bash
      ./.agents/scripts/task.sh reject TASK-XXX "<motivo en una línea>"
      ```
+     Si `reject` avisa de una **reincidencia** (el motivo ya estaba cubierto por una lección activa `LL-XXX`), inclúyelo en el bug report: la lección existía y no llegó a tiempo, así que hay que corregir su ámbito (`task.sh brain scope`) o su antídoto.
    - **Si el rechazo alcanza 3/3** (`BLOCKED`): detén el ciclo de iteraciones y solicita al `orchestrator-agent` el informe de escalamiento al humano.
 6. **Historial y aprendizaje**:
    - `close` y `reject` actualizan §7 de `GLOBAL_STATE.md` automáticamente.
-   - Si se aprobó la corrección de un bug complejo, recuerda registrar el antídoto con `/aprender`.
+   - La lección de una tarea rechazada o de corrección se registra **antes** de `close` (ver paso 5); las reincidencias quedan en `.agents/brain/recurrences.md` y se resumen con `task.sh brain stats`.
 
 ## Formato del Veredicto
 ```markdown

@@ -238,8 +238,13 @@ in_git() {
 # ------------------------------------------------------------------------------
 
 case "$COMMAND" in
-  add|start|move|handoff|reject|close|learn|debt|debt-resolve|lesson-retire|brain)
+  add|start|move|handoff|reject|close|learn|debt|debt-resolve|lesson-retire)
     acquire_lock
+    ;;
+  brain)
+    # Solo los subcomandos que escriben toman el lock; search, for, doctor y stats son de lectura
+    # (doctor lo ejecuta validate-state.sh desde el pre-commit)
+    case "${2:-}" in sync|scope) acquire_lock ;; esac
     ;;
 esac
 
@@ -492,6 +497,13 @@ EOF
 
     AGENT=$(task_field "$TASK_ID" 4)
     NEXT=$(( $(task_iteration "$TASK_ID") + 1 ))
+    # Reincidencia: el motivo repite algo que una lección activa ya cubría
+    REC=$(recurrence_for "$REASON")
+    REC_REASON="$REASON"
+    if [ -n "$REC" ]; then
+      REC_ID="${REC%%$'\t'*}"
+      REASON="$REASON (reincidencia de $REC_ID)"
+    fi
     if [ "$NEXT" -ge "$MAX_ITERATIONS" ]; then
       set_task "$TASK_ID" "BLOCKED" "$MAX_ITERATIONS/$MAX_ITERATIONS"
       log_history "qa-security-agent" "orchestrator-agent" "$TASK_ID" "Rechazo $MAX_ITERATIONS/$MAX_ITERATIONS: $REASON. BLOCKED, escalar al humano"
@@ -503,12 +515,31 @@ EOF
       say "${YELLOW}⚠️  $TASK_ID rechazada ($NEXT/$MAX_ITERATIONS):${NC} $REASON"
       say "   Vuelve a ${BOLD}IN_PROGRESS${NC}; el especialista retoma con 'task.sh start $TASK_ID'."
     fi
+    if [ -n "$REC" ]; then
+      # El rechazo ya está registrado: un fallo al anotar la reincidencia solo avisa, nunca lo deshace
+      if ! record_recurrence "$TASK_ID" "$REC_ID" "$REC_REASON" 2>/dev/null; then
+        say "${YELLOW}⚠️  No se pudo anotar la reincidencia en .agents/brain/recurrences.md (¿permisos?); el rechazo sí quedó registrado.${NC}"
+      fi
+      say "${YELLOW}🧠 Reincidencia:${NC} $REC_ID ya cubría este fallo (${REC#*$'\t'}). La lección no llegó a tiempo: revisa su ámbito con 'task.sh brain scope $REC_ID \"<globs>\"' o mejora su antídoto."
+    fi
     ;;
 
   close)
     require_state
-    [ -n "$2" ] || die "Uso: ./task.sh close TASK-001"
+    [ -n "${2:-}" ] || die "Uso: ./task.sh close TASK-001 [--lesson LL-001 | --no-lesson \"<motivo>\"]"
     TASK_ID=$(normalize_id "$2")
+    shift 2
+    CLOSE_LESSON=""; CLOSE_NO_LESSON=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --lesson)    [ -n "${2:-}" ] || die "--lesson requiere el ID de la lección (LL-001)."; CLOSE_LESSON="$2"; shift 2 ;;
+        --lesson=*)  CLOSE_LESSON="${1#--lesson=}"; shift ;;
+        --no-lesson) [ -n "${2:-}" ] || die "--no-lesson requiere el motivo por el que no hay nada que aprender."; CLOSE_NO_LESSON="$2"; shift 2 ;;
+        --no-lesson=*) CLOSE_NO_LESSON="${1#--no-lesson=}"; shift ;;
+        *) die "Opción desconocida para close: '$1'." ;;
+      esac
+    done
+    [ -z "$CLOSE_LESSON" ] || [ -z "$CLOSE_NO_LESSON" ] || die "Usa --lesson o --no-lesson, no ambos."
     require_task "$TASK_ID"
     STATUS=$(task_field "$TASK_ID" 5)
     [ "$STATUS" = "IN_REVIEW_QA" ] || die "$TASK_ID está en $STATUS; solo QA cierra tareas en IN_REVIEW_QA (cero bypasses de QA)."
@@ -522,8 +553,42 @@ EOF
     ASSIGNED=$(task_field "$TASK_ID" 4)
     [ "$REVIEWER" != "$ASSIGNED" ] || die "El revisor ($REVIEWER) no puede ser el mismo agente asignado a la tarea ($ASSIGNED). Se requiere revisión por un agente independiente (cero auto-aprobación)."
 
+    # Captura obligatoria (AGENTS.md §7.2): una tarea que fue rechazada o que corrige un defecto
+    # (rama fix/ o descripción Bug:/Fix:/Hotfix:) no se cierra sin lección o sin justificar su ausencia
+    # Los rechazos se cuentan en el historial (§7), no en el contador n/3: 'move' lo reinicia al
+    # salir de BLOCKED, y una tarea que llegó a bloquearse es la que más tiene que enseñar
+    NEEDS_LESSON=""
+    REJECTIONS=$(TID="$TASK_ID" awk -F'|' '
+      /^\|/ { id = $5; gsub(/[ \t`]/, "", id); if (id == ENVIRON["TID"] && $6 ~ /^[ \t]*Rechazo [0-9]+\/[0-9]+/) n++ }
+      END { print n + 0 }' "$STATE_FILE")
+    [ "$(task_iteration "$TASK_ID")" -gt "$REJECTIONS" ] && REJECTIONS=$(task_iteration "$TASK_ID")
+    [ "$REJECTIONS" -ge 1 ] && NEEDS_LESSON="tuvo $REJECTIONS rechazo(s) de QA"
+    if [ -z "$NEEDS_LESSON" ]; then
+      case "$(task_field "$TASK_ID" 3 | tr '[:upper:]' '[:lower:]')" in
+        bug[:\ ]*|fix[:\ ]*|hotfix[:\ ]*) NEEDS_LESSON="corrige un defecto" ;;
+      esac
+    fi
+    if [ -z "$NEEDS_LESSON" ] && in_git && [ -n "$(git -C "$PROJECT_ROOT" branch --list "fix/$TASK_ID-*" 2>/dev/null)" ]; then
+      NEEDS_LESSON="corrige un defecto (rama fix/)"
+    fi
+    LESSON_NOTE=""
+    if [ -n "$CLOSE_LESSON" ]; then
+      CLOSE_LESSON=$(printf '%s' "$CLOSE_LESSON" | tr '[:lower:]' '[:upper:]')
+      [[ "$CLOSE_LESSON" =~ ^LL-[0-9]+$ ]] || die "ID de lección inválido: '$CLOSE_LESSON' (formato LL-001)."
+      all_lessons | awk -F'\t' -v id="$CLOSE_LESSON" '$1 == id { f = 1 } END { exit !f }' \
+        || die "$CLOSE_LESSON no existe en el cerebro. Regístrala antes con 'task.sh learn' (skill /aprender)."
+      active_lessons | awk -F'\t' -v id="$CLOSE_LESSON" '$1 == id { f = 1 } END { exit !f }' \
+        || die "$CLOSE_LESSON está OBSOLETA: una lección retirada no vale como aprendizaje de esta tarea. Registra una nueva con 'task.sh learn'."
+      LESSON_NOTE=" Lección: $CLOSE_LESSON."
+    elif [ -n "$CLOSE_NO_LESSON" ]; then
+      case "$CLOSE_NO_LESSON" in *[![:space:]]*) ;; *) die "--no-lesson requiere un motivo." ;; esac
+      LESSON_NOTE=" Sin lección: $CLOSE_NO_LESSON."
+    elif [ -n "$NEEDS_LESSON" ]; then
+      die "$TASK_ID $NEEDS_LESSON: antes de cerrarla registra lo aprendido con 'task.sh learn ... --paths \"<globs>\"' y cierra con 'task.sh close $TASK_ID --lesson LL-XXX', o justifica que no hay nada que aprender con 'task.sh close $TASK_ID --no-lesson \"<motivo>\"'."
+    fi
+
     set_task "$TASK_ID" "DONE"
-    log_history "$REVIEWER" "orchestrator-agent" "$TASK_ID" "Aprobada por QA -> DONE"
+    log_history "$REVIEWER" "orchestrator-agent" "$TASK_ID" "Aprobada por QA -> DONE.$LESSON_NOTE"
     say "${GREEN}✅ $TASK_ID aprobada y cerrada (DONE).${NC}"
     if in_git; then
       BRANCH=$(git -C "$PROJECT_ROOT" branch --list "*$TASK_ID*" 2>/dev/null | tr -d '* ' | head -n1)
@@ -772,8 +837,23 @@ EOF
           printf '%s\n' "$DEBTS"
         fi
         ;;
+      doctor)
+        DOC_RC=0
+        DOC=$(brain_doctor) || DOC_RC=1
+        if [ -n "$DOC" ]; then
+          printf '%s\n' "$DOC"
+        fi
+        if [ "$DOC_RC" -ne 0 ]; then
+          die "El cerebro tiene errores que corregir (ver arriba)."
+        fi
+        say "${GREEN}🧠 Cerebro sano${NC}$( [ -n "$DOC" ] && printf ' (con avisos)' )."
+        ;;
+      stats)
+        say "🧠 Estado del cerebro:"
+        brain_stats
+        ;;
       *)
-        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\">"
+        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\" | doctor | stats>"
         ;;
     esac
     ;;
@@ -790,7 +870,9 @@ EOF
   handoff TASK-ID [revisor] [--verify "cmd"]...  IN_PROGRESS -> IN_REVIEW_QA + JSON + historial
                                          (revisor: quien recibe la entrega; por defecto qa-security-agent)
   reject TASK-ID "<motivo>"              QA rechaza (+1); a 3/3 -> BLOCKED
-  close TASK-ID                          QA aprueba: IN_REVIEW_QA -> DONE
+  close TASK-ID [--lesson LL-ID | --no-lesson "<motivo>"]
+                                         QA aprueba: IN_REVIEW_QA -> DONE (lección obligatoria si la
+                                         tarea fue rechazada o corrige un defecto)
   move TASK-ID <TODO|BACKLOG>            Replanificar o desbloquear (BLOCKED también -> IN_PROGRESS)
   commit TASK-ID "<msg>" [tipo] [--trailer "Clave: valor"]...
                                          Commit con formato tipo(TASK-ID): msg (trailers de autoría
@@ -803,6 +885,8 @@ EOF
   brain for TASK-ID [ruta...]            Lecciones y deuda relevantes para una tarea (y rutas)
   brain scope LL-ID "<globs>"            Fija a qué rutas aplica una lección
   brain sync                             Regenera la tabla de BRAIN.md desde lessons_learned.md
+  brain doctor                           Valida el cerebro (columnas, IDs duplicados, estados, sincronía)
+  brain stats                            Lecciones por categoría, reincidencias y deuda
   debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
   lesson-retire LL-ID                    Marca una lección como OBSOLETA
 =================================================================

@@ -23,7 +23,7 @@ Coordinas el equipo: decides **qué** se hace, **quién** lo hace y **en qué or
    ```
    Si una tarea cruza capas (endpoint + pantalla), divídela en una tarea por especialista que comparten el mismo contrato.
 6. **Seguimiento**: revisa `task.sh metrics`. Las transiciones las ejecuta cada rol según la tabla de `AGENTS.md` §3; tú solo creas tareas y desbloqueas `BLOCKED` tras decisión humana.
-7. **Cerrar el ciclo de aprendizaje**: cuando QA apruebe la corrección de un defecto no trivial, registra el antídoto con `/aprender` (problema, causa raíz y solución; nunca solo el problema). Al iniciar cada fase, revisa `.agents/brain/tech_debt.md` y planifica su saneamiento.
+7. **Cerrar el ciclo de aprendizaje**: toda tarea que tuvo rechazos de QA o que corrige un defecto necesita su lección **antes** del cierre: regístrala con `/aprender` (problema, causa raíz, solución y `--paths` con las rutas afectadas; nunca solo el problema) para que QA cierre con `task.sh close TASK-XXX --lesson LL-XXX`. Revisa `task.sh brain stats`: una lección con reincidencias no está llegando a tiempo y hay que corregir su ámbito o su antídoto. Al iniciar cada fase, revisa `.agents/brain/tech_debt.md` y planifica su saneamiento.
 
 ## Enrutamiento de Tareas
 

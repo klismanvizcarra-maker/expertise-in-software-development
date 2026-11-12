@@ -44,7 +44,7 @@ Certificas que un entregable cumple **todos** sus criterios de aceptación y es 
 - **Aprobar**: Genera el veredicto en `.agents/reviews/qa_TASK-XXX.md` usando [qa_review_template.md](../../templates/qa_review_template.md) (con revisor independiente) y ejecuta `./.agents/scripts/task.sh close TASK-XXX`.
 - **Rechazar**: documenta con [bug_report_template.md](../../templates/bug_report_template.md) y ejecuta `./.agents/scripts/task.sh reject TASK-XXX "<motivo corto>"`.
 - **Regla de 3 iteraciones**: al alcanzar **3/3**, la tarea transiciona automáticamente a `BLOCKED`; detén las revisiones y solicita escalamiento al humano al `orchestrator-agent`.
-- **Registro de aprendizaje**: cuando se apruebe la corrección de un defecto complejo, promueve registrar el antídoto con `/aprender`.
+- **Registro de aprendizaje**: `task.sh close` no cierra una tarea que tuvo algún rechazo o que corrige un defecto (`Bug:`/`Fix:`/`Hotfix:` o rama `fix/`) sin lección. Regístrala **antes** de cerrar con `/aprender` y cierra con `task.sh close TASK-XXX --lesson LL-XXX`, o justifica con `--no-lesson "<motivo>"` que no hay nada que aprender. Si `task.sh reject` avisa de una **reincidencia**, la lección ya existía y no llegó a tiempo: pide corregir su ámbito o su antídoto.
 
 ## Checklist de Revisión
 - [ ] Pruebas automatizadas y builds ejecutados de forma directa e independiente.

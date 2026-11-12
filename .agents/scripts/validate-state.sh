@@ -58,6 +58,22 @@ fi
 DONE_TASKS=$(printf '%s\n' "$ROWS" | awk -F'|' '$2 == "DONE" { n++ } END { print n+0 }')
 echo "   [INFO] Tareas completadas (DONE): $DONE_TASKS"
 
+# 3b. Salud del cerebro (lecciones y deuda): errores estructurales cuentan como errores
+TASK_SH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/task.sh"
+if [ -f "$TASK_SH" ] && [ -f "$(dirname "$STATE_FILE")/BRAIN.md" ]; then
+  echo "-> Verificando el cerebro (lecciones y deuda)..."
+  BRAIN_OUT=$(cd "$(dirname "$STATE_FILE")" && bash "$TASK_SH" brain doctor 2>&1) || true
+  BRAIN_ERR=$(printf '%s\n' "$BRAIN_OUT" | grep -c '^ERROR' || true)
+  BRAIN_WARN=$(printf '%s\n' "$BRAIN_OUT" | grep -c '^AVISO' || true)
+  { printf '%s\n' "$BRAIN_OUT" | grep -E '^(ERROR|AVISO)' | sed 's/^/   /'; } || true
+  if [ "$BRAIN_ERR" -gt 0 ]; then
+    ERRORS=$((ERRORS + BRAIN_ERR))
+  else
+    echo "   [OK] Cerebro sin errores estructurales."
+  fi
+  WARNINGS=$((WARNINGS + BRAIN_WARN))
+fi
+
 # 4. Placeholders sin rellenar en metadatos
 echo "-> Verificando placeholders pendientes..."
 if grep -qE '\[NOMBRE_DEL_PROYECTO\]|\[Framework:|\[Breve descripción' "$STATE_FILE"; then
