@@ -15,7 +15,7 @@ Si no se puede ver, no se puede operar. Cada funcionalidad que llega a producci�
 4. **Métricas**: RED por endpoint (peticiones, errores, duración en histograma) y las métricas de negocio del paso 1. Etiquetas de baja cardinalidad: ruta con plantilla (`/orders/:id`), nunca el ID real ni el usuario.
 5. **Trazas** (cuando hay varios servicios, colas o llamadas externas lentas): instrumenta con OpenTelemetry y exporta por OTLP; propaga el contexto entre servicios y colas.
 6. **Errores**: captura las excepciones no controladas con un servicio de reporte (Sentry, Rollbar o el del proveedor) con versión de release, entorno y `request_id`, filtrando datos sensibles antes de enviar.
-7. **Salud**: `GET /healthz` (vivo, sin dependencias) y `GET /readyz` (puede atender: base de datos y dependencias críticas), sin información sensible en la respuesta. Son las mismas rutas que usan `devops-cloud-agent` y las skills `stack-*`; si el stack del proyecto define otras, mandan las del stack.
+7. **Salud**: `GET /healthz` (vivo, sin dependencias) y `GET /readyz` (puede atender: base de datos y dependencias críticas), sin información sensible en la respuesta. Son las rutas que usan `devops-cloud-agent`, `backend-agent` y `stack-angular-express-postgres`; si la skill de stack del proyecto define otras (por ejemplo `stack-fastapi-postgres` usa `/health`), mandan las del stack.
 8. **Alertas accionables**: alerta sobre síntomas que afectan al usuario (tasa de error, latencia p95, cola atascada), no sobre causas sueltas (CPU al 80 %). Cada alerta tiene umbral, duración y un runbook corto: qué significa, cómo confirmarlo y qué hacer. Ver [alerts-runbook.md](references/alerts-runbook.md).
 
 ## Checklist antes de `task.sh handoff`
