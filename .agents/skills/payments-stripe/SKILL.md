@@ -18,7 +18,7 @@ Carga la referencia que corresponda al stack del proyecto (`GLOBAL_STATE.md` §2
 
 1. **Modelado y persistencia**: crea las tablas `billing_customers`, `subscriptions` y `stripe_events` con `database-architect-agent`.
 2. **Precios en servidor**: mapea cada clave semántica de plan (`"pro_monthly"`) a su `price_id` en variables de entorno (`.env`); nunca aceptes importes, divisas ni `price_id` desde el cliente.
-3. **Endpoints de sesión**: implementa `POST /api/v1/billing/checkout` (con `idempotencyKey` y `client_reference_id`) y `POST /api/v1/billing/portal` autenticados.
+3. **Endpoints de sesión**: implementa `POST /api/v1/billing/checkout` (o ruta/Action equivalente en tu stack, con clave de idempotencia y `client_reference_id`) y `POST /api/v1/billing/portal` autenticados.
 4. **Endpoint de webhook seguro**: lee el **body crudo intacto** antes de cualquier parser JSON, valida la firma `stripe-signature` y aplica los cambios de forma idempotente registrando `event.id` en `stripe_events` dentro de la misma transacción.
 5. **Control de acceso en dominio**: modela las reglas de acceso (`active`, `trialing`, periodo de gracia en `past_due`) en funciones puras (`domain-logic-agent`) y protege las rutas/acciones en el servidor.
 6. **Pruebas y simulación local**: cubre firma válida (`200`), firma inválida (`400`) y replay duplicado en tests unitarios, y valida eventos completos con Stripe CLI.

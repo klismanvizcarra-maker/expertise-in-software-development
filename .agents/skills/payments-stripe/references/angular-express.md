@@ -28,11 +28,20 @@ Si `express.json()` se ejecuta antes que `express.raw()`, `req.body` deja de ser
 ## 3. Verificación, idempotencia y Checkout en Node
 
 ```ts
-const event = stripe.webhooks.constructEvent(
-  req.body,
-  req.header('stripe-signature') ?? '',
-  env.STRIPE_WEBHOOK_SECRET
-);
+import Stripe from 'stripe';
+import { BadRequestException } from '../utils/apiResponse';
+
+const sig = req.header('stripe-signature');
+if (!sig) throw new BadRequestException('Falta cabecera stripe-signature');
+
+let event: Stripe.Event;
+try {
+  // constructEvent lanza StripeSignatureVerificationError (no HttpException):
+  // capturar explícitamente para responder 400 y evitar 500 en errorHandler
+  event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_WEBHOOK_SECRET);
+} catch {
+  throw new BadRequestException('Firma Stripe inválida');
+}
 
 await db.transaction(async (tx) => {
   const inserted = await tx

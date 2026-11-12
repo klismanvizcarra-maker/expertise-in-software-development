@@ -28,14 +28,27 @@ from fastapi import Header
 SUPPORTED_LOCALES = ("es", "en")
 DEFAULT_LOCALE = "es"
 
+def _parse_q(params: list[str]) -> float:
+    for param in params:
+        if param.strip().startswith("q="):
+            try:
+                return float(param.strip()[2:])
+            except ValueError:
+                return 0.0
+    return 1.0
+
 def resolve_locale(accept_language: str | None = Header(default=None)) -> str:
     if not accept_language:
         return DEFAULT_LOCALE
+    candidates: list[tuple[float, str]] = []
     for part in accept_language.split(","):
-        tag = part.split(";")[0].strip().lower().split("-")[0]
-        if tag in SUPPORTED_LOCALES:
-            return tag
-    return DEFAULT_LOCALE
+        segments = part.split(";")
+        tag = segments[0].strip().lower().split("-")[0]
+        q = _parse_q(segments[1:])
+        if q > 0 and tag in SUPPORTED_LOCALES:
+            candidates.append((q, tag))
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1] if candidates else DEFAULT_LOCALE
 ```
 
 - Prioridad recomendada cuando hay usuario autenticado: `user.locale` (preferencia guardada) → cabecera `Accept-Language` → `DEFAULT_LOCALE`.

@@ -9,13 +9,13 @@ Receta de referencia para `stack-fastapi-postgres`. En una API Python el cuello 
 ## 2. Event Loop y Concurrencia (`asyncio`)
 
 - **Nunca bloquees el loop**: usa drivers asíncronos (`psycopg` async / `asyncpg` + `AsyncSession`) en rutas `async def`.
-- Para tareas CPU-bound (PDFs, hashing, parsing pesado) o librerías síncronas sin equivalente async, delega a `await asyncio.to_thread(...)` (o rutas `def` síncronas si toda la ruta es blocking) o a una cola en segundo plano (`async-jobs`).
+- Para tareas CPU-bound (PDFs, hashing, parsing pesado) o librerías síncronas sin equivalente async, delega a `await asyncio.to_thread(...)` (o rutas `def` síncronas si toda la ruta es blocking) o a una cola de trabajos en segundo plano.
 
 ## 3. SQLAlchemy 2, Conexiones y Consultas
 
-- **Prohibido lazy loading implícito en async**: configura `expire_on_commit=False` y usa `selectinload(...)` / `joinedload(...)` explícitos cuando necesites relaciones; en Pydantic selecciona solo las columnas necesarias (`select(Model.id, Model.name)`).
+- **Prohibido lazy loading implícito en async**: configura `expire_on_commit=False` y usa `selectinload(...)` / `joinedload(...)` explícitos cuando necesites relaciones; selecciona en SQLAlchemy solo las columnas necesarias (`select(Model.id, Model.name)`) antes de serializar con el esquema Pydantic.
 - **Pool de conexiones**: dimensiona `pool_size` y `max_overflow` según workers de Uvicorn/Gunicorn y el límite de PostgreSQL (`pool_pre_ping=True`).
-- **Paginación obligatoria**: keyset/cursor pagination (`WHERE created_at < :cursor ORDER BY created_at DESC LIMIT :limit`) mejor que `OFFSET` alto; exige un límite máximo en el esquema Pydantic (`limit: int = Field(default=20, le=100)`).
+- **Paginación obligatoria**: keyset/cursor pagination compuesta con desempate estable (`WHERE (created_at, id) < (:cursor_ts, :cursor_id) ORDER BY created_at DESC, id DESC LIMIT :limit`) mejor que `OFFSET` alto; exige un límite máximo en el esquema Pydantic (`limit: int = Field(default=20, le=100)`).
 - **Índices reales**: comprueba con `EXPLAIN (ANALYZE, BUFFERS)` que no haya `Seq Scan` en tablas crecientes ni sort sin índice.
 
 ## 4. Red, Caché y Payloads

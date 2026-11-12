@@ -43,6 +43,6 @@ Angular no falla cuando falta `<target>` en un archivo `.xlf`: simplemente emite
 
 ## 4. API Express y SSR
 
-- Express resuelve el error mediante código estable (`{ error: { code: 'ERR_PLAN_REQUIRED' } }`), nunca texto traducido.
-- El servidor SSR o Nginx redirige `/` usando: cookie `NEXT_LOCALE`/`lang` → cabecera `Accept-Language` → `sourceLocale`.
+- Express resuelve el error mediante el contrato estándar `{ success: false, error: { code: 'ERR_PLAN_REQUIRED', message: '...' } }`, manteniendo estable `error.code` para que el cliente lo traduzca con su catálogo.
+- El servidor SSR o Nginx redirige `/` usando: cookie `app_locale`/`lang` → cabecera `Accept-Language` → `sourceLocale`.
 - Emite URL canónica por idioma y `<link rel="alternate" hreflang="...">` en `SeoService` (ver skill `seo-web`).

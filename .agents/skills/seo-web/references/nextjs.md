@@ -43,7 +43,8 @@ Para rutas privadas (`app/(dashboard)/layout.tsx`), exporta `export const metada
 - `app/robots.ts`: devuelve `MetadataRoute.Robots` bloqueando `/app/`, `/dashboard/` y `/api/`, apuntando a `/sitemap.xml`.
 - `app/sitemap.ts`: consulta en servidor únicamente URLs públicas indexables con código 200 (nunca borradores ni rutas tras login) y devuelve `MetadataRoute.Sitemap` con `lastModified`.
 
-## 3. Código SSR seguro y validación de Host
+## 3. Código SSR seguro, JSON-LD y validación de Host
 
 - Mantén el acceso a `window`, `document` o `localStorage` exclusivamente dentro de `'use client'` + `useEffect` (nunca durante el render inicial que corre en servidor ni provocando hydration mismatch).
-- Detrás de proxy inverso, valida `Host` / orígenes permitidos en `next.config.ts` (`images.remotePatterns`, `serverActions.allowedOrigins`) y en el proxy.
+- Al embeber datos estructurados JSON-LD (`<script type="application/ld+json">`) en Server Components con `dangerouslySetInnerHTML`, escapa siempre `<` con `JSON.stringify(jsonLd).replace(/</g, '\\u003c')` para impedir inyección XSS por cierre anticipado de `</script>`.
+- Detrás de proxy inverso, valida orígenes permitidos de Server Actions en `next.config.ts` con `experimental.serverActions.allowedOrigins` (solo hostnames, sin protocolo ni ruta) y `images.remotePatterns`, además de validar `Host` en el proxy.

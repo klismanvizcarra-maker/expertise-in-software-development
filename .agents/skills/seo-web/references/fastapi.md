@@ -5,8 +5,8 @@ Receta de referencia para `stack-fastapi-postgres`. Según sirva solo API JSON o
 ## 1. Backend API puro (SPA o frontend separado)
 
 - Añade `X-Robots-Tag: noindex, nofollow` en las respuestas de `/api/**` mediante middleware para evitar que endpoints JSON o OpenAPI aparezcan indexados en buscadores.
-- En producción desactiva o restringe `/docs`, `/redoc` y `/openapi.json` (`docs_url=None` cuando `ENV=production`, salvo documentación pública intencional).
-- Mantén `TrustedHostMiddleware` (`from fastapi.middleware.trustedhost import TrustedHostMiddleware`) configurado con la lista cerrada de dominios reales (`allowed_hosts=settings.ALLOWED_HOSTS`) para rechazar cabeceras `Host` arbitrarias (`400 Invalid host header`).
+- En producción desactiva esquema y UIs automáticas (`docs_url=None, redoc_url=None, openapi_url=None` cuando `settings.env == "production"`, salvo documentación pública intencional).
+- Mantén `TrustedHostMiddleware` (`from fastapi.middleware.trustedhost import TrustedHostMiddleware`) configurado con la lista cerrada de dominios reales (`allowed_hosts=settings.allowed_hosts`) para rechazar cabeceras `Host` arbitrarias (`400 Invalid host header`).
 
 ## 2. FastAPI sirviendo páginas públicas HTML (Jinja2)
 
