@@ -6,6 +6,7 @@
 # ==============================================================================
 # Uso:
 #   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular|fastapi] [--ci]
+#   ./init-project.sh --adopt ["/ruta/al/proyecto-existente"] [--stack ...] [--ci] [--copy]
 #   O simplemente: ./init-project.sh "Mi Proyecto"
 #
 #   --copy               Copia las skills en .claude/skills en vez de crear un enlace
@@ -14,6 +15,9 @@
 #                        placeholders (opciones: nextjs | angular | fastapi).
 #   --ci                 Instala el pipeline de GitHub Actions (.github/workflows/audit.yml)
 #                        a partir de ci_workflow_template.yml sin sobrescribir si ya existe.
+#   --adopt              Adopta un repositorio existente (brownfield): instala .agents/,
+#                        reglas y hooks sin sobrescribir código, docs, .gitignore,
+#                        .env.example, README.md, GLOBAL_STATE.md, BRAIN.md ni hooks previos.
 #   --update, -u         Sincroniza scripts, plantillas, hooks y skills existentes sin tocar
 #                        GLOBAL_STATE.md, BRAIN.md ni .agents/brain/.
 # ==============================================================================
@@ -25,6 +29,7 @@ TARGET_DIR="."
 LINK_MODE="symlink"
 SELECTED_STACK=""
 IS_UPDATE=0
+IS_ADOPT=0
 INSTALL_CI=0
 
 positional=()
@@ -36,6 +41,10 @@ while [ $# -gt 0 ]; do
       ;;
     --update|-u)
       IS_UPDATE=1
+      shift
+      ;;
+    --adopt)
+      IS_ADOPT=1
       shift
       ;;
     --ci)
@@ -65,6 +74,11 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+if [ "$IS_UPDATE" -eq 1 ] && [ "$IS_ADOPT" -eq 1 ]; then
+  echo "❌ ERROR: Usa --update o --adopt, no ambos a la vez." >&2
+  exit 1
+fi
+
 if [ -n "$SELECTED_STACK" ]; then
   case "$SELECTED_STACK" in
     nextjs|angular|fastapi) ;;
@@ -80,6 +94,27 @@ if [ "$IS_UPDATE" -eq 1 ]; then
   if [ -n "${positional[0]:-}" ]; then
     TARGET_DIR="${positional[0]}"
   fi
+elif [ "$IS_ADOPT" -eq 1 ]; then
+  if [ "${#positional[@]}" -ge 2 ]; then
+    PROJECT_NAME="${positional[0]}"
+    TARGET_DIR="${positional[1]}"
+  elif [ "${#positional[@]}" -eq 1 ]; then
+    ARG0="${positional[0]}"
+    if [ -d "$ARG0" ] || [ "$ARG0" = "." ] || [ "$ARG0" = ".." ] || [ "${ARG0#*/}" != "$ARG0" ]; then
+      TARGET_DIR="$ARG0"
+      [ -d "$TARGET_DIR" ] && PROJECT_NAME=$(basename "$(cd "$TARGET_DIR" && pwd)")
+    else
+      PROJECT_NAME="$ARG0"
+      TARGET_DIR="."
+    fi
+  else
+    TARGET_DIR="."
+    PROJECT_NAME=$(basename "$(pwd)")
+  fi
+  [ -d "$TARGET_DIR" ] || {
+    echo "❌ ERROR: El directorio de destino '$TARGET_DIR' no existe (--adopt requiere un proyecto existente)." >&2
+    exit 1
+  }
 else
   [ -n "${positional[0]:-}" ] && PROJECT_NAME="${positional[0]}"
   [ -n "${positional[1]:-}" ] && TARGET_DIR="${positional[1]}"
@@ -184,7 +219,11 @@ if [ "$IS_UPDATE" -eq 1 ]; then
 fi
 
 echo "================================================================="
-echo "  Inicializando Entorno Multi-Agente para: $PROJECT_NAME"
+if [ "$IS_ADOPT" -eq 1 ]; then
+  echo "  Adoptando Proyecto Existente (Brownfield): $PROJECT_NAME"
+else
+  echo "  Inicializando Entorno Multi-Agente para: $PROJECT_NAME"
+fi
 echo "  Directorio de destino: $TARGET_DIR"
 [ -n "$SELECTED_STACK" ] && echo "  Stack tecnológico: $SELECTED_STACK"
 echo "================================================================="
@@ -197,7 +236,9 @@ mkdir -p "$TARGET_DIR/.agents/brain"
 mkdir -p "$TARGET_DIR/.agents/hooks"
 mkdir -p "$TARGET_DIR/.agents/plugins"
 mkdir -p "$TARGET_DIR/.agents/reviews"
-mkdir -p "$TARGET_DIR/docs/product"
+if [ "$IS_ADOPT" -eq 0 ]; then
+  mkdir -p "$TARGET_DIR/docs/product"
+fi
 
 # Copiar skills, templates, brain, scripts, hooks y plugins
 echo "-> Copiando catalogo de skills, plantillas y modulos de memoria..."
@@ -273,6 +314,17 @@ c = c.replace('[NOMBRE_DEL_PROYECTO]', pname).replace('YYYY-MM-DD', date)
 with open(dst, 'w', encoding='utf-8') as f:
     f.write(c)
 " "$PROJECT_NAME" "$CURRENT_DATE" "$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" "$TARGET_DIR/GLOBAL_STATE.md"
+
+  if [ "$IS_ADOPT" -eq 1 ]; then
+    tmp_gs=$(mktemp)
+    STACK_SET="$SELECTED_STACK" awk '
+      /^\|[ \t]*`?TASK-00[12]`?[ \t]*\|/ { next }
+      /^\- \*\*Fase Actual\*\*:/ { print "- **Fase Actual**: `FASE 0: Adopción e Inventario (Brownfield)`"; next }
+      ENVIRON["STACK_SET"] == "" && /^\|.*\|[ \t]*Elección del stack base[ \t]*\|/ { next }
+      { print }
+    ' "$TARGET_DIR/GLOBAL_STATE.md" > "$tmp_gs"
+    cat "$tmp_gs" > "$TARGET_DIR/GLOBAL_STATE.md" && rm -f "$tmp_gs"
+  fi
 
   # Configurar stack tecnológico predeterminado si se especificó
   if [ "$SELECTED_STACK" = "nextjs" ]; then
@@ -355,7 +407,11 @@ fi
 # Instalar Git hooks si existe .git
 if [ -d "$TARGET_DIR/.git" ]; then
   echo "-> Instalando Git Hooks en repositorio local..."
-  (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh) || true
+  if [ "$IS_ADOPT" -eq 1 ]; then
+    (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh --preserve-existing) || true
+  else
+    (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh) || true
+  fi
 fi
 
 # Configurar pipeline CI si se especificó --ci
@@ -366,7 +422,11 @@ if [ "$INSTALL_CI" -eq 1 ]; then
 fi
 
 echo "================================================================="
-echo "  [OK] Inicializacion completada exitosamente!"
+if [ "$IS_ADOPT" -eq 1 ]; then
+  echo "  [OK] Adopción brownfield instalada sin sobrescribir trabajo previo!"
+else
+  echo "  [OK] Inicializacion completada exitosamente!"
+fi
 echo ""
 echo "  Archivos generados:"
 echo "    - $TARGET_DIR/AGENTS.md (Reglas globales; Antigravity)"
@@ -386,6 +446,11 @@ command -v npx >/dev/null 2>&1 || {
   echo ""
 }
 echo "  Siguiente paso:"
-echo "    Abre el proyecto en Claude Code o Antigravity y dale tu primer"
-echo "    requerimiento al Orchestrator Agent (/orchestrator-agent)."
+if [ "$IS_ADOPT" -eq 1 ]; then
+  echo "    Abre el proyecto en Claude Code o Antigravity y ejecuta /adoptar-proyecto"
+  echo "    para inventariar el codebase existente, ajustar rutas y registrar el estado."
+else
+  echo "    Abre el proyecto en Claude Code o Antigravity y dale tu primer"
+  echo "    requerimiento al Orchestrator Agent (/orchestrator-agent)."
+fi
 echo "================================================================="

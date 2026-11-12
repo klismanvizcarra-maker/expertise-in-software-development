@@ -768,5 +768,90 @@ for ev in evals:
         assert (root / "tests/evals/fixtures" / fx).is_file(), fx
 PY'
 
+# ------------------------------------------------------------------------------
+section "init-project.sh --adopt (brownfield)"
+BROWN="$WORK/brownfield-app"
+mkdir -p "$BROWN/src" "$BROWN/docs" "$BROWN/.claude" "$BROWN/.git/hooks"
+echo 'console.log("legacy");' > "$BROWN/src/index.ts"
+echo "# App Heredada" > "$BROWN/README.md"
+echo "custom=secret_placeholder" > "$BROWN/.env.example"
+echo "node_modules/" > "$BROWN/.gitignore"
+echo "# Guia previa del repo" > "$BROWN/CLAUDE.md"
+echo '{"permissions":{}}' > "$BROWN/.claude/settings.json"
+echo "# Arquitecto original" > "$BROWN/docs/architecture.md"
+cat > "$BROWN/.git/hooks/pre-commit" <<'EOF_HOOK'
+#!/usr/bin/env bash
+echo "custom hook"
+EOF_HOOK
+chmod +x "$BROWN/.git/hooks/pre-commit"
+
+check "--adopt falla si destino no existe o si se combina con --update" '! bash "$ROOT/.agents/scripts/init-project.sh" --adopt "$WORK/no-existe" >/dev/null 2>&1 && ! bash "$ROOT/.agents/scripts/init-project.sh" --update --adopt "$BROWN" >/dev/null 2>&1'
+ADOPT_OUT=$(bash "$ROOT/.agents/scripts/init-project.sh" --adopt "$BROWN" 2>&1)
+check "--adopt instala entorno y muestra guía /adoptar-proyecto" '[ -d "$BROWN/.agents/skills/adoptar-proyecto" ] && [ -f "$BROWN/GLOBAL_STATE.md" ] && [ -f "$BROWN/BRAIN.md" ] && printf "%s" "$ADOPT_OUT" | grep -q "/adoptar-proyecto"'
+check "--adopt conserva código, docs, .gitignore, .env.example y settings previos" 'grep -q "legacy" "$BROWN/src/index.ts" && grep -q "# App Heredada" "$BROWN/README.md" && grep -q "custom=secret_placeholder" "$BROWN/.env.example" && grep -q "node_modules/" "$BROWN/.gitignore" && grep -q "permissions" "$BROWN/.claude/settings.json" && grep -q "# Arquitecto original" "$BROWN/docs/architecture.md"'
+check "--adopt conserva hooks custom en .git/hooks y añade @AGENTS.md al CLAUDE.md previo" 'grep -q "custom hook" "$BROWN/.git/hooks/pre-commit" && grep -q "# Guia previa del repo" "$BROWN/CLAUDE.md" && grep -q "^@AGENTS.md" "$BROWN/CLAUDE.md"'
+check "--adopt genera GLOBAL_STATE.md sin tareas ficticias de plantilla ni docs/product vacío" '! grep -qE "^\| *\`?TASK-00[12]" "$BROWN/GLOBAL_STATE.md" && grep -q "brownfield-app" "$BROWN/GLOBAL_STATE.md" && [ ! -d "$BROWN/docs/product" ]'
+
+cp "$BROWN/GLOBAL_STATE.md" "$WORK/gs.adopt.bak"
+echo "custom-agents" > "$BROWN/AGENTS.md"
+bash "$ROOT/.agents/scripts/init-project.sh" --adopt "$BROWN" >/dev/null 2>&1
+check "--adopt es idempotente y conserva AGENTS.md y GLOBAL_STATE.md existentes" 'cmp -s "$BROWN/GLOBAL_STATE.md" "$WORK/gs.adopt.bak" && grep -q "custom-agents" "$BROWN/AGENTS.md"'
+
+# ------------------------------------------------------------------------------
+section "task.sh archive y métricas con archivo"
+new_project archive_test
+# Plantilla trae TASK-001 y TASK-002; añadimos TASK-003 y TASK-004
+$T add "Tercera tarea" backend-agent "c3" >/dev/null
+$T add "Cuarta tarea" backend-agent "c4" >/dev/null
+
+# Dejar TASK-001 en IN_PROGRESS (no debe archivarse) y cerrar TASK-002, TASK-003 (1/3), TASK-004
+$T start TASK-001 >/dev/null 2>&1
+git checkout -q main
+
+for tid in TASK-002 TASK-003 TASK-004; do
+  $T start "$tid" >/dev/null 2>&1
+  echo "// $tid" >> "work_$tid.ts"
+  git add "work_$tid.ts"
+  $T commit "$tid" "implementar $tid" >/dev/null 2>&1
+  $T handoff "$tid" --verify "true" >/dev/null 2>&1
+  if [ "$tid" = "TASK-003" ]; then
+    $T reject "$tid" "falta edge case" >/dev/null 2>&1
+    $T start "$tid" >/dev/null 2>&1
+    $T handoff "$tid" --verify "true" >/dev/null 2>&1
+    $T learn "Leccion archivo $tid" backend "causa $tid" "solucion $tid" >/dev/null 2>&1
+    LAST_LL=$(awk -F'|' '/^\|/ { c=$2; gsub(/[ \t`]/,"",c); if (c~/^LL-[0-9]+$/) last=c } END { print last }' .agents/brain/lessons_learned.md)
+  fi
+  cat > ".agents/reviews/qa_${tid}.md" <<EOF_REV
+- **Revisor**: \`qa-security-agent\`
+- **Veredicto**: \`APROBADO\`
+EOF_REV
+  if [ "$tid" = "TASK-003" ]; then
+    $T close "$tid" --lesson "$LAST_LL" >/dev/null 2>&1
+  else
+    $T close "$tid" >/dev/null 2>&1
+  fi
+  BR=$(git branch --show-current)
+  git checkout -q main
+  git merge --no-ff -q "$BR" -m "chore($tid): merge" --no-verify
+  git branch -d -q "$BR"
+done
+
+ARCH_RES=$($T archive --keep 1 --phase "Fase 1 Base" 2>&1)
+check "task.sh archive mueve 2 DONE más antiguas y conserva 1 DONE + activas" '[ "$(col TASK-002 5)" = "" ] && [ "$(col TASK-003 5)" = "" ] && [ "$(col TASK-004 5)" = "DONE" ] && [ "$(col TASK-001 5)" = "IN_PROGRESS" ] && grep -q "TASK-002" .agents/archive/tasks_*.md && grep -q "TASK-003" .agents/archive/tasks_*.md && printf "%s" "$ARCH_RES" | grep -q "Archivadas 2 tareas"'
+check "task.sh metrics incluye tareas DONE archivadas y rechazos QA" 'MET=$($T metrics) && printf "%s" "$MET" | grep -q "DONE:.*3 (1 activas, 2 archivadas)" && printf "%s" "$MET" | grep -q "3 de 4 tareas" && printf "%s" "$MET" | grep -q "1/3 → 1"'
+check "validate-state.sh contabiliza archivadas sin falsos errores" 'VAL=$(bash ./.agents/scripts/validate-state.sh 2>&1) && printf "%s" "$VAL" | grep -q "3 (1 activas, 2 archivadas)"'
+check "require_task distingue una tarea archivada de una inexistente" '! $T start TASK-002 2>&1 | grep -q "no existe" && $T start TASK-002 2>&1 | grep -q "archivada"'
+
+# Archivar la DONE restante (TASK-004, ID máximo) y probar que add no reutiliza IDs archivados
+$T archive --keep 0 >/dev/null 2>&1
+check "task.sh archive --keep 0 archiva la DONE restante en archivo existente del día" '[ "$(col TASK-004 5)" = "" ] && grep -q "TASK-004" .agents/archive/tasks_*.md'
+check "next_id tras archive no reutiliza IDs archivados" '$T add "Quinta tarea" frontend-agent "c5" >/dev/null && [ "$(col TASK-005 4)" = "frontend-agent" ]'
+
+# Simular ID duplicado entre GLOBAL_STATE.md y .agents/archive/
+cp GLOBAL_STATE.md "$WORK/gs.predup"
+printf '| `TASK-002` | Duplicada | `backend-agent` | `DONE` | `0/3` | ok |\n' >> GLOBAL_STATE.md
+check "validate-state.sh detecta TASK-XXX duplicada entre tablero y archivo" '! bash ./.agents/scripts/validate-state.sh >/dev/null 2>&1'
+cp "$WORK/gs.predup" GLOBAL_STATE.md
+
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

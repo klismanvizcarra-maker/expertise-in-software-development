@@ -30,10 +30,15 @@ El `orchestrator-agent` debe revisar la deuda técnica al empezar cada fase (pas
    - **Lecciones que ya no aplican** (se cambió de librería, se eliminó el módulo): retíralas con `task.sh lesson-retire LL-XXX`.
 4. **Revisar la deuda técnica** (`.agents/brain/tech_debt.md`): para cada deuda pendiente decide con el usuario si se salda en la fase siguiente (crea su tarea) o se mantiene. Deuda de prioridad `ALTA` que sigue abierta va al principio de la fase siguiente. Las deudas ya resueltas se cierran con `task.sh debt-resolve TD-XXX`.
 5. **Resumen de la fase**: añade a `GLOBAL_STATE.md` §7 una fila de hito (en la columna Tarea, el rango de la fase, p. ej. `TASK-024..TASK-038`) con lo entregado (tareas, nº de rechazos de QA, lecciones nuevas, deuda saldada y abierta). Si hubo decisiones de arquitectura, comprueba que están como ADR en §6 (`docs-architecture-agent` si faltan).
-6. **Proponer la fase siguiente**: presenta al usuario el nombre de la fase, su objetivo, y de 3 a 7 tareas candidatas con agente y criterios de aceptación (incluidas las de deuda del paso 4). **No registres nada sin su confirmación.** Con el visto bueno:
+6. **Archivar las tareas `DONE` cerradas** (recomendado cuando el tablero crece, opcionalmente conservando las `N` más recientes):
+   ```bash
+   ./.agents/scripts/task.sh archive --phase "<nombre de la fase>" --keep 0
+   ```
+   Mueve las tareas `DONE` de `GLOBAL_STATE.md` §5 a `.agents/archive/` preservando `next_id`, `task.sh metrics` y `validate-state.sh`. Verifica después con `./.agents/scripts/validate-state.sh`.
+7. **Proponer la fase siguiente**: presenta al usuario el nombre de la fase, su objetivo, y de 3 a 7 tareas candidatas con agente y criterios de aceptación (incluidas las de deuda del paso 4). **No registres nada sin su confirmación.** Con el visto bueno:
    - Actualiza la **Fase Actual** en §1 de `GLOBAL_STATE.md`.
    - Registra las tareas con `/nueva-tarea`.
-7. **Siguiente paso**: si la fase cierra con una versión publicable, recomienda `/release`.
+8. **Siguiente paso**: si la fase cierra con una versión publicable, recomienda `/release`.
 
 ## Checklist antes de dar la fase por cerrada
 - [ ] Ninguna tarea de la fase en `TODO`, `IN_PROGRESS`, `IN_REVIEW_QA` ni `BLOCKED` sin decisión humana.
@@ -41,6 +46,7 @@ El `orchestrator-agent` debe revisar la deuda técnica al empezar cada fase (pas
 - [ ] `task.sh brain doctor` sin errores; reincidencias y lecciones generales revisadas.
 - [ ] Cada deuda pendiente con decisión explícita (tarea en la fase siguiente o se mantiene).
 - [ ] Hito de cierre registrado en §7 de `GLOBAL_STATE.md`.
+- [ ] Tareas `DONE` archivadas con `task.sh archive` si corresponde y `validate-state.sh` en verde.
 - [ ] Fase siguiente y sus tareas confirmadas por el usuario antes de registrarlas.
 
 ## Prohibido
