@@ -695,6 +695,7 @@ check "test-skills.sh rechaza YAML sin cierre ---" '! run_skills_lint no-close "
 name: no-close
 description: Skill de prueba completa. Usar en regresion.
 # Sin cierre YAML
+---
 ## Pasos
 - [ ] paso
 ## Prohibido

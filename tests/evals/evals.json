@@ -129,7 +129,7 @@
         ],
         [
           "GLOBAL_STATE.md documenta la entrega de TASK-003",
-          "grep -qE 'handoff_TASK-003\\.json|TASK-003.*QA|node --test' GLOBAL_STATE.md"
+          "git diff eval-start -- GLOBAL_STATE.md | grep -qE '^\\+\\|[^|]+\\|[^|]+\\|[^|]*qa-security-agent[^|]*\\|[[:space:]]*`?TASK-003`?[[:space:]]*\\|'"
         ],
         [
           "la suite sigue pasando",
@@ -145,7 +145,7 @@
       "checks": [
         [
           "comportamiento publico identico tras refactor",
-          "node -e 'import(\"./src/invoice.js\").then(m => process.exit(m.calculateInvoiceTotal([{price:100,qty:2}], \"ES\") === 242 && m.calculateInvoiceTotal([{price:50,qty:1}], \"US\") === 55 && m.calculateInvoiceTotal([{price:50,qty:1}], \"OTHER\") === 50 ? 0 : 1))'"
+          "node -e 'import(\"./src/invoice.js\").then(m => process.exit(m.calculateInvoiceTotal([{price:100,qty:2}], \"ES\") === 242 && m.calculateInvoiceTotal([{price:50,qty:1}], \"US\") === 55 && m.calculateInvoiceTotal([{price:100,qty:1}], \"FR\") === 120 && m.calculateInvoiceTotal([{price:50,qty:1}], \"OTHER\") === 50 ? 0 : 1))'"
         ],
         [
           "la suite pasa",
@@ -173,11 +173,11 @@
       "checks": [
         [
           "consulta parametrizada vinculada a authUserId y sin IDOR",
-          "node -e 'import(\"./src/search.js\").then(m => { let q=\"\", p=[]; const db={query:(s,a)=>{q=s;p=a;return []}}; m.searchInvoices(db,\"u1\",{userId:\"u2\",status:\"OR1=1\"}); process.exit((q.includes(\"$1\")||q.includes(\"?\")) && !q.includes(\"OR1=1\") && p.includes(\"u1\") && !p.includes(\"u2\") ? 0 : 1); })'"
+          "node -e 'import(\"./src/search.js\").then(m => { let q=\"\", p=[]; const db={query:(s,a)=>{q=s;p=a;return []}}; m.searchInvoices(db,\"u1\",{userId:\"u2\",status:\"paid\"}); const ok1=(q.includes(\"$1\")||q.includes(\"?\")) && !q.includes(\"u1\") && !q.includes(\"u2\") && p.includes(\"u1\") && !p.includes(\"u2\"); let ok2=false; try { q=\"\"; p=[]; m.searchInvoices(db,\"u1\",{userId:\"u2\",status:\"OR 1=1\"}); ok2=(q.includes(\"$1\")||q.includes(\"?\")) && !q.includes(\"OR 1=1\") && !p.includes(\"u2\"); } catch { ok2=true; } process.exit(ok1 && ok2 ? 0 : 1); })'"
         ],
         [
           "sin concatenacion ni interpolacion SQL en src/search.js",
-          "! grep -E 'SELECT .*(user_id.*\\+|\\$\\{)' src/search.js"
+          "! grep -E '(\\+[[:space:]]*params|\\$\\{)' src/search.js"
         ],
         [
           "la suite pasa",

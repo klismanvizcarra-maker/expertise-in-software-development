@@ -29,7 +29,7 @@ for skill_file in "$ROOT"/.agents/skills/*/SKILL.md; do
     file_errors=$((file_errors + 1))
   fi
 
-  if ! awk '{ sub(/\r$/, "") } NR > 1 && /^---[ \t]*$/ { f=1; exit } END { exit !f }' "$skill_file"; then
+  if ! awk '{ sub(/\r$/, "") } NR > 1 && /^#+[ \t]/ { exit } NR > 1 && /^---[ \t]*$/ { f=1; exit } END { exit !f }' "$skill_file"; then
     red "  ❌ [$skill_name] Falta delimitador de cierre '---' en YAML frontmatter"
     file_errors=$((file_errors + 1))
   fi

@@ -33,6 +33,6 @@ test('devuelve consulta de facturas para el usuario', () => {
 });
 EOF
 
-git add package.json src test
+git add -A
 $T commit TASK-003 "anadir busqueda inicial de facturas" feat >/dev/null
 
