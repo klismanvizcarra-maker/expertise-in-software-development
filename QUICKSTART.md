@@ -33,7 +33,7 @@ En WSL instala las dependencias una vez: `sudo apt update && sudo apt install -y
 ### Opción A: Usando el script automático
 En tu terminal, ejecuta:
 ```bash
-# Sintaxis: ./.agents/scripts/init-project.sh "Nombre" "/ruta/al/proyecto" [--copy] [--stack nextjs|angular|fastapi] [--ci]
+# Sintaxis: ./.agents/scripts/init-project.sh "Nombre" "/ruta/al/proyecto" [--copy] [--stack nextjs|angular|fastapi] [--ci] [--adopt]
 ./.agents/scripts/init-project.sh "Mi Plataforma SaaS" "../MI-NUEVO-PROYECTO" --stack nextjs --ci
 cd ../MI-NUEVO-PROYECTO && ./.agents/scripts/install-hooks.sh
 ```
@@ -41,6 +41,7 @@ El script nunca sobrescribe `AGENTS.md`, `CLAUDE.md`, `GLOBAL_STATE.md`, `BRAIN.
 - Usa `--copy` si tu entorno no admite enlaces simbólicos (ej. Windows).
 - Usa `--stack nextjs`, `--stack angular` o `--stack fastapi` para preconfigurar la arquitectura sin placeholders (para otros stacks como Go, Django o Rust, crea una skill propia desde [`stack_template.md`](.agents/templates/stack_template.md)).
 - Usa `--ci` para instalar automáticamente el pipeline de GitHub Actions (`.github/workflows/audit.yml`) con soporte multi-stack para Node 24 (`package.json`) y Python 3.12 (`pyproject.toml` / `requirements.txt`).
+- Usa `--adopt` sobre un repositorio ya existente (brownfield) para instalar `.agents/`, reglas y hooks conservando código, `README.md`, `.gitignore`, `.env.example`, configuraciones y hooks previos; luego ejecuta `/adoptar-proyecto`.
 - Usa `--update` (o `-u`) en proyectos existentes para sincronizar scripts, plantillas, hooks y skills retirando obsoletas, sin tocar `GLOBAL_STATE.md`, `BRAIN.md` ni `.agents/brain/`.
 Luego ejecuta `install-hooks.sh` para activar la validación de commits y escaneo de secretos.
 
@@ -76,17 +77,19 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | Comando | Qué hace | Rol que asume |
 | :--- | :--- | :--- |
 | [`/iniciar-proyecto`](.agents/skills/iniciar-proyecto/SKILL.md) | Acuerda el stack, completa `GLOBAL_STATE.md` y planifica la fase 1 | Orchestrator |
+| [`/adoptar-proyecto`](.agents/skills/adoptar-proyecto/SKILL.md) | Inventaría un codebase heredado tras `--adopt`, ajusta rutas reales y registra deuda inicial | Orchestrator |
 | [`/estado`](.agents/skills/estado/SKILL.md) | Resumen: progreso, bloqueos, pendientes de QA y siguiente paso (solo lectura) | — |
 | [`/nueva-tarea`](.agents/skills/nueva-tarea/SKILL.md) | Descompone un requerimiento y registra las `TASK-XXX` tras tu confirmación | Orchestrator |
 | [`/bugfix`](.agents/skills/bugfix/SKILL.md) | Reproduce, escribe un test que falle, corrige la causa raíz y entrega a QA | Especialista |
 | [`/refactor`](.agents/skills/refactor/SKILL.md) | Reestructura sin cambiar el comportamiento: tests de caracterización y pasos pequeños con la suite en verde | Especialista |
+| [`/pr-review`](.agents/skills/pr-review/SKILL.md) | Prepara descripción del PR, revisa el diff antes de fusionar y resuelve conflictos/rebase | Especialista |
 | [`/handoff`](.agents/skills/handoff/SKILL.md) | Verifica el checklist y los tests, y pasa la tarea a `IN_REVIEW_QA` | Especialista |
 | [`/qa-review`](.agents/skills/qa-review/SKILL.md) | Verificación independiente y veredicto: `close` o `reject` con bug report | QA & Security |
 | [`/aprender`](.agents/skills/aprender/SKILL.md) | Registra problema, causa, solución y ámbito de rutas en el cerebro (o deuda técnica) | — |
-| [`/cerrar-fase`](.agents/skills/cerrar-fase/SKILL.md) | Cierra la fase: tareas fusionadas, salud del cerebro, deuda, hito y propuesta de la fase siguiente | Orchestrator |
+| [`/cerrar-fase`](.agents/skills/cerrar-fase/SKILL.md) | Cierra la fase: tareas fusionadas, salud del cerebro, deuda, hito, archivado (`task.sh archive`) y propuesta siguiente | Orchestrator |
 | [`/release`](.agents/skills/release/SKILL.md) | Batería completa, CHANGELOG, versión, tag, despliegue (con tu confirmación) y prueba de humo | DevOps + Docs + QA |
 
-Flujo típico: `/iniciar-proyecto` → `/nueva-tarea` → *(especialista trabaja)* → `/handoff` → `/qa-review` → `/release`. Para errores: `/bugfix` → `/aprender` → `/handoff` → `/qa-review` (la lección se registra antes del cierre). Al terminar una fase: `/cerrar-fase`. Usa `/estado` en cualquier momento.
+Flujo típico: `/iniciar-proyecto` *(o `/adoptar-proyecto` en repos existentes)* → `/nueva-tarea` → *(especialista trabaja)* → `/handoff` → `/qa-review` → `/release`. Para errores: `/bugfix` → `/aprender` → `/handoff` → `/qa-review` (la lección se registra antes del cierre). Al terminar una fase: `/cerrar-fase`. Usa `/estado` en cualquier momento.
 
 ### Skills de Stack y de Técnica
 
@@ -95,11 +98,13 @@ Flujo típico: `/iniciar-proyecto` → `/nueva-tarea` → *(especialista trabaja
 | [`stack-angular-express-postgres`](.agents/skills/stack-angular-express-postgres/SKILL.md) | Convenciones verificadas de Angular 22 + Node 24/Express 5 + PostgreSQL 18 con Drizzle, JWT propio y monorepo npm. Se carga junto a la skill del rol. |
 | [`stack-fastapi-postgres`](.agents/skills/stack-fastapi-postgres/SKILL.md) | Convenciones de una API Python 3.12 con FastAPI, Pydantic v2, SQLAlchemy 2 (async), Alembic y PostgreSQL. |
 | [`stack-nextjs-tailwind-prisma`](.agents/skills/stack-nextjs-tailwind-prisma/SKILL.md) | Convenciones verificadas de React 19 + Next.js 15 (App Router, Server Components y Actions) + Tailwind CSS + PostgreSQL con Prisma ORM y Zod. |
+| [`testing-strategy`](.agents/skills/testing-strategy/SKILL.md) | Estrategia y arquitectura de pruebas unitarias, integración y contrato: pirámide de testing, fakes, aislamiento de BD y anti-flakiness. |
 | [`e2e-testing`](.agents/skills/e2e-testing/SKILL.md) | Pruebas end-to-end con Playwright a partir de los escenarios Gherkin del PRD. |
-| [`payments-stripe`](.agents/skills/payments-stripe/SKILL.md) | Suscripciones y pagos con Stripe Checkout, portal de cliente y webhooks idempotentes (Stripe 23). |
+| [`async-jobs`](.agents/skills/async-jobs/SKILL.md) | Colas y workers en segundo plano, Transactional Outbox, consumidores idempotentes, retries/DLQ, URLs pre-firmadas y emails transaccionales. |
+| [`payments-stripe`](.agents/skills/payments-stripe/SKILL.md) | Suscripciones y pagos con Stripe Checkout, portal de cliente y webhooks idempotentes (recetas para Angular+Express, Next.js y FastAPI). |
 | [`seo-web`](.agents/skills/seo-web/SKILL.md) | SSR y prerender por ruta, metadatos, canonical/hreflang, JSON-LD, sitemap y hosts permitidos. |
 | [`web-performance`](.agents/skills/web-performance/SKILL.md) | Core Web Vitals, presupuestos, análisis del bundle, imágenes, caché y latencia de la API. |
-| [`i18n`](.agents/skills/i18n/SKILL.md) | Varios idiomas con `@angular/localize`, builds por idioma y comprobación de traducciones. |
+| [`i18n`](.agents/skills/i18n/SKILL.md) | Varios idiomas: plurales ICU, formato regional, builds/rutas por locale y traducciones (recetas Angular+Express, Next.js y FastAPI). |
 | [`security-hardening`](.agents/skills/security-hardening/SKILL.md) | Seguridad desde el diseño: STRIDE por funcionalidad, autenticación, autorización por objeto, cabeceras, archivos subidos, SSRF y dependencias. |
 | [`observability`](.agents/skills/observability/SKILL.md) | Logs JSON con `request_id`, métricas RED y de negocio, OpenTelemetry, reporte de errores, `/healthz` y `/readyz`, alertas con runbook. |
 
@@ -203,7 +208,7 @@ Instala los hooks con un solo comando:
 ```bash
 bash tests/test-scripts.sh
 ```
-Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (269 comprobaciones).
+Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (282 comprobaciones).
 
 ---
 

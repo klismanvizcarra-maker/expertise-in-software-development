@@ -1,0 +1,28 @@
+{
+  "task_id": "TASK-046",
+  "summary": "Modo adopcion brownfield (adoptar-proyecto y --adopt) y archivado de fases (task.sh archive)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-12T05:55:27Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/scripts/install-hooks.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": ".agents/scripts/validate-state.sh" },
+    { "type": "file", "path": ".agents/skills/adoptar-proyecto/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/cerrar-fase/SKILL.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-flow.sh",
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

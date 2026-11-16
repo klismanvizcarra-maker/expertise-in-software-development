@@ -2,13 +2,14 @@
 """
 Análisis estático de las descripciones de las skills (sin llamar a ningún modelo).
 
-- Valida que cases.json solo use skills existentes y que toda skill tenga al menos un caso.
+- Valida que cases.json solo use skills existentes y que toda skill tenga al menos dos casos.
 - Comprueba que cada descripción diga cuándo usarla.
 - Calcula la similitud entre descripciones (Jaccard de palabras de contenido) y marca
   los pares parecidos que no se delimitan entre sí con un "No usar ... (otra-skill)".
 
 Uso: python3 tests/triggers/lint_descriptions.py [--threshold 0.18]
 """
+from collections import Counter
 import itertools
 import json
 import re
@@ -63,10 +64,10 @@ def main() -> int:
                 if name not in skills:
                     print(f"❌ {c['id']}: '{name}' en {key} no es una skill existente")
                     problems += 1
-    expected = {n for c in cases for n in c["expect"]}
+    expect_counts = Counter(n for c in cases for n in c["expect"])
     for name in skills:
-        if name not in expected:
-            print(f"❌ '{name}' no aparece como esperada en ningún caso")
+        if expect_counts[name] < 2:
+            print(f"❌ '{name}' solo tiene {expect_counts[name]} caso(s) como esperada (mínimo 2)")
             problems += 1
 
     # 2. Cláusula de uso

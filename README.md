@@ -9,11 +9,11 @@ Sistema multi-agente para desarrollar software con asistentes de IA (**Claude Co
 | Pieza | Dónde | Para qué |
 | :--- | :--- | :--- |
 | Reglas del sistema | [`AGENTS.md`](AGENTS.md) (Claude Code lo importa desde [`CLAUDE.md`](CLAUDE.md)) | Ciclo de vida de las tareas, veto de QA, Git, seguridad, cerebro y propiedad del código |
-| 32 skills | [`.agents/skills/`](.agents/skills) | Roles (`backend-agent`, `qa-security-agent`...), flujo (`/nueva-tarea`, `/bugfix`, `/refactor`, `/qa-review`, `/cerrar-fase`, `/release`...), stacks (Angular + Express, Next.js + Prisma, FastAPI) y técnicas (pagos, SEO, rendimiento, i18n, E2E, seguridad, observabilidad) |
-| CLI de tareas | [`.agents/scripts/task.sh`](.agents/scripts/task.sh) | `add`, `start`, `handoff`, `reject`, `close`, `commit`, `learn`, `brain`... Única forma de cambiar el estado de una tarea |
+| 36 skills | [`.agents/skills/`](.agents/skills) | Roles (`backend-agent`, `qa-security-agent`...), flujo (`/iniciar-proyecto`, `/adoptar-proyecto`, `/nueva-tarea`, `/bugfix`, `/refactor`, `/pr-review`, `/qa-review`, `/cerrar-fase`, `/release`...), stacks (Angular + Express, Next.js + Prisma, FastAPI) y técnicas (pagos, SEO, rendimiento, i18n, testing, E2E, colas/async, seguridad, observabilidad) |
+| CLI de tareas | [`.agents/scripts/task.sh`](.agents/scripts/task.sh) | `add`, `start`, `handoff`, `reject`, `close`, `archive`, `commit`, `learn`, `brain`... Única forma de cambiar el estado de una tarea |
 | Cerebro | `BRAIN.md` y [`.agents/brain/`](.agents/brain) | Lecciones con ámbito de rutas, gotchas, deuda técnica, preferencias y glosario; se muestran al agente cuando toca |
 | Hooks | `.claude/settings.json`, `.agents/hooks/` | Sin tarea activa no se edita código; las lecciones aparecen al editar; commits convencionales y escaneo de secretos |
-| Pruebas | [`tests/`](tests) | Scripts, flujo completo de una tarea, estructura de las skills y batería de activación contra Claude real |
+| Pruebas | [`tests/`](tests) | Scripts, flujo completo de una tarea, estructura de las skills, batería de activación y evaluaciones en `tests/evals/` |
 
 ## Empezar
 
@@ -26,9 +26,10 @@ cd ../mi-proyecto && ./.agents/scripts/install-hooks.sh
 
 Luego, en el asistente: `/iniciar-proyecto`. La guía completa (opciones de instalación, catálogo de skills, flujo de trabajo y Windows) está en [QUICKSTART.md](QUICKSTART.md).
 
-Para actualizar un proyecto que ya usa la librería:
+Para adoptar un proyecto existente (brownfield) sin sobrescribir código ni docs previos, o actualizar uno que ya usa la librería:
 
 ```bash
+./.agents/scripts/init-project.sh --adopt ../proyecto-existente   # luego ejecuta /adoptar-proyecto
 ./.agents/scripts/init-project.sh --update ../mi-proyecto
 ```
 
