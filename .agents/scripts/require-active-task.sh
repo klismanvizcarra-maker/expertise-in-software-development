@@ -41,16 +41,24 @@ except Exception:
     sys.exit(0)
 i = d.get("tool_input") or {}
 path = i.get("file_path") or i.get("notebook_path") or ""
-if not isinstance(path, str) or not path or "\n" in path or "\r" in path:
+if path == "" or path is None:
     sys.exit(0)
-root = os.path.normpath(os.environ["ROOT"])
-full = os.path.normpath(path if os.path.isabs(path) else os.path.join(root, path))
+if not isinstance(path, str) or "\n" in path or "\r" in path or "\0" in path:
+    print("/INVALID")  # centinela: un relpath nunca empieza por /
+    sys.exit(0)
+# realpath en ambos lados: resuelve symlinks (/var -> /private/var en macOS) ademas de . y ..
+root = os.path.realpath(os.environ["ROOT"])
+full = os.path.realpath(path if os.path.isabs(path) else os.path.join(root, path))
 rel = os.path.relpath(full, root)
 if rel == "." or rel == ".." or rel.startswith(".." + os.sep):
     sys.exit(0)
 print(rel)
 ' 2>/dev/null)
 [ -n "$REL" ] || exit 0
+if [ "$REL" = "/INVALID" ]; then
+  printf 'Bloqueado por AGENTS.md §2.4: la ruta del archivo a editar no es válida (no es texto o contiene saltos de línea).\n' >&2
+  exit 2
+fi
 
 case "$REL" in
   *.md|docs/*|specs/*|.agents/*|.claude/*) exit 0 ;;

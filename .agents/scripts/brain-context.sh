@@ -49,10 +49,11 @@ except Exception:
 i = d.get("tool_input") or {}
 path = i.get("file_path") or i.get("notebook_path") or ""
 sid = re.sub(r"[^A-Za-z0-9_-]", "", str(d.get("session_id") or ""))[:80]
-if not isinstance(path, str) or not path or "\n" in path or "\r" in path:
+if not isinstance(path, str) or not path or "\n" in path or "\r" in path or "\0" in path:
     sys.exit(0)
-root = os.path.normpath(os.environ["ROOT"])
-full = os.path.normpath(path if os.path.isabs(path) else os.path.join(root, path))
+# realpath en ambos lados: resuelve symlinks (/var -> /private/var en macOS) ademas de . y ..
+root = os.path.realpath(os.environ["ROOT"])
+full = os.path.realpath(path if os.path.isabs(path) else os.path.join(root, path))
 rel = os.path.relpath(full, root)
 if rel == "." or rel == ".." or rel.startswith(".." + os.sep):
     sys.exit(0)

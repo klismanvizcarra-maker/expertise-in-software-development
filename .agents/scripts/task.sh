@@ -60,7 +60,12 @@ fi
 # Los mensajes se imprimen literalmente (%s): el texto del usuario nunca se interpreta como
 # secuencias de escape. Los colores llevan el carácter ESC real.
 say()  { printf '%s\n' "$*"; }
-die()  { printf '%s\n' "${RED}❌ Error: $*${NC}" >&2; exit 1; }
+# die escribe en stderr: solo lleva color si stderr también es una terminal (no ensucia logs)
+die()  {
+  if [ -n "$RED" ] && [ -t 2 ]; then printf '%s\n' "${RED}❌ Error: $*${NC}" >&2
+  else printf '%s\n' "❌ Error: $*" >&2; fi
+  exit 1
+}
 
 # Sustituye FILE por el contenido de TMP conservando permisos e inodo del original
 # (mv dejaría el archivo con los permisos 0600 de mktemp)
@@ -1071,8 +1076,9 @@ EOF_ARCH
     case "$COMMAND" in
       help|-h|--help) ;;
       *)
-        printf '%s\n' "${RED}❌ Error: comando desconocido '$COMMAND'.${NC}" >&2
         exec 1>&2
+        [ -t 2 ] || { RED=""; NC=""; }
+        printf '%s\n' "${RED}❌ Error: comando desconocido '$COMMAND'.${NC}"
         HELP_RC=1
         ;;
     esac

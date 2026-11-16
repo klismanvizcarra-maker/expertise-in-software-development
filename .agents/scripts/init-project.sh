@@ -126,6 +126,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Copia un archivo solo si no existe en el destino (nunca sobrescribe trabajo previo)
+# TARGET_DIR es la raíz de un repositorio git (también si es un worktree o submódulo, donde
+# .git es un archivo); un subdirectorio de otro repositorio no cuenta (LL-016)
+is_git_root() {
+  local top here
+  top=$(git -C "$1" rev-parse --show-toplevel 2>/dev/null) || return 1
+  here=$(cd "$1" 2>/dev/null && pwd -P) || return 1
+  [ -n "$top" ] && [ "$(cd "$top" && pwd -P)" = "$here" ]
+}
+
 copy_if_missing() {
   if [ -e "$2" ]; then
     echo "   (se conserva $2 existente)"
@@ -200,7 +209,7 @@ if [ "$IS_UPDATE" -eq 1 ]; then
     echo "   (aviso: AGENTS.md del proyecto difiere del de la librería; revísalo si incorporas nuevas reglas de gobierno)"
   fi
 
-  if [ -d "$TARGET_DIR/.git" ]; then
+  if is_git_root "$TARGET_DIR"; then
     echo "-> Actualizando Git Hooks en repositorio..."
     (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh) || true
   fi
@@ -404,8 +413,8 @@ with open(dst, 'w', encoding='utf-8') as f:
 " "$PROJECT_NAME" "$SKILL_ROOT/.agents/templates/README_TEMPLATE.md" "$TARGET_DIR/README.md"
 fi
 
-# Instalar Git hooks si existe .git
-if [ -d "$TARGET_DIR/.git" ]; then
+# Instalar Git hooks si TARGET_DIR es la raíz de un repositorio (incluidos worktrees)
+if is_git_root "$TARGET_DIR"; then
   echo "-> Instalando Git Hooks en repositorio local..."
   if [ "$IS_ADOPT" -eq 1 ]; then
     (cd "$TARGET_DIR" && bash ./.agents/scripts/install-hooks.sh --preserve-existing) || true

@@ -667,6 +667,9 @@ check "'docs/./../src/app.ts' tampoco esquiva el bloqueo" 'edit_json "$PWD/docs/
 check "una ruta relativa del proyecto se controla (src/app.ts bloqueada)" 'edit_json "src/app.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ]'
 check "una ruta relativa fuera del proyecto (../otro/x.ts) se permite" 'edit_json "../otro/x.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
 check "una ruta absoluta que sale del proyecto con '..' se permite" 'edit_json "$PWD/../otro/x.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
+ln -s "$PWD" "$WORK/enlace-hook"
+check "la misma ruta vista a través de un symlink del proyecto sigue bloqueada" 'edit_json "$WORK/enlace-hook/src/app.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ] && edit_json "$PWD/src/app.ts" | CLAUDE_PROJECT_DIR="$WORK/enlace-hook" bash $H 2>/dev/null; [ $? -eq 2 ]'
+check "un file_path que no es texto se bloquea (fail-closed)" 'printf "{\"tool_input\":{\"file_path\":123}}" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ]'
 check "el mensaje de bloqueo indica /nueva-tarea" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>&1 | grep -q "/nueva-tarea"'
 check "Markdown y docs/ siempre permitidos" 'edit_json "$PWD/docs/product/prd.md" | CLAUDE_PROJECT_DIR="$PWD" bash $H && edit_json "$PWD/GLOBAL_STATE.md" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
 check "archivos fuera del proyecto permitidos" 'edit_json "/tmp/otro/x.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
@@ -863,9 +866,27 @@ cp "$WORK/gs.predup" GLOBAL_STATE.md
 # ------------------------------------------------------------------------------
 section "install-hooks.sh en worktrees y con core.hooksPath"
 new_project hookswt
+rm -f .git/hooks/commit-msg .git/hooks/pre-commit
 git worktree add -q "$WORK/hookswt-arbol" -b arbol-hooks 2>/dev/null
 check "install-hooks.sh funciona desde un worktree (.git es un archivo)" '(cd "$WORK/hookswt-arbol" && bash ./.agents/scripts/install-hooks.sh >/dev/null 2>&1) && [ -x .git/hooks/commit-msg ] && [ -x .git/hooks/pre-commit ]'
 check "con los hooks del worktree, un commit sin TASK-XXX se rechaza" '(cd "$WORK/hookswt-arbol" && echo x > nota.txt && git add nota.txt && ! git commit -qm "sin formato" >/dev/null 2>&1)'
+check "install-hooks.sh desde un subdirectorio se niega (exit 1) en vez de instalar en el repositorio que lo contiene" 'mkdir -p sub && ! (cd sub && bash ../.agents/scripts/install-hooks.sh >/dev/null 2>&1)'
+# init-project en worktrees de un repositorio sin hooks (instalación nueva, --adopt y --update)
+WTBASE="$WORK/wt-base"; mkdir -p "$WTBASE"
+git -C "$WTBASE" init -q -b main && git -C "$WTBASE" -c user.email=t@e -c user.name=t commit -q --allow-empty -m init
+git -C "$WTBASE" worktree add -q "$WORK/wt-nuevo" -b wt-nuevo 2>/dev/null
+bash "$ROOT/.agents/scripts/init-project.sh" "Proyecto WT" "$WORK/wt-nuevo" >/dev/null 2>&1
+check "init-project.sh en un worktree instala los git hooks" '[ -x "$WTBASE/.git/hooks/commit-msg" ] && [ -x "$WTBASE/.git/hooks/pre-commit" ]'
+rm -f "$WTBASE/.git/hooks/commit-msg" "$WTBASE/.git/hooks/pre-commit"
+bash "$ROOT/.agents/scripts/init-project.sh" --update "$WORK/wt-nuevo" >/dev/null 2>&1
+check "init-project.sh --update en un worktree reinstala los git hooks" '[ -x "$WTBASE/.git/hooks/commit-msg" ]'
+rm -f "$WTBASE/.git/hooks/commit-msg" "$WTBASE/.git/hooks/pre-commit"
+git -C "$WTBASE" worktree add -q "$WORK/wt-adopt" -b wt-adopt 2>/dev/null
+bash "$ROOT/.agents/scripts/init-project.sh" --adopt "$WORK/wt-adopt" >/dev/null 2>&1
+check "init-project.sh --adopt en un worktree instala los git hooks" '[ -x "$WTBASE/.git/hooks/commit-msg" ] && [ -x "$WTBASE/.git/hooks/pre-commit" ]'
+SUBDIR_REPO="$WORK/sub-de-repo/app"; mkdir -p "$SUBDIR_REPO"; git -C "$WORK/sub-de-repo" init -q -b main
+bash "$ROOT/.agents/scripts/init-project.sh" "Sub" "$SUBDIR_REPO" >/dev/null 2>&1
+check "init-project.sh en un subdirectorio de otro repositorio no instala hooks en ese repositorio" '! [ -e "$WORK/sub-de-repo/.git/hooks/commit-msg" ]'
 cd "$WORK" || exit 1
 new_project hookspath
 mkdir -p .husky && printf '#!/bin/sh\necho husky\n' > .husky/commit-msg && chmod +x .husky/commit-msg
@@ -897,16 +918,29 @@ FAKEBIN="$WORK/fakegit-bin"; mkdir -p "$FAKEBIN"
 REALGIT="$(command -v git)"
 printf '#!/usr/bin/env bash\ncase " $* " in *" checkout "*) : > "%s/en-checkout"; sleep 2 ;; esac\nexec "%s" "$@"\n' "$WORK" "$REALGIT" > "$FAKEBIN/git"
 chmod +x "$FAKEBIN/git"
-$T add "Tarea para probar señales" backend-agent "c" >/dev/null
-SIG_ID="$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)"
-rm -f "$WORK/en-checkout"
-PATH="$FAKEBIN:$PATH" bash $T start "$SIG_ID" >/dev/null 2>&1 &
-SIG_PID=$!
-for _ in $(seq 1 100); do [ -e "$WORK/en-checkout" ] && break; sleep 0.05; done
-kill -TERM "$SIG_PID" 2>/dev/null
-wait "$SIG_PID"; SIG_RC=$?
-check "SIGTERM a mitad de una escritura termina task.sh (exit 143) en vez de continuar" '[ "$SIG_RC" -eq 143 ]'
-check "tras la señal el lock queda liberado" '[ ! -d .agents/.task_lock ] && $T add "Tras la señal" backend-agent "c" >/dev/null'
+# Lanza 'task.sh start' con un git que se detiene en checkout (lock tomado y GLOBAL_STATE.md a
+# medio escribir), le envía la señal y devuelve su código de salida
+signal_start() {
+  local sig="$1" id
+  $T add "Tarea para probar $sig" backend-agent "c" >/dev/null
+  id="$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)"
+  rm -f "$WORK/en-checkout"
+  SIG="$sig" MARK="$WORK/en-checkout" PATH="$FAKEBIN:$PATH" python3 -c '
+import os, signal, subprocess, sys, time
+p = subprocess.Popen(["bash", sys.argv[1], "start", sys.argv[2]], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+for _ in range(200):
+    if os.path.exists(os.environ["MARK"]): break
+    time.sleep(0.05)
+p.send_signal(getattr(signal, os.environ["SIG"]))
+print(p.wait())' "$T" "$id"
+}
+check "SIGTERM a mitad de una escritura termina task.sh (exit 143) en vez de continuar" '[ "$(signal_start SIGTERM)" = 143 ] && [ ! -d .agents/.task_lock ]'
+git checkout -q main 2>/dev/null
+check "SIGINT (Ctrl-C) a mitad de una escritura termina task.sh (exit 130)" '[ "$(signal_start SIGINT)" = 130 ] && [ ! -d .agents/.task_lock ]'
+git checkout -q main 2>/dev/null
+check "tras las señales el lock queda liberado y task.sh sigue operativo" '$T add "Tras la señal" backend-agent "c" >/dev/null'
+check "con stdout en terminal, los errores redirigidos a un log no llevan códigos ANSI" 'TERM=xterm tty_out bash -c "$T clsoe 2>\"$WORK/err.log\"" >/dev/null; [ -s "$WORK/err.log" ] && ! grep -q $(printf "\033") "$WORK/err.log"'
+check "test-skills.sh usa colores en terminal y los desactiva con NO_COLOR" '[ "$(TERM=xterm tty_out bash "$ROOT/tests/test-skills.sh")" = ESC ] && [ "$(TERM=xterm NO_COLOR=1 tty_out bash "$ROOT/tests/test-skills.sh")" = PLAIN ]'
 cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"

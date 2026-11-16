@@ -21,6 +21,11 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "   Ejecuta 'git init' antes de instalar los hooks."
   exit 1
 fi
+# Desde un subdirectorio se instalarían los hooks del repositorio que lo contiene
+if [ "$(cd "$(git rev-parse --show-toplevel)" && pwd -P)" != "$(pwd -P)" ]; then
+  echo "⚠️ Advertencia: ejecuta install-hooks.sh desde la raíz del repositorio ($(git rev-parse --show-toplevel))." >&2
+  exit 1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOKS_SRC="$SCRIPT_DIR/../hooks"
