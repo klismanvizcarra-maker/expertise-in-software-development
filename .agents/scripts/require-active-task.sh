@@ -30,23 +30,27 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 2
 fi
 
-FILE=$(python3 -c '
-import json, sys
+# Ruta relativa a la raíz del proyecto, normalizada: sin segmentos '.' ni '..' (así
+# '.agents/../src/app.ts' no pasa por una ruta exenta) y las relativas se resuelven contra
+# la raíz. Vacía si el archivo queda fuera del proyecto (no se controla).
+REL=$(ROOT="$ROOT" python3 -c '
+import json, os, sys
 try:
     d = json.load(sys.stdin)
 except Exception:
     sys.exit(0)
 i = d.get("tool_input") or {}
-print(i.get("file_path") or i.get("notebook_path") or "")
+path = i.get("file_path") or i.get("notebook_path") or ""
+if not isinstance(path, str) or not path or "\n" in path or "\r" in path:
+    sys.exit(0)
+root = os.path.normpath(os.environ["ROOT"])
+full = os.path.normpath(path if os.path.isabs(path) else os.path.join(root, path))
+rel = os.path.relpath(full, root)
+if rel == "." or rel == ".." or rel.startswith(".." + os.sep):
+    sys.exit(0)
+print(rel)
 ' 2>/dev/null)
-[ -n "$FILE" ] || exit 0
-
-# Ruta relativa a la raíz del proyecto (los archivos de fuera no se controlan)
-case "$FILE" in
-  "$ROOT"/*) REL="${FILE#"$ROOT"/}" ;;
-  /*) exit 0 ;;
-  *) REL="${FILE#./}" ;;
-esac
+[ -n "$REL" ] || exit 0
 
 case "$REL" in
   *.md|docs/*|specs/*|.agents/*|.claude/*) exit 0 ;;

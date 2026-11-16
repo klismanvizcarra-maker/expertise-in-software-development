@@ -488,6 +488,8 @@ check "en la misma sesión sí muestra una lección distinta" 'ctx_text s4 "$PWD
 check "las lecciones generales (*) no se inyectan al editar" '! ctx_text s6 "$PWD/server/db/001.sql" | grep -q "LL-002"'
 check "acepta rutas relativas y un ámbito de directorio" 'ctx_text s7 "migrations/2026/0001.sql" | grep -q "LL-001"'
 check "ignora archivos de fuera del proyecto" '[ -z "$(ctx s8 "/tmp/otro/server/db/x.sql")" ]'
+check "normaliza '..': docs/../server/auth/z.ts recibe la lección de server/auth" 'ctx_text s8b "$PWD/docs/../server/auth/z.ts" | grep -q "LL-003"'
+check "una ruta con '..' que sale del proyecto se ignora" '[ -z "$(ctx s8c "$PWD/../fuera/server/auth/z.ts")" ]'
 $T lesson-retire LL-001 >/dev/null
 check "una lección OBSOLETA deja de mostrarse" '[ -z "$(ctx s9 "$PWD/server/db/001.sql")" ]'
 check "MAESTRO_BRAIN_CONTEXT=0 lo desactiva" '[ -z "$(ctx_json s10 "$PWD/server/auth/login.ts" | MAESTRO_BRAIN_CONTEXT=0 CLAUDE_PROJECT_DIR="$PWD" bash $BC)" ]'
@@ -660,6 +662,11 @@ H=./.agents/scripts/require-active-task.sh
 edit_json() { printf '{"tool_name":"Edit","tool_input":{"file_path":"%s"}}' "$1"; }
 check "init-project instala .claude/settings.json con el hook" 'grep -q "require-active-task.sh" .claude/settings.json'
 check "sin tarea IN_PROGRESS bloquea código (exit 2)" 'edit_json "$PWD/apps/api/src/app.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ]'
+check "'.agents/../src/app.ts' no esquiva el bloqueo (ruta normalizada)" 'edit_json "$PWD/.agents/../src/app.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ]'
+check "'docs/./../src/app.ts' tampoco esquiva el bloqueo" 'edit_json "$PWD/docs/./../src/app.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ]'
+check "una ruta relativa del proyecto se controla (src/app.ts bloqueada)" 'edit_json "src/app.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>/dev/null; [ $? -eq 2 ]'
+check "una ruta relativa fuera del proyecto (../otro/x.ts) se permite" 'edit_json "../otro/x.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
+check "una ruta absoluta que sale del proyecto con '..' se permite" 'edit_json "$PWD/../otro/x.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
 check "el mensaje de bloqueo indica /nueva-tarea" 'edit_json "$PWD/a.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H 2>&1 | grep -q "/nueva-tarea"'
 check "Markdown y docs/ siempre permitidos" 'edit_json "$PWD/docs/product/prd.md" | CLAUDE_PROJECT_DIR="$PWD" bash $H && edit_json "$PWD/GLOBAL_STATE.md" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
 check "archivos fuera del proyecto permitidos" 'edit_json "/tmp/otro/x.ts" | CLAUDE_PROJECT_DIR="$PWD" bash $H'
@@ -852,6 +859,55 @@ cp GLOBAL_STATE.md "$WORK/gs.predup"
 printf '| `TASK-002` | Duplicada | `backend-agent` | `DONE` | `0/3` | ok |\n' >> GLOBAL_STATE.md
 check "validate-state.sh detecta TASK-XXX duplicada entre tablero y archivo" '! bash ./.agents/scripts/validate-state.sh >/dev/null 2>&1'
 cp "$WORK/gs.predup" GLOBAL_STATE.md
+
+# ------------------------------------------------------------------------------
+section "install-hooks.sh en worktrees y con core.hooksPath"
+new_project hookswt
+git worktree add -q "$WORK/hookswt-arbol" -b arbol-hooks 2>/dev/null
+check "install-hooks.sh funciona desde un worktree (.git es un archivo)" '(cd "$WORK/hookswt-arbol" && bash ./.agents/scripts/install-hooks.sh >/dev/null 2>&1) && [ -x .git/hooks/commit-msg ] && [ -x .git/hooks/pre-commit ]'
+check "con los hooks del worktree, un commit sin TASK-XXX se rechaza" '(cd "$WORK/hookswt-arbol" && echo x > nota.txt && git add nota.txt && ! git commit -qm "sin formato" >/dev/null 2>&1)'
+cd "$WORK" || exit 1
+new_project hookspath
+mkdir -p .husky && printf '#!/bin/sh\necho husky\n' > .husky/commit-msg && chmod +x .husky/commit-msg
+git config core.hooksPath .husky
+bash ./.agents/scripts/install-hooks.sh >/dev/null 2>&1
+check "con core.hooksPath instala en ese directorio sin pisar hooks existentes" 'grep -q "echo husky" .husky/commit-msg && [ -x .husky/pre-commit ] && grep -q "scan-secrets" .husky/pre-commit'
+git config --unset core.hooksPath
+
+# ------------------------------------------------------------------------------
+section "task.sh: comandos desconocidos, colores y señales"
+new_project cli
+check "un comando desconocido sale con exit 1 y lo dice por stderr" 'OUT=$($T clsoe TASK-001 2>&1 >/dev/null); [ $? -eq 1 ] && printf "%s" "$OUT" | grep -q "comando desconocido" && [ -z "$($T clsoe 2>/dev/null)" ]'
+check "help, -h, --help y sin argumentos salen con exit 0" '$T help >/dev/null && $T -h >/dev/null && $T --help >/dev/null && $T >/dev/null'
+tty_out() { python3 -c 'import os,pty,sys
+out=b""
+pid,fd=pty.fork()
+if pid==0:
+    os.execvp(sys.argv[1], sys.argv[1:])
+while True:
+    try: d=os.read(fd,4096)
+    except OSError: break
+    if not d: break
+    out+=d
+os.waitpid(pid,0)
+sys.stdout.write("ESC" if b"\x1b[" in out else "PLAIN")' "$@"; }
+check "en una terminal task.sh usa colores" '[ "$(TERM=xterm tty_out bash $T list)" = ESC ]'
+check "NO_COLOR=1 desactiva los colores aunque sea una terminal" '[ "$(TERM=xterm NO_COLOR=1 tty_out bash $T list)" = PLAIN ] && [ "$(TERM=dumb tty_out bash $T list)" = PLAIN ]'
+FAKEBIN="$WORK/fakegit-bin"; mkdir -p "$FAKEBIN"
+REALGIT="$(command -v git)"
+printf '#!/usr/bin/env bash\ncase " $* " in *" checkout "*) : > "%s/en-checkout"; sleep 2 ;; esac\nexec "%s" "$@"\n' "$WORK" "$REALGIT" > "$FAKEBIN/git"
+chmod +x "$FAKEBIN/git"
+$T add "Tarea para probar señales" backend-agent "c" >/dev/null
+SIG_ID="$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)"
+rm -f "$WORK/en-checkout"
+PATH="$FAKEBIN:$PATH" bash $T start "$SIG_ID" >/dev/null 2>&1 &
+SIG_PID=$!
+for _ in $(seq 1 100); do [ -e "$WORK/en-checkout" ] && break; sleep 0.05; done
+kill -TERM "$SIG_PID" 2>/dev/null
+wait "$SIG_PID"; SIG_RC=$?
+check "SIGTERM a mitad de una escritura termina task.sh (exit 143) en vez de continuar" '[ "$SIG_RC" -eq 143 ]'
+check "tras la señal el lock queda liberado" '[ ! -d .agents/.task_lock ] && $T add "Tras la señal" backend-agent "c" >/dev/null'
+cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]

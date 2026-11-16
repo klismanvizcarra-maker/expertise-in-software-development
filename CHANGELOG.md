@@ -15,6 +15,10 @@ Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Ke
 - Las skills de roles de código recuerdan ejecutar `./.agents/scripts/task.sh brain for TASK-XXX <rutas>` antes de editar (paridad con el hook `brain-context.sh` en Antigravity), y `e2e-testing` incorpora sección `## Prohibido` (TASK-041).
 
 ### Corregido
+- Los hooks `require-active-task.sh` y `brain-context.sh` normalizan la ruta editada: `.agents/../src/app.ts` ya no esquiva "Cero Código sin Tarea", y una ruta relativa fuera del proyecto (`../otro/x.ts`) deja de bloquearse (TASK-050).
+- `install-hooks.sh` funciona en worktrees y submódulos (`.git` es un archivo), instala en el directorio que git usa de verdad (`git rev-parse --git-path hooks`) y, con `core.hooksPath` (husky, lefthook), no pisa hooks existentes (TASK-050).
+- `task.sh` sale con exit 1 ante un comando desconocido, en lugar de mostrar la ayuda con exit 0; `SIGINT` y `SIGTERM` terminan el script tras liberar el bloqueo (exit 130/143), en vez de continuar escribiendo sin él (TASK-050).
+- `task.sh` y `tests/test-skills.sh` emiten colores ANSI solo en una terminal y respetan `NO_COLOR` y `TERM=dumb` (TASK-050).
 - Saldadas `TD-003` (`brain-context.sh` valida `IN_PROGRESS` antes de emitir/marcar vista, usa bloqueo de sesión seguro sin robar locks y purga sesiones `>7` días) y `TD-004` (`recurrence_for` compara causa raíz y plurales simples; `task.sh close` exige emisor `qa-security-agent`) (TASK-039, TASK-041).
 - `debt_sync()` integrado en `task.sh brain sync`, `debt` y `debt-resolve` con guarda de cabecera y `FILENAME` (evita borrado de `BRAIN.md` ante `tech_debt.md` vacío); `brain doctor` valida §6 de `BRAIN.md` y la tabla de `tech_debt.md` (TASK-039).
 - Endurecidos `task.sh` (`next_id`, `handoff` con `-z`/`quotePath=false`, `close` con `git for-each-ref`, `Última Actualización`), `init-project.sh` (`--stack`, permisos en `strip_examples`, aviso de drift en `AGENTS.md`) y `validate-state.sh` (IDs duplicados y agentes desconocidos) (TASK-039).
