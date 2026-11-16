@@ -15,7 +15,7 @@ flowchart TD
     TaskCLI -->|start / handoff / reject / close| Branches["Ramas Git (feature/ / fix/ / refactor/)"]
     TaskCLI -->|Validación| Hooks["Git Hooks (commit-msg / pre-commit)"]
     Agent -->|Auditoría y Seguridad| Security["scan-secrets.sh / validate-state.sh"]
-    Agent -->|Pruebas y Verificación| Tests["tests/test-scripts.sh / test-skills.sh / tests/triggers/"]
+    Agent -->|Pruebas y Verificación| Tests["tests/test-scripts.sh / test-skills.sh / triggers / evals"]
     TaskCLI -->|Memoria Permanente| Brain["BRAIN.md / .agents/brain/"]
 ```
 

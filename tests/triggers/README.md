@@ -4,8 +4,8 @@ Comprueba que, ante una petición típica, se carga la skill correcta (y no otra
 
 | Archivo | Para qué |
 | :--- | :--- |
-| `cases.json` | 74 peticiones con la skill esperada (`expect`), alternativas válidas (`accept`) y prohibidas (`forbid`) |
-| `lint_descriptions.py` | Análisis estático gratuito: casos que apuntan a skills inexistentes, skills sin casos y pares de descripciones demasiado parecidas sin límite explícito |
+| `cases.json` | 87 peticiones con la skill esperada (`expect`), alternativas válidas (`accept`) y prohibidas (`forbid`) |
+| `lint_descriptions.py` | Análisis estático gratuito: casos que apuntan a skills inexistentes, skills con menos de dos casos y pares de descripciones demasiado parecidas sin límite explícito |
 | `run_claude.py` | Ejecución real contra Claude Code en modo `--print`, solo con herramientas de lectura |
 
 ## 1. Análisis estático (siempre, no gasta nada)
