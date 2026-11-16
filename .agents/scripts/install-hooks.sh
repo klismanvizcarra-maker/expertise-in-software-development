@@ -15,15 +15,27 @@ case "${1:-}" in
     ;;
 esac
 
-if [ ! -d ".git" ]; then
+# En un worktree o submódulo .git es un archivo, no un directorio: se pregunta a git
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "⚠️ Advertencia: No se detectó un repositorio Git activo (.git) en este directorio."
   echo "   Ejecuta 'git init' antes de instalar los hooks."
+  exit 1
+fi
+# Desde un subdirectorio se instalarían los hooks del repositorio que lo contiene
+if [ "$(cd "$(git rev-parse --show-toplevel)" && pwd -P)" != "$(pwd -P)" ]; then
+  echo "⚠️ Advertencia: ejecuta install-hooks.sh desde la raíz del repositorio ($(git rev-parse --show-toplevel))." >&2
   exit 1
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOKS_SRC="$SCRIPT_DIR/../hooks"
-GIT_HOOKS_DIR=".git/hooks"
+# Directorio de hooks que git usa de verdad: respeta core.hooksPath y el directorio común
+# de los worktrees (git rev-parse --git-path hooks)
+GIT_HOOKS_DIR="$(git rev-parse --git-path hooks)"
+# Con core.hooksPath (husky, lefthook...) los hooks suelen estar versionados: nunca se pisan
+if [ -n "$(git config --get core.hooksPath 2>/dev/null || true)" ]; then
+  PRESERVE_EXISTING=1
+fi
 
 mkdir -p "$GIT_HOOKS_DIR"
 

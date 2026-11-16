@@ -11,8 +11,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ERRORS=0
 TOTAL=0
 
-red()   { printf "\033[31m%s\033[0m\n" "$1"; }
-green() { printf "\033[32m%s\033[0m\n" "$1"; }
+# Colores solo en una terminal real (ni en CI ni en tuberías, ni con NO_COLOR o TERM=dumb)
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != "dumb" ]; then
+  red()   { printf "\033[31m%s\033[0m\n" "$1"; }
+  green() { printf "\033[32m%s\033[0m\n" "$1"; }
+else
+  red()   { printf "%s\n" "$1"; }
+  green() { printf "%s\n" "$1"; }
+fi
 
 printf "=== Auditando estructura y calidad de skills (.agents/skills/) ===\n\n"
 

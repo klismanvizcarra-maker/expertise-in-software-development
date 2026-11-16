@@ -38,8 +38,10 @@ replace_file() { :; }
 . "$LIB" 2>/dev/null || exit 0
 
 INPUT=$(cat)
-PARSED=$(printf '%s' "$INPUT" | python3 -c '
-import json, re, sys
+# Ruta relativa a la raíz normalizada (sin '.' ni '..', igual que require-active-task.sh);
+# solo archivos del proyecto
+PARSED=$(printf '%s' "$INPUT" | ROOT="$ROOT" python3 -c '
+import json, os, re, sys
 try:
     d = json.load(sys.stdin)
 except Exception:
@@ -47,21 +49,20 @@ except Exception:
 i = d.get("tool_input") or {}
 path = i.get("file_path") or i.get("notebook_path") or ""
 sid = re.sub(r"[^A-Za-z0-9_-]", "", str(d.get("session_id") or ""))[:80]
-if "\n" in path or "\r" in path:
+if not isinstance(path, str) or not path or "\n" in path or "\r" in path or "\0" in path:
+    sys.exit(0)
+# realpath en ambos lados: resuelve symlinks (/var -> /private/var en macOS) ademas de . y ..
+root = os.path.realpath(os.environ["ROOT"])
+full = os.path.realpath(path if os.path.isabs(path) else os.path.join(root, path))
+rel = os.path.relpath(full, root)
+if rel == "." or rel == ".." or rel.startswith(".." + os.sep):
     sys.exit(0)
 print(sid)
-print(path)
+print(rel)
 ' 2>/dev/null)
 SESSION=$(printf '%s\n' "$PARSED" | sed -n 1p)
-FILE=$(printf '%s\n' "$PARSED" | sed -n 2p)
-[ -n "$FILE" ] || exit 0
-
-# Solo archivos del proyecto
-case "$FILE" in
-  "$ROOT"/*) REL="${FILE#"$ROOT"/}" ;;
-  /*) exit 0 ;;
-  *) REL="${FILE#./}" ;;
-esac
+REL=$(printf '%s\n' "$PARSED" | sed -n 2p)
+[ -n "$REL" ] || exit 0
 
 # Si aplica "Cero Código sin Tarea" y no hay tarea IN_PROGRESS, no emitir ni marcar vista (TD-003)
 if [ -f "$STATE_FILE" ] && [ "${MAESTRO_ALLOW_UNTRACKED:-0}" != "1" ]; then
@@ -103,7 +104,8 @@ cleanup_seen_lock() {
     LOCK_HELD=0
   fi
 }
-trap 'cleanup_seen_lock' EXIT INT TERM
+trap 'cleanup_seen_lock' EXIT
+trap 'cleanup_seen_lock; exit 0' INT TERM
 
 if [ -n "$SEEN_LOCK" ]; then
   tries=0

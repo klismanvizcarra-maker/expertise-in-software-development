@@ -45,8 +45,8 @@ HDR_DEBT='^\|[ \t]*ID[ \t]*\|[ \t]*Tarea Vinculada'
 COMMAND="${1:-help}"
 TODAY=$(date +"%Y-%m-%d")
 
-# Colores ANSI (desactivados si la salida no es una terminal)
-if [ -t 1 ]; then
+# Colores ANSI (desactivados si la salida no es una terminal, con NO_COLOR o con TERM=dumb)
+if [ -t 1 ] && [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != "dumb" ]; then
   GREEN=$'\033[0;32m'; BLUE=$'\033[0;34m'; YELLOW=$'\033[1;33m'; RED=$'\033[0;31m'
   CYAN=$'\033[0;36m'; BOLD=$'\033[1m'; NC=$'\033[0m'
 else
@@ -60,7 +60,12 @@ fi
 # Los mensajes se imprimen literalmente (%s): el texto del usuario nunca se interpreta como
 # secuencias de escape. Los colores llevan el carácter ESC real.
 say()  { printf '%s\n' "$*"; }
-die()  { printf '%s\n' "${RED}❌ Error: $*${NC}" >&2; exit 1; }
+# die escribe en stderr: solo lleva color si stderr también es una terminal (no ensucia logs)
+die()  {
+  if [ -n "$RED" ] && [ -t 2 ]; then printf '%s\n' "${RED}❌ Error: $*${NC}" >&2
+  else printf '%s\n' "❌ Error: $*" >&2; fi
+  exit 1
+}
 
 # Sustituye FILE por el contenido de TMP conservando permisos e inodo del original
 # (mv dejaría el archivo con los permisos 0600 de mktemp)
@@ -109,7 +114,11 @@ acquire_lock() {
   printf "%s" "$my_pid" > "$LOCK_DIR/pid" 2>/dev/null || true
   LOCK_ACQUIRED=1
   LOCK_OWNER_PID="$my_pid"
-  trap 'release_lock' EXIT INT TERM
+  # Una señal debe terminar el script tras liberar el lock: un trap de INT/TERM que solo
+  # limpia deja que bash continúe y escriba en GLOBAL_STATE.md sin el bloqueo
+  trap 'release_lock' EXIT
+  trap 'release_lock; exit 130' INT
+  trap 'release_lock; exit 143' TERM
 }
 
 require_file() {
@@ -1062,6 +1071,17 @@ EOF_ARCH
     ;;
 
   help|-h|--help|*)
+    # Un comando desconocido (errata como 'clsoe') no puede parecer un éxito: ayuda por stderr y exit 1
+    HELP_RC=0
+    case "$COMMAND" in
+      help|-h|--help) ;;
+      *)
+        exec 1>&2
+        [ -t 2 ] || { RED=""; NC=""; }
+        printf '%s\n' "${RED}❌ Error: comando desconocido '$COMMAND'.${NC}"
+        HELP_RC=1
+        ;;
+    esac
     cat <<'EOF'
 =================================================================
   CLI de Gestión de Tareas y Cerebro Multi-Agente (task.sh)
@@ -1095,5 +1115,6 @@ EOF_ARCH
   lesson-retire LL-ID                    Marca una lección como OBSOLETA
 =================================================================
 EOF
+    exit "$HELP_RC"
     ;;
 esac
