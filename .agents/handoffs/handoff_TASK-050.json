@@ -1,0 +1,29 @@
+{
+  "task_id": "TASK-050",
+  "summary": "Bug: endurecer hooks y CLI (rutas con .., install-hooks en worktrees, comando desconocido, señales y colores)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-16T14:51:00Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/scripts/brain-context.sh" },
+    { "type": "file", "path": ".agents/scripts/install-hooks.sh" },
+    { "type": "file", "path": ".agents/scripts/require-active-task.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" },
+    { "type": "file", "path": "tests/test-skills.sh" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-flow.sh",
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
