@@ -4,59 +4,55 @@
 - **Fecha**: 2026-11-16
 - **Revisor**: `qa-security-agent`
 - **Especialista Asignado**: `devops-cloud-agent`
-- **Resultado**: `RECHAZADA`
-- **Iteración**: `1/3`
+- **Resultado**: `APROBADA`
+- **Iteración**: `2/3`
 
 ---
 
 ## 1. Criterios de Aceptación Verificados
 
-Revisión independiente (subagente con contexto limpio) sobre la rama `fix/TASK-050-endurecer-hooks-y-cli-rutas-co` (`4088c60`) frente a `main` (`694f7c8`). Las pruebas manuales se hicieron en proyectos temporales (`mktemp -d`) instalados con `init-project.sh`, en macOS con `/bin/bash` 3.2.57 y git 2.54.
+Revisión independiente con contexto limpio (subagente) de la rama `fix/TASK-050-endurecer-hooks-y-cli-rutas-co` (`6a1b7f9`) frente a `main` (`694f7c8`). Las pruebas manuales se hicieron en proyectos temporales (`mktemp -d`) instalados con `init-project.sh`. Entorno: macOS, `/bin/bash` 3.2.57 (el único `bash` del `PATH`) y git 2.54.
 
 | Criterio / Control | Resultado | Evidencia |
 | :--- | :---: | :--- |
-| 1. `require-active-task.sh` y `brain-context.sh` normalizan la ruta | ✅ | Bloqueados (exit 2): `.agents/../src/app.ts`, `$P//.agents//..//src//app.ts`, `//$P/...`, `./.agents/../src/app.ts`, `docs/../src/app.ts`, `src/x.md/../app.ts`, `.agents/../src/a.ts`, raíz con barra final, raíz `.` / `./` / `p/../p`, raíz con espacios. Permitidos (exit 0): `../otro/x.ts`, `$P/../otro/x.ts`, prefijo hermano `${P}2/src/x.ts`. `brain-context.sh` inyecta la lección de `src/*.ts` con `.agents/../src/app.ts`, `//`, `./` y raíz con barra final; ignora `../otro/...`; no emite sin `IN_PROGRESS`; JSON inválido o `file_path` no string → exit 0 |
-| 2. `install-hooks.sh` funciona en worktrees y respeta `core.hooksPath` sin pisar hooks existentes | ⚠️ | `install-hooks.sh` sí: worktree con espacios en el nombre (instala en `<común>/.git/hooks`), submódulo (`.git/modules/lib/hooks`, un commit sin formato se rechaza), `core.hooksPath` relativo, absoluto inexistente y desde un subdirectorio; un `pre-commit` propio en `.husky`/`.hk` se conserva. **Pero** el instalador oficial no lo usa en worktrees: ver `BUG-TASK-050-1` |
-| 3. `task.sh` sale con exit 1 ante un comando desconocido | ✅ | `clsoe`, `HELP` y `--version` → exit 1, mensaje por stderr y stdout vacío (0 bytes); `help`, `-h`, `--help`, sin argumentos y `""` → exit 0; también con `/bin/bash` 3.2 |
-| 4. SIGINT y SIGTERM terminan `task.sh` tras liberar el lock (130/143) | ✅ | `start` con un `git` falso que se detiene en `checkout`, señal enviada desde Python (para que SIGINT no llegue ignorado como en `&`): SIGINT → 130 y SIGTERM → 143, sin `.agents/.task_lock` residual, con `bash` 5 y con `/bin/bash` 3.2 |
-| 5. Colores ANSI solo en una terminal, respetando `NO_COLOR` y `TERM=dumb` | ✅ | Con un pty: `task.sh list` y `tests/test-skills.sh` usan ESC con `TERM=xterm`; texto plano con `NO_COLOR=1` y `TERM=dumb`; `NO_COLOR=` vacío mantiene los colores (como dice no-color.org); en una tubería, 0 secuencias ESC |
-| 6. Hay tests nuevos en `tests/test-scripts.sh` que fallan antes del arreglo | ✅ | `git archive HEAD` en un directorio temporal, con los 5 scripts de `main` y el `tests/test-scripts.sh` nuevo: **288 OK, 10 fallidas**. Fallan los 10 tests de criterios 1–5 (rutas `..`, worktree, `core.hooksPath`, comando desconocido, `NO_COLOR`, SIGTERM). Los otros 6 son de guarda y ya pasaban en `main` |
-| 7. La suite pasa al 100% | ✅ | `LC_ALL=C bash tests/test-scripts.sh` → 298 OK, 0 fallidas (exit 0); `test-flow.sh` → 25 OK; `test-skills.sh` → 36 skills sin errores; `lint_descriptions.py` → sin problemas; `validate-state.sh` → 0 errores y 0 avisos (todos con exit 0) |
-| Escaneo de secretos | ✅ | `./.agents/scripts/scan-secrets.sh --branch` → sin hallazgos (respecto a `main` `694f7c8`) |
-| Regresiones en `task.sh` e `init-project.sh` (`--adopt`, `--update`) | ✅ | Suite completa en verde, incluidas las secciones `--adopt` (conserva hooks propios en `.git/hooks`) y el ciclo `add/start/handoff/reject/close/archive`; `bash -n` limpio en los 6 scripts modificados; ninguna skill ni documento depende de que `task.sh <desconocido>` salga con exit 0 (todas las llamadas usan subcomandos válidos) |
-| Auditoría de seguridad | ✅ | Sin inyección: `ROOT` y la ruta llegan a Python por entorno o JSON, no se interpolan; `session_id` sigue saneado; sin secretos |
+| **BUG-TASK-050-1** (iteración 1): `init-project.sh` no instalaba hooks en worktrees | ✅ | La reproducción del veredicto anterior, en un `mktemp -d`, ahora funciona. Instalación nueva en un worktree: `-> Instalando Git Hooks` y `commit-msg` y `pre-commit` en `base/.git/hooks`. `--adopt` en un worktree con espacios en el nombre: también los instala. `--update`: los reinstala tras borrarlos. Un commit `"sin formato"` desde el worktree se rechaza (rc=1). `--adopt` conserva un `pre-commit` propio. La causa raíz está corregida en `init-project.sh:131-136` (`is_git_root`, con `rev-parse --show-toplevel` y `pwd -P`) y en las líneas 212 y 417 |
+| 1. `require-active-task.sh` y `brain-context.sh` normalizan la ruta | ✅ | Bloqueado (exit 2): `.agents/../src/app.ts`, `src/app.ts` relativo y absoluto con raíz `proy con  espacios`, `CLAUDE_PROJECT_DIR=.` y sin `CLAUDE_PROJECT_DIR`. Permitido (exit 0): `../otro/x.ts`, `README.md` y `docs/x.ts`. `brain-context.sh` inyecta la lección de `src/*.ts` con la raíz con espacios, con `.agents/../src` y con la raíz o el archivo vistos a través de un symlink. Ignora los archivos de fuera del proyecto |
+| 2. `install-hooks.sh` funciona en worktrees y respeta `core.hooksPath` sin pisar hooks existentes | ✅ | Probado en un worktree, con `init-project.sh` y directamente. En un submódulo instala en `.git/modules/mod/hooks` y no en el repositorio padre. En un repositorio anidado instala en su propio `.git/hooks`. Con un worktree, `core.hooksPath=.husky` y `--update`, añade `commit-msg`, conserva el `.husky/pre-commit` propio (`echo propio`) y avisa de que lo conserva |
+| 3. `task.sh` sale con exit 1 ante un comando desconocido | ✅ | `task.sh clsoe` → rc=1, 0 bytes en stdout y error por stderr (sin ESC en una tubería, comprobado con `od -c`). `task.sh help` → rc=0 |
+| 4. SIGINT y SIGTERM terminan `task.sh` tras liberar el lock (130/143) | ✅ | Hay tests nuevos para los dos: `signal_start SIGINT` → 130 y `signal_start SIGTERM` → 143, sin `.agents/.task_lock` residual. Fallan con `main` y pasan en la rama. Los traps de `task.sh:119-121` están separados (`EXIT` limpia; `INT`/`TERM` limpian y salen) |
+| 5. Colores ANSI solo en una terminal, respetando `NO_COLOR` y `TERM=dumb` | ✅ | Tests con pty en `task.sh list` y `tests/test-skills.sh`: hay ESC con `TERM=xterm` y texto plano con `NO_COLOR=1` o `TERM=dumb`. `task.sh` no tiene otra escritura en stderr con color aparte de `die()` (`task.sh:64-68`), que comprueba `-t 2` |
+| 6. Hay tests nuevos en `tests/test-scripts.sh` que fallan antes del arreglo | ✅ | Copia con `git archive HEAD` y los 6 archivos de `main` (`task.sh`, `require-active-task.sh`, `brain-context.sh`, `install-hooks.sh`, `init-project.sh`, `tests/test-skills.sh`) junto al `tests/test-scripts.sh` nuevo: **290 OK, 18 fallidas**. Fallan las rutas `..` (5), el symlink, el worktree (2), `init-project` en un worktree (3), `core.hooksPath`, el comando desconocido, `NO_COLOR`, SIGTERM, SIGINT, ANSI en el log de stderr y los colores de `test-skills.sh`. Con los scripts de la iteración 1 (`382a6c1`) hay **301 OK, 7 fallidas**: los tests nuevos de la iteración 2 también distinguen su propio arreglo |
+| 7. La suite pasa al 100% | ✅ | `LC_ALL=C bash tests/test-scripts.sh` → 308 OK, 0 fallidas (rc=0), en dos ejecuciones seguidas. `bash tests/test-flow.sh` → 25 OK. `bash tests/test-skills.sh` → 36 skills sin errores. `python3 tests/triggers/lint_descriptions.py` → sin problemas. `./.agents/scripts/validate-state.sh` → 0 advertencias. Todos con rc=0. `bash -n` limpio en `.agents/scripts/*.sh` y `tests/*.sh` |
+| Escaneo de secretos | ✅ | `./.agents/scripts/scan-secrets.sh --branch` → sin hallazgos respecto a `main` (`694f7c8`), rc=0 |
+| Batería de pruebas (comandos del handoff) | ✅ | Los 6 `verification_commands` de `.agents/handoffs/handoff_TASK-050.json` se ejecutaron por separado, todos con rc=0 |
+| Regresiones: `.claude/skills` es un symlink a `.agents/skills` | ✅ | `realpath` resuelve `.claude/skills/qa-review/scripts/x.py` (relativo y absoluto) a `.agents/skills/...`, que se sigue permitiendo (exit 0). `brain-context.sh` inyecta ahora las lecciones con ámbito `.agents/skills/**` al editar a través de `.claude/skills`, lo que es una mejora. Ninguna lección del repositorio tiene ámbito `.claude/` (`grep -c` → 0) |
+| Regresiones: `CLAUDE_PROJECT_DIR` con espacios o symlinks | ✅ | Raíz `proy con  espacios` (dos espacios, igual que este repositorio). También `/var` frente a `/private/var`, en ambos sentidos, y una raíz enlazada frente a la real, en ambos sentidos. En todos los casos `src/app.ts` se bloquea y la lección se inyecta |
+| Seguridad: bypass por symlink y entradas no textuales (observaciones 3 y 5) | ✅ | Ahora se bloquean (exit 2): `.agents/evil -> ../src` con `.agents/evil/app.ts`, `docs/link.md -> ../src/app.ts`, un bucle de symlinks, `{"file_path":123}`, `["src/a.ts"]`, saltos de línea y `\u0000`. El mensaje es claro: "la ruta del archivo a editar no es válida" |
+| Auditoría de seguridad | ✅ | No hay inyección: `ROOT` y la ruta llegan a Python por entorno o por JSON, sin interpolarse en código. `session_id` sigue saneado, no hay secretos y no hay comandos destructivos |
+
+### Observaciones BAJA del veredicto anterior
+
+| # | Observación | Resultado | Evidencia |
+| :---: | :--- | :---: | :--- |
+| 1 | El test de worktree pasaba también con `main` | ✅ Resuelta | Borra `.git/hooks/{commit-msg,pre-commit}` antes de instalar (`tests/test-scripts.sh:869`); los dos checks del worktree fallan con `main` |
+| 2 | SIGINT y los colores de `test-skills.sh` no tenían test | ✅ Resuelta | Tests nuevos en `tests/test-scripts.sh:939` y `:943`; los dos fallan con `main` |
+| 3 | Los symlinks no se resolvían | ✅ Resuelta | `os.path.realpath` en los dos lados (`require-active-task.sh:50-51`, `brain-context.sh:55-56`). El test del symlink falla con `main` y con la iteración 1 |
+| 4 | Había ANSI en los logs de stderr | ✅ Resuelta | `die()` y el comando desconocido solo usan color si `-t 2`. El test pty con `2>err.log` falla con `main` y con la iteración 1 |
+| 5 | Un `file_path` no textual se dejaba pasar | ✅ Resuelta | Centinela `/INVALID` → exit 2 (`require-active-task.sh:46-48`, `:58-61`). El test falla con la iteración 1 |
+| 6 | `install-hooks.sh` desde un subdirectorio instalaba en el repositorio que lo contiene | ✅ Resuelta | Ahora se niega con exit 1 y lo explica (`install-hooks.sh:25-28`). `init-project.sh` en un subdirectorio de otro repositorio no toca los hooks de ese repositorio |
 
 ## 2. Observaciones y Hallazgos
 
-### BUG-TASK-050-1 (MEDIA): `init-project.sh` sigue suponiendo que `.git` es un directorio y no instala los git hooks en worktrees
-
-- **Componente**: DevOps (`.agents/scripts/init-project.sh:203` y `.agents/scripts/init-project.sh:408`).
-- **Descripción**: la corrección hace que `install-hooks.sh` funcione en worktrees, pero el instalador que lo llama solo lo hace si se cumple `[ -d "$TARGET_DIR/.git" ]`. En un worktree `.git` es un archivo, así que `init-project.sh`, `--update` y `--adopt` se saltan los git hooks sin avisar: no se instalan ni `commit-msg` ni el `pre-commit` que escanea secretos. Es la misma causa raíz que esta tarea corrige y que la lección LL-016 de la entrega prohíbe ("preguntar a git por sus rutas en lugar de suponer `.git/`").
-- **Reproducción**:
-  ```bash
-  W=$(mktemp -d); cd "$W" && git init -q -b main base && cd base
-  git -c user.email=a@b -c user.name=a commit -q --allow-empty -m init
-  git worktree add -q "$W/wt" -b wt && git worktree add -q "$W/wt2" -b wt2
-  bash "<repo>/.agents/scripts/init-project.sh" "P" "$W/wt"   # sin "-> Instalando Git Hooks"
-  bash "<repo>/.agents/scripts/init-project.sh" --adopt "$W/wt2"
-  ls .git/hooks | grep -v sample   # vacío: ningún hook instalado
-  ```
-- **Observado**: exit 0 y ningún hook en `git rev-parse --git-path hooks`. **Esperado**: igual que en un repositorio normal, se instalan (con `--preserve-existing` en `--adopt`).
-- **Recomendación**: en las dos líneas, sustituir `[ -d "$TARGET_DIR/.git" ]` por `git -C "$TARGET_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1`, o mejor comprobar que `git -C "$TARGET_DIR" rev-parse --show-toplevel` es `$TARGET_DIR`, para no instalar en un repositorio padre cuando el destino es un subdirectorio sin repositorio propio. Añadir un test en `tests/test-scripts.sh` que ejecute `init-project.sh` y `--adopt` sobre un worktree de un repositorio **sin** hooks previos y compruebe `commit-msg` y `pre-commit` en `$(git rev-parse --git-path hooks)`.
-
-### Observaciones (BAJA, no bloqueantes; se pueden resolver en la misma iteración)
-
-1. **Test que no discrimina**: el check `con los hooks del worktree, un commit sin TASK-XXX se rechaza` (`tests/test-scripts.sh:868`) también pasa en `main`, porque `new_project` ya instaló los hooks en el `.git/hooks` común antes de crear el worktree. Lo mismo ocurre con `[ -x .git/hooks/commit-msg ]` en el check anterior: solo discrimina el exit code. Conviene borrar `.git/hooks/{commit-msg,pre-commit}` antes de ejecutar `install-hooks.sh` desde el worktree.
-2. **Faltan tests de dos casos del criterio**: SIGINT (exit 130), que verifiqué a mano, y los colores de `tests/test-skills.sh` con pty, `NO_COLOR` y `TERM=dumb`.
-3. **Symlinks y realpath (ya pasaba en `main`)**: la normalización es solo léxica (`normpath`). Si `CLAUDE_PROJECT_DIR` y `file_path` difieren por un symlink (`/var` frente a `/private/var` en macOS, o una raíz enlazada), el archivo se considera externo y se permite: `/private$P/src/app.ts` con raíz `$P` en `/var/...` → exit 0. `main` hacía lo mismo. Se resolvería con `os.path.realpath` en los dos lados.
-4. **ANSI en stderr redirigido**: el color se decide con `[ -t 1 ]`. Con stdout en una terminal y stderr redirigido a un archivo (`task.sh clsoe 2>log`, `task.sh start TASK-999 2>log`), el archivo recibe secuencias ESC. `die()` ya lo hacía en `main`.
-5. **`file_path` que no es string**: ahora se permite (`{"file_path":123}` → exit 0) y `main` lo bloqueaba. No se puede explotar porque la herramienta rechaza esa entrada, pero el cambio va de fallar cerrado a fallar abierto.
-6. **`install-hooks.sh` desde un subdirectorio sin repositorio propio**: si ese subdirectorio está dentro de otro repositorio, ahora instala los hooks en el repositorio padre; antes se negaba. Puede ser lo deseado en un monorepo, pero conviene documentarlo.
-
-- **Deuda Técnica**: no registrada; corresponde al especialista resolver `BUG-TASK-050-1` en la iteración 2/3.
-- **Lección**: LL-015 y LL-016 ya registradas por el especialista. `BUG-TASK-050-1` es un caso del antídoto de LL-016 que no se aplicó a `init-project.sh`; al cerrar, usar `--lesson LL-016` o `--lesson LL-015`. `task.sh reject` lo anotó como reincidencia de LL-016 en `.agents/brain/recurrences.md`: el ámbito (`.agents/scripts/*.sh`) ya cubría `init-project.sh`, pero el antídoto solo se aplicó a `install-hooks.sh`.
+- **Observaciones (BAJA, no bloqueantes)**:
+  1. **`init-project.sh` en un subdirectorio de otro repositorio** omite los git hooks sin avisar. Es lo correcto, porque los hooks usan rutas `./.agents/...` relativas a la raíz, y `main` hacía lo mismo. Aun así, convendría un mensaje del tipo `(no se instalan git hooks: <dir> no es la raíz de un repositorio)` para que no pase desapercibido.
+  2. **Entradas falsy o con estructura inesperada en el hook (ya pasaba en `main`)**: `{"file_path":0}`, `{"file_path":[]}`, `{"tool_input":"src/a.ts"}` y un JSON inválido salen con exit 0. `main` daba el mismo resultado, comprobado ejecutando su script. No se puede explotar, porque Claude Code valida el esquema de la herramienta antes del hook.
+  3. **Symlink del proyecto que apunta fuera** (`ext -> /otro/dir`): con `realpath`, `ext/a.ts` cuenta como archivo externo y se permite. Encaja con la regla de que los archivos de fuera del proyecto no se controlan, porque la escritura real ocurre fuera. Se deja anotado.
+  4. **Lección LL-015 algo desfasada**: su antídoto dice `os.path.normpath`, pero la implementación final usa `os.path.realpath` porque también resuelve symlinks. Conviene actualizar el texto en una tarea de mantenimiento del cerebro.
+  5. **Cosmético**: el handoff incluye `.agents/reviews/qa_TASK-050.md` entre los entregables, pero ese archivo es de QA, no del especialista.
+- **Deuda Técnica**: no se registra; ninguna observación es MEDIA o superior.
+- **Lección**: `LL-016` (registrada por el especialista; su ámbito `.agents/scripts/*.sh,tests/*.sh` cubre `init-project.sh`). BUG-TASK-050-1 fue la reincidencia de LL-016 anotada en `.agents/brain/recurrences.md`, y la corrección aplica su antídoto: preguntar a git (`rev-parse --show-toplevel`) en lugar de suponer `.git/`. Se cierra con `--lesson LL-016`.
 
 ## 3. Conclusión y Veredicto Final
 
-- **Estado**: `RECHAZADA`
-- **Siguiente paso**: `task.sh reject TASK-050` (iteración 1/3). El especialista retoma con `./.agents/scripts/task.sh start TASK-050`, corrige `BUG-TASK-050-1` con su test, y, si quiere, las observaciones 1 y 2, y vuelve a entregar con `task.sh handoff TASK-050`.
+- **Estado**: `APROBADA`
+- **Siguiente paso**: `./.agents/scripts/task.sh close TASK-050 --lesson LL-016`. La fusión a `main` (`git checkout main && git merge --no-ff fix/TASK-050-endurecer-hooks-y-cli-rutas-co && git branch -d fix/TASK-050-endurecer-hooks-y-cli-rutas-co`) la hace el especialista o el `orchestrator-agent`, no QA.
