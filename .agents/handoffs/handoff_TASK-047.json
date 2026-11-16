@@ -1,0 +1,26 @@
+{
+  "task_id": "TASK-047",
+  "summary": "Ampliar cobertura de triggers en cases.json y sincronizar catalogo documental",
+  "source_agent": "qa-security-agent",
+  "target_agent": "devops-cloud-agent",
+  "timestamp": "2026-11-16T14:44:19Z",
+  "iteration": 2,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/system_map.md" },
+    { "type": "file", "path": ".agents/skills/web-performance/SKILL.md" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "README.md" },
+    { "type": "file", "path": "tests/triggers/README.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" },
+    { "type": "file", "path": "tests/triggers/lint_descriptions.py" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

@@ -10,7 +10,7 @@
 - **Descripción**: `Framework y catálogo multi-agente para Claude Code y Antigravity: directrices de gobernanza, roles especializados, scripts de ciclo de vida de tareas y batería de evals.`
 - **Estado Actual**: `IN_PROGRESS`
 - **Fase Actual**: `FASE 2: Solidez Técnica Multi-Stack, Cobertura y Escala`
-- **Última Actualización**: `2026-11-12`
+- **Última Actualización**: `2026-11-16`
 - **Iteraciones Críticas Acumuladas**: `0 / 3`
 
 ---
@@ -100,7 +100,7 @@
 | `TASK-044` | Crear skills testing-strategy, async-jobs y pr-review con delimitacion estricta | docs-architecture-agent | `DONE` | `0/3` | Nuevas skills testing-strategy, async-jobs (con references de colas/outbox y uploads/email) y pr-review cumplen test-skills.sh y tienen >=2 casos en cases.json; AGENTS.md s2 y orchestrator-agent actualizados; lint_descriptions.py sin problemas |
 | `TASK-045` | Profundizar las 6 skills base con references operativas verificables | docs-architecture-agent | `DONE` | `0/3` | backend-agent, frontend-agent, database-architect-agent, domain-logic-agent, mobile-agent y docs-architecture-agent incorporan references/ con checklists y patrones (API, 4 estados UI, migraciones zero-downtime, dinero/FSM, mobile stores, C4/OpenAPI/ADR); test-skills.sh y lint_descriptions.py en verde |
 | `TASK-046` | Modo adopcion brownfield (adoptar-proyecto y --adopt) y archivado de fases (task.sh archive) | devops-cloud-agent | `DONE` | `0/3` | Skill adoptar-proyecto y soporte --adopt seguro en init-project.sh (sin sobrescribir docs/codigo previos); task.sh archive archiva tareas DONE en .agents/archive/ preservando next_id, metrics y validate-state.sh; cerrar-fase lo integra; tests en test-scripts.sh en verde |
-| `TASK-047` | Ampliar cobertura de triggers en cases.json y sincronizar catalogo documental | qa-security-agent | `IN_PROGRESS` | `1/3` | Toda skill con 1 solo caso (backend-agent, handoff, aprender, iniciar-proyecto, mobile-agent) y toda skill nueva tiene >=2 casos en cases.json; lint_descriptions.py pasa sin problemas; README.md, QUICKSTART.md, AGENTS.md y BRAIN.md sincronizados con el conteo real |
+| `TASK-047` | Ampliar cobertura de triggers en cases.json y sincronizar catalogo documental | qa-security-agent | `IN_REVIEW_QA` | `1/3` | Toda skill con 1 solo caso (backend-agent, handoff, aprender, iniciar-proyecto, mobile-agent) y toda skill nueva tiene >=2 casos en cases.json; lint_descriptions.py pasa sin problemas; README.md, QUICKSTART.md, AGENTS.md y BRAIN.md sincronizados con el conteo real |
 | `TASK-048` | Ampliar evals.json a roles de codigo y nuevas tecnicas con fixtures FAIL_INIT | qa-security-agent | `TODO` | `0/3` | evals.json pasa de 8 a >=14 evals deterministas cubriendo backend-agent, frontend-agent, database-architect-agent, domain-logic-agent, devops-cloud-agent, testing-strategy y async-jobs con fixtures 100755 y README actualizado |
 | `TASK-049` | Paridad Antigravity con pre-edit-check y verificacion automatica de baselines en evals | devops-cloud-agent | `TODO` | `0/3` | task.sh check / pre-edit-check.sh unifica require-active-task + brain-context; AGENTS.md y roles de codigo lo documentan; run_evals.py --verify-baselines verifica FAIL_INIT en todas las evals sin LLM; integrado en test-scripts.sh y library.yml; QUICKSTART.md y CHANGELOG.md actualizados; suite al 100% |
 
@@ -247,3 +247,4 @@
 | `2026-11-12` | qa-security-agent | orchestrator-agent | `TASK-046` | Aprobada por QA -> DONE. |
 | `2026-11-12` | qa-security-agent | devops-cloud-agent | `TASK-047` | Añadidos 5 casos en cases.json (min >=2 por skill, 87 totales), regla >=2 en lint_descriptions.py, corregido typo web-performance y sincronizados README.md, QUICKSTART.md, system_map.md, BRAIN.md y tests/triggers/README.md.. Comandos: `LC_ALL=C bash tests/test-scripts.sh`, `bash tests/test-flow.sh`, `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `./.agents/scripts/validate-state.sh`, `./.agents/scripts/scan-secrets.sh --branch` |
 | `2026-11-12` | qa-security-agent | qa-security-agent | `TASK-047` | Rechazo 1/3: tests/triggers/README.md:7 indica 74 peticiones frente a 87 casos reales |
+| `2026-11-16` | qa-security-agent | devops-cloud-agent | `TASK-047` | Corrige rechazo 1/3: tests/triggers/README.md indica 87 peticiones (lineas 7 y 23) igual que cases.json; system_map.md cita triggers y evals. Comandos: `LC_ALL=C bash tests/test-scripts.sh`, `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `./.agents/scripts/validate-state.sh`, `./.agents/scripts/scan-secrets.sh --branch` |
