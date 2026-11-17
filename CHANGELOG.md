@@ -7,6 +7,7 @@ Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Ke
 ### Añadido
 - `tests/test-skills.sh` endurecido para exigir cierre YAML `---`, palabra clave `Usar`, secciones obligatorias por tipo de skill y enlaces relativos a raíz, plantillas y referencias (TASK-040).
 - `tests/evals/evals.json` ampliado de 5 a 8 evals deterministas con `handoff-verificacion`, `refactor-caracterizacion` y `security-hardening-sql-idor` (fixtures en `tests/evals/fixtures/`), cubiertos junto a los nuevos linters en `tests/test-scripts.sh` (265 comprobaciones) y alineados en `QUICKSTART.md` (TASK-040).
+- `tests/evals/evals.json` pasa de 8 a 15 evals deterministas: una por cada rol que escribe código (`backend-agent`, `frontend-agent`, `database-architect-agent`, `domain-logic-agent`, `devops-cloud-agent`) y por `testing-strategy` y `async-jobs`, con sus fixtures. Todas fallan en el estado inicial y pasan con una solución de referencia; `tests/test-scripts.sh` exige al menos 14, cobertura de esos roles y fixtures con permisos `755` (TASK-048).
 
 ### Cambiado
 - `orchestrator-agent` lista también `security-hardening` y `observability` entre las skills de técnica (TASK-041).

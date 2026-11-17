@@ -770,12 +770,19 @@ import json, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 data = json.loads((root / "tests/evals/evals.json").read_text(encoding="utf-8"))
 evals = data.get("evals", [])
-assert len(evals) >= 8, f"se esperaban >=8 evals, hay {len(evals)}"
+assert len(evals) >= 14, f"se esperaban >=14 evals, hay {len(evals)}"
+ids = [ev["id"] for ev in evals]
+assert len(ids) == len(set(ids)), "ids de eval duplicados"
 for ev in evals:
     assert (root / ".agents/skills" / ev["skill"] / "SKILL.md").is_file(), ev["skill"]
     assert ev.get("checks"), ev["id"]
     for fx in re.findall(r"\$FIXTURES/([A-Za-z0-9_.-]+)", ev.get("setup", "")):
-        assert (root / "tests/evals/fixtures" / fx).is_file(), fx
+        f = root / "tests/evals/fixtures" / fx
+        assert f.is_file(), fx
+        assert f.stat().st_mode & 0o777 == 0o755, f"{fx} debe tener permisos 755"
+covered = {ev["skill"] for ev in evals}
+for s in ["backend-agent", "frontend-agent", "database-architect-agent", "domain-logic-agent", "devops-cloud-agent", "testing-strategy", "async-jobs"]:
+    assert s in covered, f"falta una eval de {s}"
 PY'
 
 # ------------------------------------------------------------------------------

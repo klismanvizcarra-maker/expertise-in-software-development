@@ -188,6 +188,202 @@
           "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
         ]
       ]
+    },
+    {
+      "id": "backend-paginacion-validacion",
+      "skill": "backend-agent",
+      "setup": "bash \"$FIXTURES/users_pagination.sh\"",
+      "prompt": "Implementa la tarea en curso TASK-003 (backend-agent): paginación por cursor y validación de entrada en src/users.js con sus tests. Cuando termine, entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "pagina con limit por defecto 20 y nextCursor",
+          "node -e 'import(\"./src/users.js\").then(m => { const u=Array.from({length:45},(_,i)=>({id:i+1})); const a=m.listUsers(u,{}); const b=m.listUsers(u,{limit:\"20\",cursor:a.body.nextCursor}); const ok=a.status===200&&a.body.data.length===20&&a.body.data[0].id===1&&a.body.nextCursor!=null&&b.body.data[0].id===21; const c=m.listUsers(u,{limit:\"100\",cursor:b.body.nextCursor}); process.exit(ok&&c.body.data.length===5&&c.body.nextCursor==null?0:1) })'"
+        ],
+        [
+          "rechaza limit invalido con 400 VALIDATION_ERROR",
+          "node -e 'import(\"./src/users.js\").then(m => { const u=[{id:1}]; const bad=[\"0\",\"101\",\"abc\",\"-5\"].map(l=>m.listUsers(u,{limit:l})); process.exit(bad.every(r=>r.status===400&&JSON.stringify(r.body).includes(\"VALIDATION_ERROR\"))?0:1) })'"
+        ],
+        [
+          "los errores no exponen trazas internas",
+          "node -e 'import(\"./src/users.js\").then(m => { const r=m.listUsers([{id:1}],{limit:\"abc\"}); process.exit(/at .*\\.js|stack/i.test(JSON.stringify(r.body))?1:0) })'"
+        ],
+        [
+          "la suite pasa y hay tests nuevos de validacion",
+          "node --test >/dev/null 2>&1 && git diff eval-start -- test | grep -qE '^\\+.*(400|VALIDATION_ERROR)'"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "frontend-cuatro-estados",
+      "skill": "frontend-agent",
+      "setup": "bash \"$FIXTURES/search_box.sh\"",
+      "prompt": "Implementa la tarea en curso TASK-003 (frontend-agent): los cuatro estados de la vista de resultados en src/results.js, con sus tests. Entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "loading con aria-busy y empty con mensaje",
+          "node -e 'import(\"./src/results.js\").then(m => { const l=m.renderResults({status:\"loading\"}); const e=m.renderResults({status:\"empty\"}); process.exit(/aria-busy=\"true\"/.test(l)&&!/<li/.test(e)&&e.replace(/<[^>]+>/g,\"\").trim().length>0?0:1) })'"
+        ],
+        [
+          "error con role=alert y boton Reintentar",
+          "node -e 'import(\"./src/results.js\").then(m => { const h=m.renderResults({status:\"error\",message:\"fallo\"}); process.exit(/role=\"alert\"/.test(h)&&/<button[^>]*>[^<]*Reintentar/i.test(h)?0:1) })'"
+        ],
+        [
+          "escapa el texto de los resultados (sin XSS)",
+          "node -e 'import(\"./src/results.js\").then(m => { const h=m.renderResults({status:\"success\",items:[{title:\"<img src=x onerror=alert(1)>\"}]}); process.exit(!h.includes(\"<img\")&&h.includes(\"&lt;img\")?0:1) })'"
+        ],
+        [
+          "la suite pasa",
+          "node --test >/dev/null 2>&1"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "database-indice-migracion",
+      "skill": "database-architect-agent",
+      "setup": "bash \"$FIXTURES/orders_migration.sh\"",
+      "prompt": "Resuelve la tarea en curso TASK-003 (database-architect-agent) con una migración nueva en migrations/ siguiendo la convención NNNN_nombre.up.sql y .down.sql. Entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "nueva migracion up con indice sobre (customer_id, created_at)",
+          "f=$(ls migrations/*.up.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$f\" ] && tr '\\n' ' ' < \"$f\" | grep -qiE 'create[[:space:]]+index.*orders[[:space:]]*\\([[:space:]]*customer_id[[:space:]]*,[[:space:]]*created_at'"
+        ],
+        [
+          "tiene su down que elimina el indice",
+          "f=$(ls migrations/*.down.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$f\" ] && grep -qiE 'drop[[:space:]]+index' \"$f\""
+        ],
+        [
+          "la migracion 0001 queda intacta",
+          "git diff --quiet eval-start -- migrations/0001_create_orders.up.sql migrations/0001_create_orders.down.sql"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "domain-prorrateo-centimos",
+      "skill": "domain-logic-agent",
+      "setup": "bash \"$FIXTURES/proration.sh\"",
+      "prompt": "Implementa la tarea en curso TASK-003 (domain-logic-agent) en src/domain/proration.js con una matriz de casos límite en los tests. Entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "devuelve centimos enteros redondeados a favor del cliente",
+          "node -e 'import(\"./src/domain/proration.js\").then(m => { const a=m.prorate(1000,2000,10,30); const b=m.prorate(2000,1000,10,30); const c=m.prorate(999,1999,1,3); process.exit(a===333&&b===-333&&c===333&&Number.isInteger(m.prorate(1,2,1,7))?0:1) })'"
+        ],
+        [
+          "rechaza dias invalidos",
+          "node -e 'import(\"./src/domain/proration.js\").then(m => { const bad=[[1000,2000,-1,30],[1000,2000,31,30],[1000,2000,1,0]]; process.exit(bad.every(a=>{try{m.prorate(...a);return false}catch{return true}})?0:1) })'"
+        ],
+        [
+          "es una funcion pura sin dependencias de infraestructura",
+          "! grep -qE 'import .*(fs|http|process|Date)|Date\\.now|console\\.' src/domain/proration.js"
+        ],
+        [
+          "la suite pasa con tests de limite nuevos",
+          "node --test >/dev/null 2>&1 && [ \"$(git diff eval-start -- test | grep -cE '^\\+.*(test|it)\\(')\" -ge 3 ]"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "devops-docker-no-root",
+      "skill": "devops-cloud-agent",
+      "setup": "bash \"$FIXTURES/docker_api.sh\"",
+      "prompt": "Resuelve la tarea en curso TASK-003 (devops-cloud-agent) sobre el Dockerfile de la raíz. No hace falta construir la imagen. Entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "multi-etapa y usuario no root",
+          "[ \"$(grep -ciE '^[[:space:]]*FROM[[:space:]]' Dockerfile)\" -ge 2 ] && u=$(grep -iE '^[[:space:]]*USER[[:space:]]' Dockerfile | tail -1 | awk '{print $2}') && [ -n \"$u\" ] && [ \"$u\" != root ] && [ \"$u\" != 0 ]"
+        ],
+        [
+          "HEALTHCHECK contra /healthz",
+          "grep -iE '^[[:space:]]*HEALTHCHECK' Dockerfile | grep -q '/healthz'"
+        ],
+        [
+          "sin secretos en la imagen",
+          "! grep -qiE 'supersecreto|JWT_SECRET[[:space:]]*=' Dockerfile"
+        ],
+        [
+          "JWT_SECRET en .env.example sin valor real",
+          "grep -qE '^JWT_SECRET=' .env.example && ! grep -qE '^JWT_SECRET=.*supersecreto' .env.example"
+        ],
+        [
+          ".dockerignore excluye .env y node_modules",
+          "grep -qxE '\\.env' .dockerignore && grep -qE '^node_modules/?$' .dockerignore"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "testing-reloj-determinista",
+      "skill": "testing-strategy",
+      "setup": "bash \"$FIXTURES/flaky_clock.sh\"",
+      "prompt": "/testing-strategy Resuelve la tarea en curso TASK-003: los tests de src/links.js son inestables. Hazlos deterministas sin cambiar el comportamiento de producción y entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "reloj e id inyectables con valores por defecto reales",
+          "node -e 'import(\"./src/links.js\").then(m => { const l=m.createLink(\"u1\"); const ok1=typeof l.token===\"string\"&&l.token.length>0&&l.expiresAt>Date.now(); const fixed={now:()=>1000}; const src=m.createLink.toString()+m.isExpired.toString(); process.exit(ok1&&/now|clock/i.test(src)?0:1) })'"
+        ],
+        [
+          "el limite exacto de expiracion esta cubierto",
+          "grep -rqE 'TTL_MS|15 ?\\* ?60 ?\\* ?1000|900000' test/ && grep -rqE '>=|exact|limite|límite|boundary' test/"
+        ],
+        [
+          "los tests no usan el reloj real ni esperas aleatorias",
+          "! grep -rqE 'setTimeout|Math\\.random|Date\\.now\\(\\)' test/"
+        ],
+        [
+          "node --test pasa 20 veces seguidas",
+          "for i in $(seq 1 20); do node --test >/dev/null 2>&1 || exit 1; done"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "async-worker-idempotente",
+      "skill": "async-jobs",
+      "setup": "bash \"$FIXTURES/email_worker.sh\"",
+      "prompt": "/async-jobs Implementa la tarea en curso TASK-003 en src/worker.js con sus tests y entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "no reenvia un mensaje ya procesado",
+          "node -e 'import(\"./src/worker.js\").then(async m => { const sent=[]; const seen=new Set(); const deps={mailer:{send:async t=>sent.push(t)},store:{has:async i=>seen.has(i),add:async i=>seen.add(i)},queue:{retry(){},deadLetter(){}},maxAttempts:5}; const msg={id:\"m1\",attempt:1,to:\"a@x.com\",template:\"w\"}; await m.handleMessage(msg,deps); await m.handleMessage(msg,deps); process.exit(sent.length===1?0:1) })'"
+        ],
+        [
+          "fallo transitorio: reintenta y tras maxAttempts va a la DLQ",
+          "node -e 'import(\"./src/worker.js\").then(async m => { const retried=[], dead=[]; const deps={mailer:{send:async()=>{throw new Error(\"ECONNRESET\")}},store:{has:async()=>false,add:async()=>{}},queue:{retry:(msg,d)=>retried.push(d),deadLetter:(msg,e)=>dead.push(msg.id)},maxAttempts:3}; const run=async a=>{ try { await m.handleMessage({id:\"m2\",attempt:a,to:\"b@x.com\",template:\"w\"},deps) } catch {} }; await run(1); await run(3); process.exit(retried.length===1&&retried[0]>0&&dead.length===1?0:1) })'"
+        ],
+        [
+          "backoff exponencial con jitter acotado",
+          "node -e 'import(\"./src/worker.js\").then(m => { const lo=[1,2,3,4].map(a=>m.computeBackoff(a,()=>0)); const hi=[1,2,3,4].map(a=>m.computeBackoff(a,()=>0.999)); const grows=hi[3]>hi[0]*4; const jitter=lo.some((v,i)=>v!==hi[i]); const capped=m.computeBackoff(50,()=>0.999)<=10*60*1000; process.exit(grows&&jitter&&capped&&lo.every(v=>v>=0)?0:1) })'"
+        ],
+        [
+          "la suite pasa",
+          "node --test >/dev/null 2>&1"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
     }
   ]
 }
