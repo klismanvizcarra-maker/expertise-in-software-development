@@ -201,7 +201,7 @@
         ],
         [
           "rechaza limit invalido con 400 VALIDATION_ERROR",
-          "node -e 'import(\"./src/users.js\").then(m => { const u=[{id:1}]; const bad=[\"0\",\"101\",\"abc\",\"-5\"].map(l=>m.listUsers(u,{limit:l})); process.exit(bad.every(r=>r.status===400&&JSON.stringify(r.body).includes(\"VALIDATION_ERROR\"))?0:1) })'"
+          "node -e 'import(\"./src/users.js\").then(m => { const u=[{id:1}]; const bad=[\"0\",\"101\",\"abc\",\"-5\",\"5abc\",\"2.5\"].map(l=>m.listUsers(u,{limit:l})); process.exit(bad.every(r=>r.status===400&&JSON.stringify(r.body).includes(\"VALIDATION_ERROR\"))?0:1) })'"
         ],
         [
           "los errores no exponen trazas internas",
@@ -232,8 +232,8 @@
           "node -e 'import(\"./src/results.js\").then(m => { const h=m.renderResults({status:\"error\",message:\"fallo\"}); const b=(h.match(/<button[\\s\\S]*?<\\/button>/i)||[\"\"])[0].replace(/<[^>]+>/g,\"\"); process.exit(/role=[\"\\x27]alert[\"\\x27]/.test(h)&&/Reintentar/i.test(b)?0:1) })'"
         ],
         [
-          "escapa el texto de los resultados (sin XSS)",
-          "node -e 'import(\"./src/results.js\").then(m => { const t=\"<b>x</b><img src=x onerror=alert(1)>\\\"&\"; const h=m.renderResults({status:\"success\",items:[{title:t},{title:\"<script>1</script>\"}]}); process.exit(!/<(b|img|script)\\b/i.test(h)&&(h.match(/&lt;/g)||[]).length>=4?0:1) })'"
+          "escapa el texto de los resultados (sin XSS, cualquier etiqueta)",
+          "node -e 'import(\"./src/results.js\").then(m => { const t=\"<qqx onload=alert(1)>a</qqx><qqx>&\\\"\"; const h=m.renderResults({status:\"success\",items:[{title:t},{title:\"<svg/onload=1>\"}]}); const dec=h.replace(/&#x([0-9a-f]+);/gi,(_,x)=>String.fromCharCode(parseInt(x,16))).replace(/&#(\\d+);/g,(_,x)=>String.fromCharCode(+x)).replace(/&lt;/g,\"<\").replace(/&gt;/g,\">\").replace(/&quot;/g,\"\\\"\").replace(/&amp;/g,\"&\"); process.exit(!/<(qqx|svg)/i.test(h)&&dec.includes(t)&&dec.includes(\"<svg/onload=1>\")?0:1) })'"
         ],
         [
           "la suite pasa",
@@ -253,11 +253,11 @@
       "checks": [
         [
           "nueva migracion up con indice sobre (customer_id, created_at)",
-          "f=$(ls migrations/*.up.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$f\" ] && tr '\\n' ' ' < \"$f\" | grep -qiE 'create[[:space:]]+(unique[[:space:]]+)?index.*[[:space:]]on[[:space:]]+([a-z_]+\\.)?\"?orders\"?[[:space:]]*(using[[:space:]]+[a-z]+[[:space:]]*)?\\([[:space:]]*\"?customer_id\"?[[:space:]]*(asc|desc)?[[:space:]]*,[[:space:]]*\"?created_at'"
+          "f=$(ls migrations/*.up.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$f\" ] && sed -e 's/--.*$//' \"$f\" | tr '\\n' ' ' | sed -e 's#/\\*[^*]*\\*/##g' | grep -qiE 'create[[:space:]]+(unique[[:space:]]+)?index.*[[:space:]]on[[:space:]]+(\"?[a-z_]+\"?\\.)?\"?orders\"?[[:space:]]*(using[[:space:]]+[a-z]+[[:space:]]*)?\\([[:space:]]*\"?customer_id\"?[[:space:]]*(asc|desc)?[[:space:]]*,[[:space:]]*\"?created_at'"
         ],
         [
-          "tiene su down que elimina el indice",
-          "f=$(ls migrations/*.down.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$f\" ] && grep -qiE 'drop[[:space:]]+index' \"$f\""
+          "tiene su down que elimina ese mismo indice (con nombre)",
+          "up=$(ls migrations/*.up.sql | grep -v '^migrations/0001_' | head -1); f=$(ls migrations/*.down.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$up\" ] && [ -n \"$f\" ] && n=$(sed -e 's/--.*$//' \"$up\" | tr '\\n' ' ' | grep -oiE 'index[[:space:]]+(concurrently[[:space:]]+)?(if[[:space:]]+not[[:space:]]+exists[[:space:]]+)?\"?[a-z0-9_]+\"?[[:space:]]+on' | head -1 | awk '{print $(NF-1)}' | tr -d '\"') && [ -n \"$n\" ] && [ \"$(printf '%s' \"$n\" | tr A-Z a-z)\" != on ] && sed -e 's/--.*$//' \"$f\" | grep -iE 'drop[[:space:]]+index' | grep -qi \"$n\""
         ],
         [
           "la migracion 0001 queda intacta",
@@ -276,8 +276,8 @@
       "prompt": "Implementa la tarea en curso TASK-003 (domain-logic-agent) en src/domain/proration.js con una matriz de casos límite en los tests. Entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "redondea siempre hacia abajo a favor del cliente (no round ni trunc)",
-          "node -e 'import(\"./src/domain/proration.js\").then(m => { const v=[m.prorate(1000,2000,20,30),m.prorate(2000,1000,20,30),m.prorate(2000,1000,10,30),m.prorate(1000,2000,10,30),m.prorate(1,2,1,7)]; process.exit(JSON.stringify(v)===JSON.stringify([666,-667,-334,333,0])&&v.every(Number.isInteger)?0:1) })'"
+          "redondea siempre hacia abajo a favor del cliente sin error de coma flotante",
+          "node -e 'import(\"./src/domain/proration.js\").then(m => { const v=[m.prorate(1000,2000,20,30),m.prorate(2000,1000,20,30),m.prorate(2000,1000,10,30),m.prorate(1000,2000,10,30),m.prorate(1,2,1,7),m.prorate(0,90,7,10),m.prorate(90,0,7,10),m.prorate(0,30,10,10)]; process.exit(JSON.stringify(v)===JSON.stringify([666,-667,-334,333,0,63,-63,30])&&v.every(Number.isInteger)?0:1) })'"
         ],
         [
           "rechaza dias invalidos",
@@ -304,16 +304,16 @@
       "prompt": "Resuelve la tarea en curso TASK-003 (devops-cloud-agent) sobre el Dockerfile de la raíz. No hace falta construir la imagen. Entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "multi-etapa y usuario no root",
-          "[ \"$(grep -ciE '^[[:space:]]*FROM[[:space:]]' Dockerfile)\" -ge 2 ] && u=$(grep -iE '^[[:space:]]*USER[[:space:]]' Dockerfile | tail -1 | awk '{print $2}' | cut -d: -f1) && [ -n \"$u\" ] && [ \"$u\" != root ] && [ \"$u\" != 0 ]"
+          "multi-etapa y la etapa final corre como usuario no root",
+          "[ \"$(grep -ciE '^[[:space:]]*FROM[[:space:]]' Dockerfile)\" -ge 2 ] && u=$(awk '{ if (sub(/\\\\[[:space:]]*$/, \" \")) { buf = buf $0; next } print buf $0; buf = \"\" }' Dockerfile | awk 'toupper($1)==\"FROM\" { u=\"\" } toupper($1)==\"USER\" { u=$2 } END { print u }' | cut -d: -f1) && [ -n \"$u\" ] && [ \"$u\" != root ] && [ \"$u\" != 0 ]"
         ],
         [
           "HEALTHCHECK contra /healthz",
           "awk '{ if (sub(/\\\\[[:space:]]*$/, \" \")) { buf = buf $0; next } print buf $0; buf = \"\" }' Dockerfile | grep -iE '^[[:space:]]*HEALTHCHECK' | grep -q '/healthz'"
         ],
         [
-          "sin secretos en la imagen",
-          "! grep -qi 'supersecreto' Dockerfile && ! grep -iE '^[[:space:]]*(ENV|ARG)[[:space:]]' Dockerfile | grep -qi 'JWT_SECRET'"
+          "sin secretos en la imagen (JWT_SECRET no aparece en el Dockerfile)",
+          "! grep -qi 'supersecreto' Dockerfile && ! awk '{ if (sub(/\\\\[[:space:]]*$/, \" \")) { buf = buf $0; next } print buf $0; buf = \"\" }' Dockerfile | grep -qi 'JWT_SECRET'"
         ],
         [
           "JWT_SECRET en .env.example sin valor real",
@@ -321,7 +321,7 @@
         ],
         [
           ".dockerignore excluye .env y node_modules",
-          "grep -qE '^\\.env(\\*|\\.\\*)?$' .dockerignore && grep -qE '^/?node_modules/?(\\*\\*)?$' .dockerignore"
+          "grep -qE '^(\\*\\*/|/)?\\.env\\*?$' .dockerignore && grep -qE '^(\\*\\*/|/)?node_modules/?(\\*\\*)?$' .dockerignore"
         ],
         [
           "la tarea queda en IN_REVIEW_QA",
@@ -336,16 +336,20 @@
       "prompt": "/testing-strategy Resuelve la tarea en curso TASK-003: los tests de src/links.js son inestables. Hazlos deterministas sin cambiar el comportamiento de producción y entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "reloj e id inyectables con la firma de la tarea y valores por defecto reales",
-          "node -e 'import(\"./src/links.js\").then(m => { const t0=1000; const l=m.createLink(\"u1\",{now:()=>t0,newId:()=>\"fixed\"}); const ok1=l.token===\"fixed\"&&l.expiresAt===t0+m.TTL_MS&&m.isExpired(l,{now:()=>t0+m.TTL_MS})===true&&m.isExpired(l,{now:()=>t0+m.TTL_MS-1})===false; const d=m.createLink(\"u1\"); const ok2=typeof d.token===\"string\"&&d.token.length>0&&d.expiresAt>Date.now()&&m.isExpired(d)===false; process.exit(ok1&&ok2?0:1) })'"
+          "reloj e id inyectables con la firma de la tarea; por defecto reloj real e id aleatorio",
+          "node -e 'import(\"./src/links.js\").then(m => { const t0=1000; const l=m.createLink(\"u1\",{now:()=>t0,newId:()=>\"fixed\"}); const ok1=l.token===\"fixed\"&&l.expiresAt===t0+m.TTL_MS&&m.isExpired(l,{now:()=>t0+m.TTL_MS})===true&&m.isExpired(l,{now:()=>t0+m.TTL_MS-1})===false; const d=m.createLink(\"u1\"), e=m.createLink(\"u1\"); const ok2=typeof d.token===\"string\"&&d.token.length>0&&d.token!==e.token&&d.expiresAt>Date.now()&&m.isExpired(d)===false; process.exit(ok1&&ok2?0:1) })'"
         ],
         [
-          "los tests detectan si se mueve el limite exacto de expiracion (mutacion)",
-          "tmp=$(mktemp -d) && cp -R src test package.json \"$tmp/\" && f=\"$tmp/src/links.js\" && for i in 1 2 3; do (cd \"$tmp\" && node --test >/dev/null 2>&1) || { rm -rf \"$tmp\"; exit 1; }; done && if grep -q '>=' \"$f\"; then sed -i.bak 's/>=/>/' \"$f\"; elif grep -qE '<[^=]' \"$f\"; then sed -i.bak -E 's/<([^=])/<=\\1/' \"$f\"; else rm -rf \"$tmp\"; exit 1; fi && ! (cd \"$tmp\" && node --test >/dev/null 2>&1); r=$?; rm -rf \"$tmp\"; exit $r"
+          "los tests pasan con una implementacion correcta y fallan con una mutante (> en vez de >=)",
+          "tmp=$(mktemp -d) && cp -R test package.json \"$tmp/\" && mkdir \"$tmp/src\" && for op in '>=' '>'; do printf '%s\\n' 'export const TTL_MS = 15 * 60 * 1000;' 'export function createLink(userId, { now = Date.now, newId = () => Math.random().toString(36).slice(2) } = {}) { return { token: newId(), userId, expiresAt: now() + TTL_MS }; }' 'export function isExpired(link, { now = Date.now } = {}) { return now() OP link.expiresAt; }' | sed \"s/ OP / $op /\" > \"$tmp/src/links.js\"; if [ \"$op\" = '>=' ]; then for i in 1 2 3; do (cd \"$tmp\" && node --test >/dev/null 2>&1) || { rm -rf \"$tmp\"; exit 1; }; done; else (cd \"$tmp\" && node --test >/dev/null 2>&1) && { rm -rf \"$tmp\"; exit 1; }; fi; done; rm -rf \"$tmp\""
         ],
         [
           "los tests no usan el reloj real ni esperas aleatorias",
           "! grep -rqE 'setTimeout|setInterval|Math\\.random|Date\\.now|new Date|performance\\.now|randomBytes|randomUUID' test/"
+        ],
+        [
+          "los tests pasan con el reloj y la aleatoriedad del sistema bloqueados",
+          "fz=$(mktemp -d)/freeze.mjs && printf '%s\\n' \"import crypto from 'node:crypto';\" \"import { syncBuiltinESMExports } from 'node:module';\" \"const boom = (n) => () => { throw new Error(n + ' prohibido en tests'); };\" \"const RealDate = Date;\" \"globalThis.Date = class extends RealDate { constructor(...a) { if (a.length === 0) throw new Error('new Date() prohibido en tests'); super(...a); } static now() { throw new Error('Date.now prohibido en tests'); } };\" \"Math.random = boom('Math.random'); crypto.randomUUID = boom('randomUUID'); crypto.randomBytes = boom('randomBytes');\" \"syncBuiltinESMExports();\" > \"$fz\" && node --import \"$fz\" --test >/dev/null 2>&1; r=$?; rm -rf \"$(dirname \"$fz\")\"; exit $r"
         ],
         [
           "node --test pasa 20 veces seguidas",
@@ -364,12 +368,12 @@
       "prompt": "/async-jobs Implementa la tarea en curso TASK-003 en src/worker.js con sus tests y entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "no reenvia un mensaje ya enviado y un fallo no lo marca como procesado",
-          "node -e 'import(\"./src/worker.js\").then(async m => { const sent=[]; const seen=new Set(); let fail=1; const q={retry(){},deadLetter(){}}; const deps={mailer:{send:async t=>{ if(fail-->0) throw new Error(\"ECONNRESET\"); sent.push(t) }},store:{has:async i=>seen.has(i),add:async i=>{seen.add(i)}},queue:q,maxAttempts:5}; const msg={id:\"m1\",attempt:1,to:\"a@x.com\",template:\"w\"}; try { await m.handleMessage(msg,deps) } catch {} try { await m.handleMessage({...msg,attempt:2},deps) } catch {} await m.handleMessage({...msg,attempt:3},deps); process.exit(sent.length===1?0:1) })'"
+          "deduplica en el store: no reenvia lo ya enviado, un fallo no lo marca y un exito si",
+          "node -e 'import(\"./src/worker.js\").then(async m => { const q={retry(){},deadLetter(){}}; const mk=(seen,fail)=>{ const sent=[]; return { sent, deps:{mailer:{send:async t=>{ if(fail.n-->0) throw new Error(\"ECONNRESET\"); sent.push(t) }},store:{has:async i=>seen.has(i),add:async i=>{seen.add(i)}},queue:q,maxAttempts:5} } }; const s1=new Set(); const a=mk(s1,{n:1}); const msg={id:\"m1\",attempt:1,to:\"a@x.com\",template:\"w\"}; try { await m.handleMessage(msg,a.deps) } catch {} const notMarked=!s1.has(\"m1\"); try { await m.handleMessage({...msg,attempt:2},a.deps) } catch {} const marked=s1.has(\"m1\"); await m.handleMessage({...msg,attempt:3},a.deps); const once=a.sent.length===1; const b=mk(new Set([\"pre\"]),{n:0}); await m.handleMessage({...msg,id:\"pre\"},b.deps); process.exit(notMarked&&marked&&once&&b.sent.length===0?0:1) })'"
         ],
         [
-          "fallo transitorio: reintenta y tras maxAttempts va a la DLQ",
-          "node -e 'import(\"./src/worker.js\").then(async m => { const retried=[], dead=[]; const deps={mailer:{send:async()=>{throw new Error(\"ECONNRESET\")}},store:{has:async()=>false,add:async()=>{}},queue:{retry:(msg,d)=>retried.push(d),deadLetter:(msg,e)=>dead.push(msg.id)},maxAttempts:3}; const run=async a=>{ try { await m.handleMessage({id:\"m2\",attempt:a,to:\"b@x.com\",template:\"w\"},deps) } catch {} }; await run(1); await run(3); process.exit(retried.length===1&&retried[0]>0&&dead.length===1?0:1) })'"
+          "fallo transitorio: reintenta con attempt+1 y tras maxAttempts va a la DLQ",
+          "node -e 'import(\"./src/worker.js\").then(async m => { const retried=[], dead=[]; const deps={mailer:{send:async()=>{throw new Error(\"ECONNRESET\")}},store:{has:async()=>false,add:async()=>{}},queue:{retry:(msg,d)=>retried.push([msg.attempt,d]),deadLetter:(msg,e)=>dead.push(msg.id)},maxAttempts:3}; const run=async a=>{ try { await m.handleMessage({id:\"m2\",attempt:a,to:\"b@x.com\",template:\"w\"},deps) } catch {} }; await run(1); await run(3); process.exit(retried.length===1&&retried[0][0]===2&&retried[0][1]>0&&dead.length===1?0:1) })'"
         ],
         [
           "backoff exponencial con jitter acotado",
