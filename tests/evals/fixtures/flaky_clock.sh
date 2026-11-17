@@ -4,7 +4,7 @@ set -euo pipefail
 T=./.agents/scripts/task.sh
 
 $T add "Estabilizar los tests de expiracion de enlaces" "qa-security-agent" \
-  "Los tests de src/links.js no dependen del reloj real ni de Math.random (reloj e id inyectables); cubren el limite exacto de expiracion; node --test pasa 20 veces seguidas" >/dev/null
+  "Reloj e id inyectables sin romper la API: createLink(userId, { now, newId } = {}) e isExpired(link, { now } = {}), con Date.now y un id aleatorio por defecto; los tests no usan el reloj real ni aleatoriedad; cubren el limite exacto de expiracion (en expiresAt ya ha caducado); node --test pasa 20 veces seguidas" >/dev/null
 $T start TASK-003 >/dev/null
 
 mkdir -p src test

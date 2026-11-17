@@ -4,7 +4,7 @@ set -euo pipefail
 T=./.agents/scripts/task.sh
 
 $T add "Prorrateo de cambio de plan en centimos enteros" "domain-logic-agent" \
-  "prorate(oldCents, newCents, daysLeft, daysInPeriod) devuelve centimos enteros redondeados a favor del cliente (hacia abajo si cobra, hacia arriba si abona); rechaza dias negativos o daysLeft > daysInPeriod; funcion pura en src/domain; node --test en verde" >/dev/null
+  "prorate(oldCents, newCents, daysLeft, daysInPeriod) devuelve centimos enteros redondeados a favor del cliente: siempre hacia abajo (se cobra de menos y se abona de mas; 666,67 -> 666 y -666,67 -> -667); sin aritmetica de coma flotante en el resultado; rechaza dias negativos, daysLeft > daysInPeriod o daysInPeriod <= 0; funcion pura en src/domain; matriz de casos limite con al menos 3 tests nuevos; node --test en verde" >/dev/null
 $T start TASK-003 >/dev/null
 
 mkdir -p src/domain test

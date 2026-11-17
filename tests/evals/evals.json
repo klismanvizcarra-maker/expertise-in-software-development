@@ -225,15 +225,15 @@
       "checks": [
         [
           "loading con aria-busy y empty con mensaje",
-          "node -e 'import(\"./src/results.js\").then(m => { const l=m.renderResults({status:\"loading\"}); const e=m.renderResults({status:\"empty\"}); process.exit(/aria-busy=\"true\"/.test(l)&&!/<li/.test(e)&&e.replace(/<[^>]+>/g,\"\").trim().length>0?0:1) })'"
+          "node -e 'import(\"./src/results.js\").then(m => { const l=m.renderResults({status:\"loading\"}); const e=m.renderResults({status:\"empty\"}); process.exit(/aria-busy=[\"\\x27]true[\"\\x27]/.test(l)&&!/<li/.test(e)&&e.replace(/<[^>]+>/g,\"\").trim().length>0?0:1) })'"
         ],
         [
           "error con role=alert y boton Reintentar",
-          "node -e 'import(\"./src/results.js\").then(m => { const h=m.renderResults({status:\"error\",message:\"fallo\"}); process.exit(/role=\"alert\"/.test(h)&&/<button[^>]*>[^<]*Reintentar/i.test(h)?0:1) })'"
+          "node -e 'import(\"./src/results.js\").then(m => { const h=m.renderResults({status:\"error\",message:\"fallo\"}); const b=(h.match(/<button[\\s\\S]*?<\\/button>/i)||[\"\"])[0].replace(/<[^>]+>/g,\"\"); process.exit(/role=[\"\\x27]alert[\"\\x27]/.test(h)&&/Reintentar/i.test(b)?0:1) })'"
         ],
         [
           "escapa el texto de los resultados (sin XSS)",
-          "node -e 'import(\"./src/results.js\").then(m => { const h=m.renderResults({status:\"success\",items:[{title:\"<img src=x onerror=alert(1)>\"}]}); process.exit(!h.includes(\"<img\")&&h.includes(\"&lt;img\")?0:1) })'"
+          "node -e 'import(\"./src/results.js\").then(m => { const t=\"<b>x</b><img src=x onerror=alert(1)>\\\"&\"; const h=m.renderResults({status:\"success\",items:[{title:t},{title:\"<script>1</script>\"}]}); process.exit(!/<(b|img|script)\\b/i.test(h)&&(h.match(/&lt;/g)||[]).length>=4?0:1) })'"
         ],
         [
           "la suite pasa",
@@ -253,7 +253,7 @@
       "checks": [
         [
           "nueva migracion up con indice sobre (customer_id, created_at)",
-          "f=$(ls migrations/*.up.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$f\" ] && tr '\\n' ' ' < \"$f\" | grep -qiE 'create[[:space:]]+index.*orders[[:space:]]*\\([[:space:]]*customer_id[[:space:]]*,[[:space:]]*created_at'"
+          "f=$(ls migrations/*.up.sql | grep -v '^migrations/0001_' | head -1); [ -n \"$f\" ] && tr '\\n' ' ' < \"$f\" | grep -qiE 'create[[:space:]]+(unique[[:space:]]+)?index.*[[:space:]]on[[:space:]]+([a-z_]+\\.)?\"?orders\"?[[:space:]]*(using[[:space:]]+[a-z]+[[:space:]]*)?\\([[:space:]]*\"?customer_id\"?[[:space:]]*(asc|desc)?[[:space:]]*,[[:space:]]*\"?created_at'"
         ],
         [
           "tiene su down que elimina el indice",
@@ -276,8 +276,8 @@
       "prompt": "Implementa la tarea en curso TASK-003 (domain-logic-agent) en src/domain/proration.js con una matriz de casos límite en los tests. Entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "devuelve centimos enteros redondeados a favor del cliente",
-          "node -e 'import(\"./src/domain/proration.js\").then(m => { const a=m.prorate(1000,2000,10,30); const b=m.prorate(2000,1000,10,30); const c=m.prorate(999,1999,1,3); process.exit(a===333&&b===-333&&c===333&&Number.isInteger(m.prorate(1,2,1,7))?0:1) })'"
+          "redondea siempre hacia abajo a favor del cliente (no round ni trunc)",
+          "node -e 'import(\"./src/domain/proration.js\").then(m => { const v=[m.prorate(1000,2000,20,30),m.prorate(2000,1000,20,30),m.prorate(2000,1000,10,30),m.prorate(1000,2000,10,30),m.prorate(1,2,1,7)]; process.exit(JSON.stringify(v)===JSON.stringify([666,-667,-334,333,0])&&v.every(Number.isInteger)?0:1) })'"
         ],
         [
           "rechaza dias invalidos",
@@ -288,8 +288,8 @@
           "! grep -qE 'import .*(fs|http|process|Date)|Date\\.now|console\\.' src/domain/proration.js"
         ],
         [
-          "la suite pasa con tests de limite nuevos",
-          "node --test >/dev/null 2>&1 && [ \"$(git diff eval-start -- test | grep -cE '^\\+.*(test|it)\\(')\" -ge 3 ]"
+          "la suite pasa con al menos 3 tests nuevos (matriz de casos limite)",
+          "out=$(node --test --test-reporter=tap 2>/dev/null) && n=$(printf '%s\\n' \"$out\" | awk '/^# pass /{print $3}') && [ \"${n:-0}\" -ge 4 ]"
         ],
         [
           "la tarea queda en IN_REVIEW_QA",
@@ -305,15 +305,15 @@
       "checks": [
         [
           "multi-etapa y usuario no root",
-          "[ \"$(grep -ciE '^[[:space:]]*FROM[[:space:]]' Dockerfile)\" -ge 2 ] && u=$(grep -iE '^[[:space:]]*USER[[:space:]]' Dockerfile | tail -1 | awk '{print $2}') && [ -n \"$u\" ] && [ \"$u\" != root ] && [ \"$u\" != 0 ]"
+          "[ \"$(grep -ciE '^[[:space:]]*FROM[[:space:]]' Dockerfile)\" -ge 2 ] && u=$(grep -iE '^[[:space:]]*USER[[:space:]]' Dockerfile | tail -1 | awk '{print $2}' | cut -d: -f1) && [ -n \"$u\" ] && [ \"$u\" != root ] && [ \"$u\" != 0 ]"
         ],
         [
           "HEALTHCHECK contra /healthz",
-          "grep -iE '^[[:space:]]*HEALTHCHECK' Dockerfile | grep -q '/healthz'"
+          "awk '{ if (sub(/\\\\[[:space:]]*$/, \" \")) { buf = buf $0; next } print buf $0; buf = \"\" }' Dockerfile | grep -iE '^[[:space:]]*HEALTHCHECK' | grep -q '/healthz'"
         ],
         [
           "sin secretos en la imagen",
-          "! grep -qiE 'supersecreto|JWT_SECRET[[:space:]]*=' Dockerfile"
+          "! grep -qi 'supersecreto' Dockerfile && ! grep -iE '^[[:space:]]*(ENV|ARG)[[:space:]]' Dockerfile | grep -qi 'JWT_SECRET'"
         ],
         [
           "JWT_SECRET en .env.example sin valor real",
@@ -321,7 +321,7 @@
         ],
         [
           ".dockerignore excluye .env y node_modules",
-          "grep -qxE '\\.env' .dockerignore && grep -qE '^node_modules/?$' .dockerignore"
+          "grep -qE '^\\.env(\\*|\\.\\*)?$' .dockerignore && grep -qE '^/?node_modules/?(\\*\\*)?$' .dockerignore"
         ],
         [
           "la tarea queda en IN_REVIEW_QA",
@@ -336,16 +336,16 @@
       "prompt": "/testing-strategy Resuelve la tarea en curso TASK-003: los tests de src/links.js son inestables. Hazlos deterministas sin cambiar el comportamiento de producción y entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "reloj e id inyectables con valores por defecto reales",
-          "node -e 'import(\"./src/links.js\").then(m => { const l=m.createLink(\"u1\"); const ok1=typeof l.token===\"string\"&&l.token.length>0&&l.expiresAt>Date.now(); const fixed={now:()=>1000}; const src=m.createLink.toString()+m.isExpired.toString(); process.exit(ok1&&/now|clock/i.test(src)?0:1) })'"
+          "reloj e id inyectables con la firma de la tarea y valores por defecto reales",
+          "node -e 'import(\"./src/links.js\").then(m => { const t0=1000; const l=m.createLink(\"u1\",{now:()=>t0,newId:()=>\"fixed\"}); const ok1=l.token===\"fixed\"&&l.expiresAt===t0+m.TTL_MS&&m.isExpired(l,{now:()=>t0+m.TTL_MS})===true&&m.isExpired(l,{now:()=>t0+m.TTL_MS-1})===false; const d=m.createLink(\"u1\"); const ok2=typeof d.token===\"string\"&&d.token.length>0&&d.expiresAt>Date.now()&&m.isExpired(d)===false; process.exit(ok1&&ok2?0:1) })'"
         ],
         [
-          "el limite exacto de expiracion esta cubierto",
-          "grep -rqE 'TTL_MS|15 ?\\* ?60 ?\\* ?1000|900000' test/ && grep -rqE '>=|exact|limite|límite|boundary' test/"
+          "los tests detectan si se mueve el limite exacto de expiracion (mutacion)",
+          "tmp=$(mktemp -d) && cp -R src test package.json \"$tmp/\" && f=\"$tmp/src/links.js\" && for i in 1 2 3; do (cd \"$tmp\" && node --test >/dev/null 2>&1) || { rm -rf \"$tmp\"; exit 1; }; done && if grep -q '>=' \"$f\"; then sed -i.bak 's/>=/>/' \"$f\"; elif grep -qE '<[^=]' \"$f\"; then sed -i.bak -E 's/<([^=])/<=\\1/' \"$f\"; else rm -rf \"$tmp\"; exit 1; fi && ! (cd \"$tmp\" && node --test >/dev/null 2>&1); r=$?; rm -rf \"$tmp\"; exit $r"
         ],
         [
           "los tests no usan el reloj real ni esperas aleatorias",
-          "! grep -rqE 'setTimeout|Math\\.random|Date\\.now\\(\\)' test/"
+          "! grep -rqE 'setTimeout|setInterval|Math\\.random|Date\\.now|new Date|performance\\.now|randomBytes|randomUUID' test/"
         ],
         [
           "node --test pasa 20 veces seguidas",
@@ -364,8 +364,8 @@
       "prompt": "/async-jobs Implementa la tarea en curso TASK-003 en src/worker.js con sus tests y entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "no reenvia un mensaje ya procesado",
-          "node -e 'import(\"./src/worker.js\").then(async m => { const sent=[]; const seen=new Set(); const deps={mailer:{send:async t=>sent.push(t)},store:{has:async i=>seen.has(i),add:async i=>seen.add(i)},queue:{retry(){},deadLetter(){}},maxAttempts:5}; const msg={id:\"m1\",attempt:1,to:\"a@x.com\",template:\"w\"}; await m.handleMessage(msg,deps); await m.handleMessage(msg,deps); process.exit(sent.length===1?0:1) })'"
+          "no reenvia un mensaje ya enviado y un fallo no lo marca como procesado",
+          "node -e 'import(\"./src/worker.js\").then(async m => { const sent=[]; const seen=new Set(); let fail=1; const q={retry(){},deadLetter(){}}; const deps={mailer:{send:async t=>{ if(fail-->0) throw new Error(\"ECONNRESET\"); sent.push(t) }},store:{has:async i=>seen.has(i),add:async i=>{seen.add(i)}},queue:q,maxAttempts:5}; const msg={id:\"m1\",attempt:1,to:\"a@x.com\",template:\"w\"}; try { await m.handleMessage(msg,deps) } catch {} try { await m.handleMessage({...msg,attempt:2},deps) } catch {} await m.handleMessage({...msg,attempt:3},deps); process.exit(sent.length===1?0:1) })'"
         ],
         [
           "fallo transitorio: reintenta y tras maxAttempts va a la DLQ",
@@ -373,7 +373,7 @@
         ],
         [
           "backoff exponencial con jitter acotado",
-          "node -e 'import(\"./src/worker.js\").then(m => { const lo=[1,2,3,4].map(a=>m.computeBackoff(a,()=>0)); const hi=[1,2,3,4].map(a=>m.computeBackoff(a,()=>0.999)); const grows=hi[3]>hi[0]*4; const jitter=lo.some((v,i)=>v!==hi[i]); const capped=m.computeBackoff(50,()=>0.999)<=10*60*1000; process.exit(grows&&jitter&&capped&&lo.every(v=>v>=0)?0:1) })'"
+          "node -e 'import(\"./src/worker.js\").then(m => { const lo=[1,2,3,4].map(a=>m.computeBackoff(a,()=>0)); const hi=[1,2,3,4].map(a=>m.computeBackoff(a,()=>0.999)); const grows=hi[3]>hi[0]*4; const jitter=lo.some((v,i)=>v!==hi[i]); const top=m.computeBackoff(60,()=>0.999); const capped=Number.isFinite(top)&&top<=60*60*1000&&top===m.computeBackoff(80,()=>0.999); process.exit(grows&&jitter&&capped&&lo.every(v=>v>=0)?0:1) })'"
         ],
         [
           "la suite pasa",

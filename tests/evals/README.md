@@ -15,10 +15,10 @@ La batería de `tests/triggers/` mide **qué skill se carga**. Estas evals miden
 | `backend-paginacion-validacion` | `backend-agent` | Paginación por cursor con límite por defecto, validación de `limit` con `400 VALIDATION_ERROR`, errores sin trazas y entrega a QA |
 | `frontend-cuatro-estados` | `frontend-agent` | Estados loading (`aria-busy`), vacío, error (`role="alert"` y Reintentar) y éxito, con el texto escapado contra XSS |
 | `database-indice-migracion` | `database-architect-agent` | Migración nueva con índice compuesto y su `down`, sin editar la migración existente |
-| `domain-prorrateo-centimos` | `domain-logic-agent` | Prorrateo en céntimos enteros redondeado a favor del cliente, días inválidos rechazados, función pura y matriz de casos límite |
+| `domain-prorrateo-centimos` | `domain-logic-agent` | Prorrateo en céntimos enteros redondeado siempre hacia abajo (a favor del cliente; distingue `floor` de `round` y `trunc`), días inválidos rechazados, función pura y al menos 3 tests de límite |
 | `devops-docker-no-root` | `devops-cloud-agent` | Dockerfile multi-etapa no root con `HEALTHCHECK` a `/healthz`, sin secretos, `.env.example` y `.dockerignore` |
-| `testing-reloj-determinista` | `testing-strategy` | Reloj e id inyectables, límite exacto de expiración probado, sin reloj real ni esperas aleatorias, 20 ejecuciones seguidas en verde |
-| `async-worker-idempotente` | `async-jobs` | Consumidor idempotente por `msg.id`, reintento con backoff exponencial con jitter acotado y DLQ tras `maxAttempts` |
+| `testing-reloj-determinista` | `testing-strategy` | Reloj e id inyectables con la firma de la tarea, tests que detectan una mutación del límite de expiración (`>=` → `>`), sin reloj real ni aleatoriedad, 20 ejecuciones seguidas en verde |
+| `async-worker-idempotente` | `async-jobs` | Consumidor idempotente por `msg.id` que no marca como enviado un mensaje cuyo envío falló, reintento con backoff exponencial con jitter y tope, y DLQ tras `maxAttempts` |
 
 ## Ejecutar
 ```bash
@@ -32,4 +32,4 @@ python3 tests/evals/run_evals.py --keep                   # conserva los proyect
 - Son de un solo intento: una eval que falla de forma aislada puede ser variabilidad del modelo. Repite antes de cambiar una skill.
 
 ## Añadir una eval
-En `evals.json`: `setup` (bash; fixtures en `$FIXTURES`), `prompt` y `checks` (`[nombre, bash]`, exit 0 = cumple). En setup y checks están `$T` (task.sh), `col <TASK-ID> <n>` y el tag git `eval-start` (estado tras el setup). Antes de gastar, comprueba que los checks **fallan** en el estado inicial (*FAIL_INIT*: tras el setup, al menos un check falla); si pasan sin que la skill haga nada, no miden nada. Comprueba también que una solución correcta los hace pasar todos. Los fixtures llevan permisos `755` (lo verifica `tests/test-scripts.sh`).
+En `evals.json`: `setup` (bash; fixtures en `$FIXTURES`), `prompt` y `checks` (`[nombre, bash]`, exit 0 = cumple). En setup y checks están `$T` (task.sh), `col <TASK-ID> <n>` y el tag git `eval-start` (estado tras el setup). Antes de gastar, comprueba que los checks **fallan** en el estado inicial (*FAIL_INIT*: tras el setup, al menos un check falla); si pasan sin que la skill haga nada, no miden nada. Comprueba también que varias soluciones correctas los hacen pasar todos y que las trampas típicas (escapar solo la primera aparición, marcar como procesado antes de enviar, redondear con `round`, mantener el reloj real...) hacen fallar al menos uno. Prefiere checks de comportamiento (ejecutar el código, mutar el código y ver que los tests fallan) a `grep` sobre el código. Los fixtures llevan permisos `755` (lo verifica `tests/test-scripts.sh`).

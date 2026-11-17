@@ -4,7 +4,7 @@ set -euo pipefail
 T=./.agents/scripts/task.sh
 
 $T add "Worker de emails idempotente con reintentos" "backend-agent" \
-  "handleMessage(msg, deps) no reenvia un email si el mismo msg.id ya se proceso; ante fallo transitorio reintenta con backoff exponencial con jitter acotado (computeBackoff) y tras maxAttempts envia a la DLQ; node --test en verde" >/dev/null
+  "handleMessage(msg, deps) no reenvia un email si el mismo msg.id ya se envio con exito; un fallo de envio no marca el mensaje como procesado; ante fallo transitorio reintenta (queue.retry) con computeBackoff: exponencial, con jitter y con un tope; tras maxAttempts envia a la DLQ; node --test en verde" >/dev/null
 $T start TASK-003 >/dev/null
 
 mkdir -p src test

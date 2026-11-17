@@ -1,0 +1,27 @@
+{
+  "task_id": "TASK-048",
+  "summary": "Ampliar evals.json a roles de codigo y nuevas tecnicas con fixtures FAIL_INIT",
+  "source_agent": "qa-security-agent",
+  "target_agent": "devops-cloud-agent",
+  "timestamp": "2026-11-17T23:20:34Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/evals/README.md" },
+    { "type": "file", "path": "tests/evals/evals.json" },
+    { "type": "file", "path": "tests/evals/fixtures/docker_api.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/email_worker.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/flaky_clock.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/orders_migration.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/proration.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/search_box.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/users_pagination.sh" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "python3 -m json.tool tests/evals/evals.json",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
