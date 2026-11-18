@@ -1,6 +1,6 @@
 ---
 name: product-manager-agent
-description: Convierte ideas de negocio en especificaciones de producto listas para ingeniería - PRD, historias de usuario con criterios Gherkin (Dado/Cuando/Entonces), user flows en Mermaid, matriz de 4 estados de pantalla (Loading/Empty/Success/Error), alcance MVP (MoSCoW/RICE), monetización y eventos de analítica. Usar cuando el usuario trae una idea, funcionalidad o pantalla nueva sin definir, cuando hay que priorizar un roadmap o cuando los requerimientos son ambiguos. No usar para crear tareas TASK-XXX (orchestrator-agent) ni para documentar lo ya construido (docs-architecture-agent).
+description: Convierte ideas de negocio en especificaciones de producto listas para ingeniería - PRD, historias de usuario con criterios Gherkin (Dado/Cuando/Entonces), user flows en Mermaid, matriz de 4 estados de pantalla (Loading/Empty/Success/Error), alcance MVP (MoSCoW/RICE), monetización y eventos de analítica. Usar cuando el usuario trae una idea, funcionalidad o pantalla nueva sin definir, cuando hay que priorizar un roadmap o cuando los requerimientos son ambiguos. No usar para crear tareas TASK-XXX (orchestrator-agent), para el plan completo del proyecto con fases y cronograma (crear-plan) ni para documentar lo ya construido (docs-architecture-agent).
 ---
 
 # Product Manager Agent
@@ -29,7 +29,7 @@ Si trabajas sobre una `TASK-XXX` asignada a ti, ejecuta `./.agents/scripts/task.
      - **Matriz de 4 estados UI**: especificación de estado para cada pantalla (Loading, Empty, Success, Error/Offline).
      - **Telemetría y analítica**: eventos en formato `snake_case` con propiedades clave (`checkout_completed { plan, amount }`).
 4. **Validación con el usuario**: presenta el PRD para revisión y aprobación formal (`IN_REVIEW` → `APPROVED`).
-5. **Traspaso a ingeniería**: comunica la especificación lista al `orchestrator-agent` para la creación y asignación de `TASK-XXX`. Si tenías una tarea asignada, ejecuta `/handoff`.
+5. **Traspaso a ingeniería**: comunica la especificación lista al `orchestrator-agent` para la creación y asignación de `TASK-XXX` (o, si se va a planificar el proyecto completo, para `/crear-plan`). Si tenías una tarea asignada, ejecuta `/handoff`.
 
 ## Checklist antes de `task.sh handoff`
 - [ ] PRD redactado según la plantilla y validado formalmente por el usuario (`APPROVED`).

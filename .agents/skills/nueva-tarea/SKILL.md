@@ -1,6 +1,6 @@
 ---
 name: nueva-tarea
-description: Convierte un requerimiento en tareas TASK-XXX registradas en GLOBAL_STATE.md - las descompone, asigna cada una al especialista correcto con criterios de aceptación verificables, propone el orden y las registra con task.sh add tras la confirmación del usuario. Usar cuando el usuario pide una funcionalidad, un cambio o un bugfix que aún no tiene tarea, o dice "crea una tarea", "planifica" o "descompón". No usar para seguimiento, desbloqueo de tareas BLOCKED o escalamiento (orchestrator-agent).
+description: Convierte un requerimiento en tareas TASK-XXX registradas en GLOBAL_STATE.md - las descompone, asigna cada una al especialista correcto con criterios de aceptación verificables, propone el orden y las registra con task.sh add tras la confirmación del usuario. Usar cuando el usuario pide una funcionalidad, un cambio o un bugfix que aún no tiene tarea, o dice "crea una tarea", "planifica" o "descompón". No usar para seguimiento, desbloqueo de tareas BLOCKED o escalamiento (orchestrator-agent) ni para el plan completo del proyecto con todas sus fases (crear-plan).
 ---
 
 # /nueva-tarea — Del Requerimiento al Tablero

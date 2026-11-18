@@ -24,7 +24,7 @@ flowchart TD
 ## 2. Mapa de Componentes y Directorios Clave
 
 - **Catálogo de Skills (`.agents/skills/`)**:
-  - Contiene las 37 skills estándar de roles especializados (`orchestrator-agent`, `research-agent`, `backend-agent`, `frontend-agent`, `qa-security-agent`, etc.), flujos (`iniciar-proyecto`, `adoptar-proyecto`, `nueva-tarea`, `pr-review`, `handoff`, `qa-review`, `bugfix`, `refactor`, `cerrar-fase`, `release`, `aprender`, `estado`), stacks (`stack-*`) y técnicas (`testing-strategy`, `e2e-testing`, `async-jobs`, `payments-stripe`, `seo-web`, `web-performance`, `i18n`, `security-hardening`, `observability`).
+  - Contiene las 38 skills estándar de roles especializados (`orchestrator-agent`, `research-agent`, `backend-agent`, `frontend-agent`, `qa-security-agent`, etc.), flujos (`iniciar-proyecto`, `adoptar-proyecto`, `crear-plan`, `nueva-tarea`, `pr-review`, `handoff`, `qa-review`, `bugfix`, `refactor`, `cerrar-fase`, `release`, `aprender`, `estado`), stacks (`stack-*`) y técnicas (`testing-strategy`, `e2e-testing`, `async-jobs`, `payments-stripe`, `seo-web`, `web-performance`, `i18n`, `security-hardening`, `observability`).
   - Cada skill contiene frontmatter con nombre y descripción con límites negativos, protocolo paso a paso, checklist interactivo y sección `Prohibido`.
 - **Scripts de Automatización (`.agents/scripts/`)**:
   - `task.sh`: CLI central de ciclo de vida (`add`, `start`, `handoff`, `reject`, `close`, `archive`, `move`, `learn`, `lesson-retire`, `debt`, `debt-resolve`, `list`, `metrics`, `commit`).
