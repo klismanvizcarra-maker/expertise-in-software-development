@@ -847,6 +847,14 @@ if command -v node >/dev/null 2>&1; then
   check "async: clasificar los fallos transitorios por err.code ya no se rechaza" 'eval_check async-worker-idempotente "fallo transitorio" "$W" && eval_check async-worker-idempotente "deduplica" "$W"'
   sed -i.bak 's/  await deps.store.add(msg.id);//; s/if (await deps.store.has(msg.id)) return;/if (await deps.store.has(msg.id)) return; await deps.store.add(msg.id);/' "$W/src/worker.js"
   check "async: marcar como enviado antes de enviar sigue fallando" '! eval_check async-worker-idempotente "deduplica" "$W"'
+  printf '%s\n' "export function computeBackoff(attempt, random = Math.random) { const base = Math.min(1000 * 2 ** (attempt - 1), 3600000); return Math.floor(base / 2 + random() * base / 2); }" \
+    "export async function handleMessage(msg, deps) {" \
+    "  if (await deps.store.has(msg.id)) return;" \
+    "  try { await deps.mailer.send(msg.to, msg.template); } catch (err) {" \
+    "    if (err.code === 'ECONNRESET') { if (msg.attempt >= deps.maxAttempts) deps.queue.deadLetter(msg, err); else deps.queue.retry({ ...msg, attempt: msg.attempt + 1 }, computeBackoff(msg.attempt)); return; }" \
+    "    console.error(err.message); }" \
+    "  await deps.store.add(msg.id);" "}" > "$W/src/worker.js"
+  check "async: un error sin code que marca el email como enviado sigue fallando" '! eval_check async-worker-idempotente "deduplica" "$W"'
 else
   printf "  ⚠️  sin node: se omiten las comprobaciones de TD-005 que ejecutan JavaScript\n"
 fi
