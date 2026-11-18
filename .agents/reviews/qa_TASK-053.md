@@ -71,3 +71,58 @@ Revisión con contexto limpio (subagente), sobre `git diff main...HEAD` de `feat
 
 - **Estado**: `RECHAZADA`
 - **Siguiente paso**: `docs-architecture-agent` retoma con `./.agents/scripts/task.sh start TASK-053`, corrige BUG-TASK-053-1 (y BUG-TASK-053-2) y vuelve a `/handoff`.
+
+---
+
+# Segunda revisión (iteración 2): APROBADA
+
+- **Fecha**: 2026-11-18
+- **Revisor**: `qa-security-agent` (subagente, contexto limpio)
+- **Resultado**: `APROBADA` → `DONE`
+- **Alcance**: `git diff main...HEAD` (20 archivos) y el commit `f8dd203` (cambio desde el rechazo).
+
+## 1. BUG-TASK-053-1 (doble registro de la fase 1): CORREGIDO
+
+| Camino | Fase Actual (§1) | Hito en §7 | Registro de la fase 1 | Aprobación del usuario |
+| :--- | :--- | :--- | :--- | :--- |
+| Stack ya declarado en §2 y sin placeholders | `crear-plan` paso 11 (rama "Si no") | `crear-plan` paso 11 | `crear-plan` paso 11 con el flujo de `/nueva-tarea` | Plan `APPROVED` (paso 10) + confirmación de `/nueva-tarea` paso 5 |
+| Stack `PENDIENTE DE CONFIRMAR` o placeholders | `iniciar-proyecto` paso 4 (fase 1 del plan) | `iniciar-proyecto` paso 4 (enlaza el plan) | `iniciar-proyecto` paso 5; `crear-plan` "termina aquí y no registra nada" | Plan `APPROVED` + stack confirmado (paso 3) + confirmación de `/nueva-tarea` paso 5 |
+
+En cada camino una sola skill hace las tres acciones. Checklist de `crear-plan` ("una sola vez, por `/crear-plan` o por `/iniciar-proyecto`, no por ambas") y Prohibido 1 (nada sin aprobación del plan) son coherentes. `cerrar-fase` paso 7 sigue siendo el único que activa las fases siguientes, con confirmación. QUICKSTART (`/crear-plan` → `/iniciar-proyecto` → fase 1) coincide con el camino del stack pendiente. Sin contradicciones con AGENTS.md §3: todos los cambios de estado pasan por `task.sh add` vía `/nueva-tarea`.
+
+## 2. BUG-TASK-053-2 (límites en un solo sentido): CORREGIDO
+
+- `orchestrator-agent` → "ni para redactar el plan maestro del proyecto completo (crear-plan)"; `crear-plan` lo ejecuta el orchestrator, así que no necesita excluirlo.
+- `product-manager-agent` ↔ `crear-plan`: ambos se excluyen.
+- `nueva-tarea` ↔ `crear-plan`: ambos se excluyen.
+- `orch-01` y `nt-01` tienen `crear-plan` en `forbid`.
+- `lint_descriptions.py`: "Sin problemas".
+
+## 3. Criterios de aceptación
+
+Siguen cumpliéndose todos los de la primera revisión; el que quedó ⚠️ (registro solo de la fase 1) ahora es ✅. La activación sigue en 30/30 en `tests/triggers/results/2026-11-18_0151-claude.json` (plan-01, plan-02, orch-01, nt-01 y pm-01 ideales; ninguna skill prohibida). Una repetición de esos 5 casos (`2026-11-18_0154-claude.json`) no concluyó nada: nt-01 ✅ (ideal) y los otros 4 dieron error de entorno por el límite de uso de la cuenta ("hit your 5-hour limit"), no fallos de activación.
+
+## 4. Comandos ejecutados
+
+| Comando | Resultado |
+| :--- | :--- |
+| `bash tests/test-skills.sh` | 38 skills sin errores (exit 0) |
+| `python3 tests/triggers/lint_descriptions.py` | Sin problemas (exit 0) |
+| `bash tests/test-scripts.sh` | 338 OK, 0 fallidas (exit 0) |
+| `bash tests/test-flow.sh` | 25 OK, 0 fallidas (exit 0) |
+| `./.agents/scripts/validate-state.sh` | 0 advertencias (exit 0) |
+| `./.agents/scripts/scan-secrets.sh --branch` | Sin hallazgos (exit 0) |
+| `python3 tests/triggers/run_claude.py --only plan-01,plan-02,orch-01,nt-01,pm-01` | 1/5; los 4 restantes, error por límite de uso (no concluyente) |
+
+## 5. Observaciones (BAJA, no bloqueantes)
+
+1. `iniciar-proyecto` paso 5: el paréntesis de responsable único solo nombra el caso del stack `PENDIENTE DE CONFIRMAR`, mientras que `crear-plan` paso 11 también deriva cuando hay placeholders. La regla general del paso 5 ya cubre ese caso, pero el paréntesis podría decir "cuando `/crear-plan` le pasó la activación".
+2. La descripción de `cerrar-fase` no excluye `crear-plan` ("qué sigue después de esta fase" frente a "en qué orden"); `crear-plan` sí excluye `cerrar-fase`. Hoy no hay casos que choquen.
+3. Rama "Si no" de `crear-plan` paso 11: si `/iniciar-proyecto` ya registró tareas genéricas de la fase 1 antes de que existiera el plan, la única defensa contra duplicados es `/nueva-tarea` paso 1. Se podría repetir ahí el "si ya están en el tablero, no las repitas".
+4. `product-manager-agent` mantiene "priorizar un roadmap" (activador compartido con `crear-plan`); el límite explícito y plan-02 (ideal) lo mitigan.
+
+## 6. Lección y veredicto
+
+- **Lección**: `LL-010`. Su antídoto ampliado en esta rama ("si dos skills encadenadas pueden ejecutar la misma acción, asignarla a una sola y que la otra lo diga, y que los límites de las descripciones vayan en los dos sentidos") cubre exactamente los dos bugs. No hace falta una lección nueva.
+- **Deuda técnica**: ninguna.
+- **Estado**: `APROBADA`, cierre con `task.sh close TASK-053 --lesson LL-010`. La fusión a `main` y el borrado de la rama quedan para el especialista o el orchestrator.
