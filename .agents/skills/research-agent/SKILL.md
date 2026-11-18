@@ -39,7 +39,7 @@ Si trabajas sobre una `TASK-XXX` asignada a ti (descripción con prefijo `Invest
    - **Preguntas abiertas** que el usuario debe decidir.
 6. **Redactar el informe** con la plantilla [research_report_template.md](../../templates/research_report_template.md) en `docs/research/<slug-del-proyecto>.md` (un informe por proyecto o por pregunta de investigación). **En Antigravity**, publícalo además como artefacto (`UserFacing: true`, `RequestFeedback: true`) para que el usuario lo revise.
 7. **Validar con el usuario**: presenta el resumen ejecutivo y la propuesta; ajusta referentes o conclusiones según su respuesta. Marca el informe como `APPROVED` cuando lo acepte.
-8. **Traspaso**: la propuesta aprobada pasa al `product-manager-agent` (PRD, historias de usuario y flujos) y las decisiones de tecnología o arquitectura, al `docs-architecture-agent` como ADR. Si tenías una tarea asignada, ejecuta `/handoff`.
+8. **Traspaso**: la propuesta aprobada pasa al `product-manager-agent` (PRD, historias de usuario y flujos) y de ahí a `/crear-plan` si se planifica el proyecto completo, y las decisiones de tecnología o arquitectura, al `docs-architecture-agent` como ADR. Si tenías una tarea asignada, ejecuta `/handoff`.
 
 ## Checklist antes de entregar
 - [ ] Referentes confirmados por el usuario e incluidos todos los que él nombró.

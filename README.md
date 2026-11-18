@@ -9,7 +9,7 @@ Sistema multi-agente para desarrollar software con asistentes de IA (**Claude Co
 | Pieza | Dónde | Para qué |
 | :--- | :--- | :--- |
 | Reglas del sistema | [`AGENTS.md`](AGENTS.md) (Claude Code lo importa desde [`CLAUDE.md`](CLAUDE.md)) | Ciclo de vida de las tareas, veto de QA, Git, seguridad, cerebro y propiedad del código |
-| 37 skills | [`.agents/skills/`](.agents/skills) | Roles (`backend-agent`, `qa-security-agent`, `research-agent`...), flujo (`/iniciar-proyecto`, `/adoptar-proyecto`, `/nueva-tarea`, `/bugfix`, `/refactor`, `/pr-review`, `/qa-review`, `/cerrar-fase`, `/release`...), stacks (Angular + Express, Next.js + Prisma, FastAPI) y técnicas (pagos, SEO, rendimiento, i18n, testing, E2E, colas/async, seguridad, observabilidad) |
+| 38 skills | [`.agents/skills/`](.agents/skills) | Roles (`backend-agent`, `qa-security-agent`, `research-agent`...), flujo (`/iniciar-proyecto`, `/adoptar-proyecto`, `/crear-plan`, `/nueva-tarea`, `/bugfix`, `/refactor`, `/pr-review`, `/qa-review`, `/cerrar-fase`, `/release`...), stacks (Angular + Express, Next.js + Prisma, FastAPI) y técnicas (pagos, SEO, rendimiento, i18n, testing, E2E, colas/async, seguridad, observabilidad) |
 | CLI de tareas | [`.agents/scripts/task.sh`](.agents/scripts/task.sh) | `add`, `start`, `handoff`, `reject`, `close`, `archive`, `commit`, `learn`, `brain`... Única forma de cambiar el estado de una tarea |
 | Cerebro | `BRAIN.md` y [`.agents/brain/`](.agents/brain) | Lecciones con ámbito de rutas, gotchas, deuda técnica, preferencias y glosario; se muestran al agente cuando toca |
 | Hooks | `.claude/settings.json`, `.agents/hooks/` | Sin tarea activa no se edita código; las lecciones aparecen al editar; commits convencionales y escaneo de secretos |

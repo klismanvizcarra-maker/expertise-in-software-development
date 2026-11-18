@@ -78,6 +78,7 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | Comando | Qué hace | Rol que asume |
 | :--- | :--- | :--- |
 | [`/iniciar-proyecto`](.agents/skills/iniciar-proyecto/SKILL.md) | Acuerda el stack, completa `GLOBAL_STATE.md` y planifica la fase 1 | Orchestrator |
+| [`/crear-plan`](.agents/skills/crear-plan/SKILL.md) | Plan maestro del proyecto completo: alcance por versiones, arquitectura, módulos, fases, cronograma Gantt, riesgos y lanzamiento; con tu aprobación registra la fase 1 | Orchestrator |
 | [`/adoptar-proyecto`](.agents/skills/adoptar-proyecto/SKILL.md) | Inventaría un codebase heredado tras `--adopt`, ajusta rutas reales y registra deuda inicial | Orchestrator |
 | [`/estado`](.agents/skills/estado/SKILL.md) | Resumen: progreso, bloqueos, pendientes de QA y siguiente paso (solo lectura) | — |
 | [`/nueva-tarea`](.agents/skills/nueva-tarea/SKILL.md) | Descompone un requerimiento y registra las `TASK-XXX` tras tu confirmación | Orchestrator |
@@ -90,7 +91,7 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | [`/cerrar-fase`](.agents/skills/cerrar-fase/SKILL.md) | Cierra la fase: tareas fusionadas, salud del cerebro, deuda, hito, archivado (`task.sh archive`) y propuesta siguiente | Orchestrator |
 | [`/release`](.agents/skills/release/SKILL.md) | Batería completa, CHANGELOG, versión, tag, despliegue (con tu confirmación) y prueba de humo | DevOps + Docs + QA |
 
-Flujo típico: `/iniciar-proyecto` *(o `/adoptar-proyecto` en repos existentes)* → `/nueva-tarea` → *(especialista trabaja)* → `/handoff` → `/qa-review` → `/release`. Para errores: `/bugfix` → `/aprender` → `/handoff` → `/qa-review` (la lección se registra antes del cierre). Al terminar una fase: `/cerrar-fase`. Usa `/estado` en cualquier momento.
+Flujo típico: `/iniciar-proyecto` *(o `/adoptar-proyecto` en repos existentes)* → `/nueva-tarea` → *(especialista trabaja)* → `/handoff` → `/qa-review` → `/release`. Para errores: `/bugfix` → `/aprender` → `/handoff` → `/qa-review` (la lección se registra antes del cierre). Al terminar una fase: `/cerrar-fase`. Proyecto nuevo de punta a punta: `/research-agent` → `/product-manager-agent` → `/crear-plan` → `/iniciar-proyecto` → fase 1 → `/cerrar-fase` → … Usa `/estado` en cualquier momento.
 
 ### Skills de Stack y de Técnica
 
@@ -137,6 +138,9 @@ Los presets `--stack nextjs|angular|fastapi` cubren los tres stacks preempaqueta
 
 * **Para conceptualizar y aterrizar una nueva idea o pantalla**:
   > *"/product-manager-agent Quiero crear una app de reservas. Define el User Flow, las Historias de Usuario con criterios Gherkin y los 4 estados de pantalla en docs/product/reservas.md."*
+
+* **Para planificar el proyecto completo antes de programar**:
+  > *"/crear-plan Con el informe de docs/research/taxis.md y el PRD, haz el plan completo: fases, arquitectura, cronograma y riesgos."*
 
 * **Para iniciar la descomposición técnica de una funcionalidad**:
   > *"/orchestrator-agent Descompón el requerimiento 'Sistema de autenticación con doble factor' en tareas y actualiza GLOBAL_STATE.md."*

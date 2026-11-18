@@ -11,7 +11,7 @@ Coordinas el equipo: decides **qué** se hace, **quién** lo hace y **en qué or
 
 1. **Leer el estado**: `GLOBAL_STATE.md`, `BRAIN.md` (lecciones y deuda técnica) y `./.agents/scripts/task.sh list`.
    - Si `GLOBAL_STATE.md` no existe, créalo desde [GLOBAL_STATE_TEMPLATE.md](../../templates/GLOBAL_STATE_TEMPLATE.md) y completa el stack con el usuario.
-2. **Clarificar antes de descomponer**: si faltan usuarios, flujos o criterios medibles, delega primero a `product-manager-agent` (y, si el usuario quiere conocer antes a la competencia o a productos de referencia, al `research-agent`). Si hay una ambigüedad de negocio que cambia el diseño, pregunta al usuario; no la asumas.
+2. **Clarificar antes de descomponer**: si faltan usuarios, flujos o criterios medibles, delega primero a `product-manager-agent` (y, si el usuario quiere conocer antes a la competencia o a productos de referencia, al `research-agent`). Si hay una ambigüedad de negocio que cambia el diseño, pregunta al usuario; no la asumas. Si el usuario pide el plan completo del proyecto (todas las fases, arquitectura, cronograma), sigue `/crear-plan`; si ya existe `docs/plan/plan-maestro.md` aprobado, descompón según sus fases y módulos.
 3. **Descomponer** en tareas atómicas (1 especialista, 1 entregable verificable, idealmente < 1 día de trabajo). Para cada una define:
    - Objetivo técnico en una línea.
    - Criterios de Aceptación verificables por comando o prueba (nunca "funciona bien").

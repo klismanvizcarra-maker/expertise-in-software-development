@@ -35,7 +35,7 @@ El `orchestrator-agent` debe revisar la deuda técnica al empezar cada fase (pas
    ./.agents/scripts/task.sh archive --phase "<nombre de la fase>" --keep 0
    ```
    Mueve las tareas `DONE` de `GLOBAL_STATE.md` §5 a `.agents/archive/` preservando `next_id`, `task.sh metrics` y `validate-state.sh`. Verifica después con `./.agents/scripts/validate-state.sh`.
-7. **Proponer la fase siguiente**: presenta al usuario el nombre de la fase, su objetivo, y de 3 a 7 tareas candidatas con agente y criterios de aceptación (incluidas las de deuda del paso 4). **No registres nada sin su confirmación.** Con el visto bueno:
+7. **Proponer la fase siguiente**: si existe `docs/plan/plan-maestro.md`, anota en su §11 lo real frente a lo planificado de la fase que cierra y toma de él la fase siguiente y sus tareas candidatas, ajustadas a lo aprendido (si el alcance o las fechas cambian, actualiza el plan con una nueva versión en su historial, con confirmación del usuario). Presenta al usuario el nombre de la fase, su objetivo, y de 3 a 7 tareas candidatas con agente y criterios de aceptación (incluidas las de deuda del paso 4). **No registres nada sin su confirmación.** Con el visto bueno:
    - Actualiza la **Fase Actual** en §1 de `GLOBAL_STATE.md`.
    - Registra las tareas con `/nueva-tarea`.
 8. **Siguiente paso**: si la fase cierra con una versión publicable, recomienda `/release`.
@@ -48,6 +48,7 @@ El `orchestrator-agent` debe revisar la deuda técnica al empezar cada fase (pas
 - [ ] Hito de cierre registrado en §7 de `GLOBAL_STATE.md`.
 - [ ] Tareas `DONE` archivadas con `task.sh archive` si corresponde y `validate-state.sh` en verde.
 - [ ] Fase siguiente y sus tareas confirmadas por el usuario antes de registrarlas.
+- [ ] Si hay plan maestro, su seguimiento real frente a planificado actualizado.
 
 ## Prohibido
 - Cerrar una fase con tareas `BLOCKED` pendientes de decisión humana o con ramas sin fusionar.
