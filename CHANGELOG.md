@@ -8,6 +8,8 @@ Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Ke
 - `tests/test-skills.sh` endurecido para exigir cierre YAML `---`, palabra clave `Usar`, secciones obligatorias por tipo de skill y enlaces relativos a raíz, plantillas y referencias (TASK-040).
 - `tests/evals/evals.json` ampliado de 5 a 8 evals deterministas con `handoff-verificacion`, `refactor-caracterizacion` y `security-hardening-sql-idor` (fixtures en `tests/evals/fixtures/`), cubiertos junto a los nuevos linters en `tests/test-scripts.sh` (265 comprobaciones) y alineados en `QUICKSTART.md` (TASK-040).
 - `tests/evals/evals.json` pasa de 8 a 15 evals deterministas: una por cada rol que escribe código (`backend-agent`, `frontend-agent`, `database-architect-agent`, `domain-logic-agent`, `devops-cloud-agent`) y por `testing-strategy` y `async-jobs`, con sus fixtures. Todas fallan en el estado inicial y pasan con una solución de referencia; `tests/test-scripts.sh` exige al menos 14, cobertura de esos roles y fixtures con permisos `755` (TASK-048).
+- `task.sh check <rutas>` y `.agents/scripts/pre-edit-check.sh`: antes de editar, aplican el control de "cero código sin tarea" (exit 2 si alguna ruta está bloqueada) y muestran las lecciones de esas rutas, reutilizando los dos hooks de Claude Code. Da a Antigravity, que no tiene hooks, el mismo control; `AGENTS.md` §2.4 y §7.4 y las skills de rol lo piden antes de editar (TASK-049).
+- `run_evals.py --verify-baselines`: sin LLM ni coste, comprueba que cada eval falla tras su setup (FAIL_INIT) y que el setup funciona; lo ejecutan `tests/test-scripts.sh` y la CI (`library.yml`) (TASK-049).
 
 ### Cambiado
 - `orchestrator-agent` lista también `security-hardening` y `observability` entre las skills de técnica (TASK-041).

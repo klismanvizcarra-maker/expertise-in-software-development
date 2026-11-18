@@ -33,6 +33,7 @@ flowchart TD
   - `install-hooks.sh`: Instalador de Git hooks locales (`commit-msg` y `pre-commit`, con `--preserve-existing` para proyectos heredados).
   - `scan-secrets.sh`: Escáner de secretos y claves criptográficas (`--staged`, `--branch`, `--all`).
   - `require-active-task.sh`: Hook de Claude Code (`.claude/settings.json`) que impone "Cero Código sin Tarea".
+  - `pre-edit-check.sh` (`task.sh check <rutas>`): comprobación previa a editar que reutiliza `require-active-task.sh` y `brain-context.sh`; es el sustituto de los hooks en Antigravity.
   - `brain-context.sh`: Hook de Claude Code (`.claude/settings.json`) que muestra al agente, una vez por sesión, las lecciones activas cuyo ámbito cubre el archivo que va a editar; nunca bloquea.
   - `validate-state.sh`: Linter de integridad de `GLOBAL_STATE.md` y `.agents/archive/` (formato, IDs duplicados, ciclos y regla de 3 iteraciones).
 - **Arnés de Pruebas y Validación (`tests/`)**:

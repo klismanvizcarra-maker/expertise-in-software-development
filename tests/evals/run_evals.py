@@ -11,8 +11,13 @@ Uso:
   python3 tests/evals/run_evals.py                         # todas
   python3 tests/evals/run_evals.py --only qa-reject-idor   # algunas
   python3 tests/evals/run_evals.py --keep                  # conserva los proyectos para inspeccionarlos
+  python3 tests/evals/run_evals.py --verify-baselines      # sin LLM: cada eval debe fallar tras el setup (FAIL_INIT)
 
-Gasta uso de tu cuenta (límite por eval con --budget, en USD). Los proyectos temporales no tocan este repositorio.
+--verify-baselines no lanza Claude ni gasta nada: instala, ejecuta el setup y los checks, y falla si
+alguna eval pasa en el estado inicial (no mediría nada) o si su setup falla. Lo ejecutan
+tests/test-scripts.sh y la CI.
+
+Las demás formas gastan uso de tu cuenta (límite por eval con --budget, en USD). Los proyectos temporales no tocan este repositorio.
 Resultados en tests/evals/results/<fecha>.json.
 """
 import argparse
@@ -103,6 +108,51 @@ def run_eval(claude: str, ev: dict, args) -> dict:
     return out
 
 
+def verify_baseline(ev: dict) -> dict:
+    """FAIL_INIT: tras el setup, sin que la skill haga nada, al menos un check debe fallar."""
+    out = {"id": ev["id"], "skill": ev["skill"], "error": None, "checks": []}
+    project = None
+    try:
+        project = make_project(ev["id"])
+        setup = sh(ev["setup"], project)
+        if setup.returncode != 0:
+            out["error"] = f"setup falló: {(setup.stderr or setup.stdout).strip()[-300:]}"
+            return out
+        subprocess.run(["git", "tag", "eval-start"], cwd=project, check=True)
+        for name, script in ev["checks"]:
+            r = sh(script, project, timeout=300)
+            out["checks"].append({"name": name, "pass": r.returncode == 0})
+    except subprocess.TimeoutExpired as exc:
+        out["error"] = f"timeout: {exc}"
+    except (subprocess.CalledProcessError, OSError) as exc:
+        out["error"] = f"no se pudo preparar el proyecto: {exc}"
+    finally:
+        if project is not None:
+            shutil.rmtree(project, ignore_errors=True)
+    out["fail_init"] = bool(out["checks"]) and not all(c["pass"] for c in out["checks"])
+    return out
+
+
+def verify_baselines(evals: list, jobs: int) -> int:
+    print(f"Verificando la línea base (FAIL_INIT) de {len(evals)} evals, sin LLM · paralelo: {jobs}\n")
+    with ThreadPoolExecutor(max_workers=jobs) as pool:
+        results = list(pool.map(verify_baseline, evals))
+    bad = 0
+    for r in results:
+        if r["error"]:
+            bad += 1
+            print(f"❌ {r['id']:<32} {r['error']}")
+            continue
+        failing = [c["name"] for c in r["checks"] if not c["pass"]]
+        if r["fail_init"]:
+            print(f"✅ {r['id']:<32} {len(failing)}/{len(r['checks'])} checks fallan en el estado inicial")
+        else:
+            bad += 1
+            print(f"❌ {r['id']:<32} todos los checks pasan sin que la skill haga nada: la eval no mide nada")
+    print(f"\nLínea base: {len(results) - bad}/{len(results)} evals correctas")
+    return 1 if bad else 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
@@ -111,12 +161,21 @@ def main() -> int:
     ap.add_argument("--budget", type=float, default=1.5)
     ap.add_argument("--timeout", type=int, default=600)
     ap.add_argument("--keep", action="store_true")
+    ap.add_argument("--file", default=str(HERE / "evals.json"), help="evals.json alternativo (pruebas)")
+    ap.add_argument("--verify-baselines", action="store_true",
+                    help="sin LLM: comprueba que cada eval falla tras el setup (FAIL_INIT)")
     args = ap.parse_args()
 
-    evals = json.loads((HERE / "evals.json").read_text())["evals"]
+    evals = json.loads(Path(args.file).read_text(encoding="utf-8"))["evals"]
     if args.only:
         wanted = set(args.only.split(","))
         evals = [e for e in evals if e["id"] in wanted]
+        missing = wanted - {e["id"] for e in evals}
+        if missing:
+            print(f"Evals inexistentes: {', '.join(sorted(missing))}", file=sys.stderr)
+            return 2
+    if args.verify_baselines:
+        return verify_baselines(evals, max(args.jobs, 1))
     claude = find_claude()
     print(f"CLI: {claude}\nEvals: {len(evals)} · paralelo: {args.jobs} · límite por eval: {args.budget} USD\n")
 

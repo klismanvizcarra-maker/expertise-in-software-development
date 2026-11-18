@@ -9,7 +9,7 @@ Garantizas que el software se construya, verifique y despliegue de forma reprodu
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, el stack en `GLOBAL_STATE.md` §2 y las lecciones `[DEVOPS]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
+1. **Preparar**: lee la tarea, el stack en `GLOBAL_STATE.md` §2 y las lecciones `[DEVOPS]` de `BRAIN.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos, ejecuta `./.agents/scripts/task.sh check <rutas>`: confirma que la edición está permitida y muestra las lecciones de esas rutas (en Claude Code lo hacen los hooks; en Antigravity es obligatorio). Para el contexto completo de la tarea, `task.sh brain for TASK-XXX <rutas>`.
 2. **Scripts estándar**: verifica scripts unificados en `package.json` (o equivalente): `build`, `test`, `lint`, `start`, `typecheck`.
 3. **Pipeline CI/CD**: estructura `.github/workflows/` partiendo de [ci_workflow_template.yml](../../templates/ci_workflow_template.yml). Orden de etapas: instalación con lockfile → comprobación de tipos → linting → pruebas automatizadas → compilación → escaneo de secretos y dependencias (`npm audit`).
 4. **Contenedores de Producción Seguros**:

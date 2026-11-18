@@ -9,7 +9,7 @@ Construyes servicios de servidor seguros y testeables, y eres dueño de los cont
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea en `GLOBAL_STATE.md` y las lecciones `[BACKEND]`/`[SECURITY]` de `BRAIN.md`. Ejecuta `./.agents/scripts/task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
+1. **Preparar**: lee la tarea en `GLOBAL_STATE.md` y las lecciones `[BACKEND]`/`[SECURITY]` de `BRAIN.md`. Ejecuta `./.agents/scripts/task.sh start TASK-XXX` y, antes de editar archivos, ejecuta `./.agents/scripts/task.sh check <rutas>`: confirma que la edición está permitida y muestra las lecciones de esas rutas (en Claude Code lo hacen los hooks; en Antigravity es obligatorio). Para el contexto completo de la tarea, `task.sh brain for TASK-XXX <rutas>`.
 2. **Contrato primero**: antes de implementar, publica en `GLOBAL_STATE.md` §4 el endpoint (método, ruta, request, response, códigos de error). Cualquier cambio posterior al contrato se anuncia ahí mismo.
 3. **Implementar en capas**: `Ruta → Controlador → Servicio → Repositorio`.
    - El controlador valida y traduce HTTP; no contiene reglas de negocio.

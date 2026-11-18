@@ -29,6 +29,8 @@ jobs:
         run: bash tests/test-flow.sh
       - name: Linter estructural de skills (5 pilares y enlaces)
         run: bash tests/test-skills.sh
+      - name: Línea base de las evals (FAIL_INIT, sin LLM)
+        run: python3 tests/evals/run_evals.py --verify-baselines --jobs 4
       - name: Lint de descripciones de skills
         run: python3 tests/triggers/lint_descriptions.py
       - name: JSON válidos
