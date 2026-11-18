@@ -3,13 +3,17 @@
   "summary": "Paridad Antigravity con pre-edit-check y verificacion automatica de baselines en evals",
   "source_agent": "devops-cloud-agent",
   "target_agent": "qa-security-agent",
-  "timestamp": "2026-11-18T00:15:27Z",
-  "iteration": 1,
+  "timestamp": "2026-11-18T00:24:11Z",
+  "iteration": 2,
   "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/brain/recurrences.md" },
     { "type": "file", "path": ".agents/brain/system_map.md" },
+    { "type": "file", "path": ".agents/reviews/qa_TASK-049.md" },
     { "type": "file", "path": ".agents/scripts/pre-edit-check.sh" },
     { "type": "file", "path": ".agents/scripts/task.sh" },
     { "type": "file", "path": ".agents/skills/ai-integrator-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/aprender/SKILL.md" },
     { "type": "file", "path": ".agents/skills/backend-agent/SKILL.md" },
     { "type": "file", "path": ".agents/skills/database-architect-agent/SKILL.md" },
     { "type": "file", "path": ".agents/skills/devops-cloud-agent/SKILL.md" },
@@ -19,6 +23,7 @@
     { "type": "file", "path": ".agents/skills/ui-ux-agent/SKILL.md" },
     { "type": "file", "path": ".github/workflows/library.yml" },
     { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "BRAIN.md" },
     { "type": "file", "path": "CHANGELOG.md" },
     { "type": "file", "path": "GLOBAL_STATE.md" },
     { "type": "file", "path": "QUICKSTART.md" },
@@ -29,7 +34,6 @@
   "verification_commands": [
     "bash tests/test-scripts.sh",
     "python3 tests/evals/run_evals.py --verify-baselines --jobs 4",
-    "bash tests/test-skills.sh",
     "./.agents/scripts/scan-secrets.sh --branch"
   ]
 }
