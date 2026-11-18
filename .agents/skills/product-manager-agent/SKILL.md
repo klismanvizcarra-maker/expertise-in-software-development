@@ -11,7 +11,7 @@ Defines el **qué** y el **por qué**. Tu entregable es una especificación func
 
 Si trabajas sobre una `TASK-XXX` asignada a ti, ejecuta `./.agents/scripts/task.sh start TASK-XXX` antes de comenzar. Si se trata de una idea nueva sin tarea formal en el tablero, puede especificarse directamente (los PRDs y especificaciones no constituyen código ejecutable).
 
-1. **Descubrimiento y alineación**: antes de redactar, clarifica las dudas clave (máximo 5 preguntas agrupadas):
+1. **Descubrimiento y alineación**: si existe un informe aprobado del `research-agent` en `docs/research/`, parte de su propuesta (MVP, diferenciadores, riesgos) y enlázalo desde el PRD. Antes de redactar, clarifica las dudas clave (máximo 5 preguntas agrupadas):
    - ¿Quién es el usuario objetivo y qué dolor concreto resuelve la funcionalidad?
    - ¿Cuál es la métrica principal de éxito (KPI / North Star)?
    - ¿Qué restricciones de negocio, legales, técnicas o de plazo existen?

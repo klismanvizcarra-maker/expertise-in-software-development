@@ -1254,6 +1254,54 @@
     "qa-review"
    ],
    "type": "flujo"
+  },
+  {
+   "id": "research-01",
+   "prompt": "Vamos a desarrollar una app para taxis; antes investiga a Uber e InDrive y luego haz una propuesta para nuestro proyecto",
+   "expect": [
+    "research-agent"
+   ],
+   "accept": [
+    "product-manager-agent",
+    "iniciar-proyecto"
+   ],
+   "forbid": [
+    "backend-agent",
+    "frontend-agent",
+    "mobile-agent"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "research-02",
+   "prompt": "Queremos una app de delivery: analiza a fondo cómo funciona Rappi (comisiones, repartidores, quejas de usuarios) y dime qué deberíamos copiar y en qué diferenciarnos",
+   "expect": [
+    "research-agent"
+   ],
+   "accept": [
+    "product-manager-agent"
+   ],
+   "forbid": [
+    "backend-agent",
+    "frontend-agent",
+    "nueva-tarea"
+   ],
+   "type": "entrada"
+  },
+  {
+   "id": "research-03",
+   "prompt": "Haz un benchmark de la competencia de nuestra plataforma de reservas para gimnasios con fuentes",
+   "expect": [
+    "research-agent"
+   ],
+   "accept": [
+    "product-manager-agent"
+   ],
+   "forbid": [
+    "backend-agent",
+    "frontend-agent"
+   ],
+   "type": "entrada"
   }
  ],
  "_seed_tasks": [

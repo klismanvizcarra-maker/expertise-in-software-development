@@ -10,7 +10,7 @@
 - **Descripción**: `Framework y catálogo multi-agente para Claude Code y Antigravity: directrices de gobernanza, roles especializados, scripts de ciclo de vida de tareas y batería de evals.`
 - **Estado Actual**: `IN_PROGRESS`
 - **Fase Actual**: `FASE 2: Solidez Técnica Multi-Stack, Cobertura y Escala`
-- **Última Actualización**: `2026-11-17`
+- **Última Actualización**: `2026-11-18`
 - **Iteraciones Críticas Acumuladas**: `0 / 3`
 
 ---
@@ -30,6 +30,7 @@
 | Agente | Rol Principal | Skill Asociada |
 | :--- | :--- | :--- |
 | **Orchestrator** | Coordinación, backlog y gestión de SSOT | `orchestrator-agent` |
+| **Research** | Investigación de referentes y competencia, propuesta para el proyecto | `research-agent` |
 | **Product Manager** | Alcance de producto, User Stories (Gherkin) y flujos | `product-manager-agent` |
 | **Backend & Data** | APIs, lógica de negocio y seguridad server | `backend-agent` |
 | **Frontend & UI** | Componentes, vistas y experiencia web | `frontend-agent` |
@@ -105,6 +106,7 @@
 | `TASK-049` | Paridad Antigravity con pre-edit-check y verificacion automatica de baselines en evals | devops-cloud-agent | `DONE` | `1/3` | task.sh check / pre-edit-check.sh unifica require-active-task + brain-context; AGENTS.md y roles de codigo lo documentan; run_evals.py --verify-baselines verifica FAIL_INIT en todas las evals sin LLM; integrado en test-scripts.sh y library.yml; QUICKSTART.md y CHANGELOG.md actualizados; suite al 100% |
 | `TASK-050` | Bug: endurecer hooks y CLI (rutas con .., install-hooks en worktrees, comando desconocido, señales y colores) | devops-cloud-agent | `DONE` | `1/3` | require-active-task.sh y brain-context.sh normalizan la ruta (.agents/../src/app.ts se bloquea; ../otro/x.ts fuera del proyecto se permite); install-hooks.sh funciona en worktrees y respeta core.hooksPath sin pisar hooks existentes; task.sh sale con exit 1 ante un comando desconocido; SIGINT/SIGTERM terminan task.sh tras liberar el lock (exit 130/143); task.sh y test-skills.sh solo emiten colores ANSI en una terminal y respetan NO_COLOR y TERM=dumb; tests nuevos en tests/test-scripts.sh que fallan antes del arreglo; suite al 100% |
 | `TASK-051` | Fix: saldar TD-005 (falsos negativos de evals) y TD-006 (temporales huerfanos, exit 127 y cwd borrado) | devops-cloud-agent | `DONE` | `1/3` | testing-reloj-determinista acepta new Date(iso) en tests y modulos auxiliares en src/; devops-docker-no-root ignora comentarios que mencionan JWT_SECRET; async-worker-idempotente lanza el error simulado con code ECONNRESET y acepta clasificar por err.code; las trampas previas siguen fallando; run_evals.py no deja skill-eval-* huerfanos si el setup falla y trata exit 127 como error de entorno, no FAIL_INIT; pre-edit-check.sh sale con 2 si no puede construir el JSON (cwd borrado); tests nuevos en test-scripts.sh que fallan antes del arreglo; suite al 100% |
+| `TASK-052` | Anadir skill research-agent (investigador): benchmark de productos de referencia y propuesta para el proyecto | docs-architecture-agent | `IN_PROGRESS` | `0/3` | Skill .agents/skills/research-agent/SKILL.md con Protocolo, Checklist y Prohibido: a partir de la idea del proyecto identifica referentes (directos, regionales y analogos) y los confirma con el usuario; investiga cada uno con fuentes citadas y fechadas (modelo de negocio, actores y flujos, funcionalidades, precios y comisiones, pagos, seguridad y confianza, quejas en resenas, regulacion, senales tecnicas); separa hechos de inferencias; entrega matriz comparativa, oportunidades y una propuesta adaptada (propuesta de valor, MVP MoSCoW, diferenciadores, modelo de negocio, riesgos e implicaciones tecnicas con skills de stack/tecnica) en docs/research/<slug>.md segun una plantilla nueva en .agents/templates/; prohibe copiar marcas, textos o UI y datos sin fuente; traspaso a product-manager-agent; integrada en AGENTS.md (seccion 2.3 y matriz seccion 8), orchestrator-agent, iniciar-proyecto, product-manager-agent, GLOBAL_STATE seccion 3 y su plantilla, README, QUICKSTART, system_map y CHANGELOG; >=2 casos en tests/triggers/cases.json y lint_descriptions.py sin problemas; test-skills.sh y test-scripts.sh en verde |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
