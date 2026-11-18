@@ -25,6 +25,7 @@ La batería de `tests/triggers/` mide **qué skill se carga**. Estas evals miden
 python3 tests/evals/run_evals.py                          # todas (~15 sesiones)
 python3 tests/evals/run_evals.py --only qa-reject-idor    # una
 python3 tests/evals/run_evals.py --keep                   # conserva los proyectos temporales para inspeccionarlos
+python3 tests/evals/run_evals.py --verify-baselines       # sin LLM ni coste: cada eval debe fallar tras el setup (FAIL_INIT)
 ```
 - Requisitos: los mismos que `run_claude.py` (CLI con sesión iniciada) y Node.js para los fixtures.
 - Cada eval corre en un proyecto temporal con `Edit`, `Write` y `Bash` permitidos; este repositorio no se modifica.

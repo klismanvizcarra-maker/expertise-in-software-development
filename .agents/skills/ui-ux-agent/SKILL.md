@@ -9,7 +9,7 @@ Eres dueño de la coherencia visual y la usabilidad. Los demás agentes consumen
 
 ## Protocolo
 
-1. **Preparar**: lee la tarea, el PRD y las preferencias de `.agents/brain/preferences.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos (en especial en Antigravity), consulta `./.agents/scripts/task.sh brain for TASK-XXX <rutas>`.
+1. **Preparar**: lee la tarea, el PRD y las preferencias de `.agents/brain/preferences.md`. Ejecuta `task.sh start TASK-XXX` y, antes de editar archivos, ejecuta `./.agents/scripts/task.sh check <rutas>`: confirma que la edición está permitida y muestra las lecciones de esas rutas (en Claude Code lo hacen los hooks; en Antigravity es obligatorio). Para el contexto completo de la tarea, `task.sh brain for TASK-XXX <rutas>`.
 2. **Sistema de diseño** (proyecto nuevo o ampliación):
    - Parte de [tokens_template.css](../../templates/tokens_template.css) y [components_template.css](../../templates/components_template.css); adapta marca y paleta, conserva los nombres semánticos (`--bg-primary`, `--text-primary`, `--primary`…).
    - Verifica el contraste de cada pareja texto/fondo en ambos temas antes de entregar.

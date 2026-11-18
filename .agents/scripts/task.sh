@@ -305,6 +305,12 @@ case "$COMMAND" in
   add|start|move|handoff|reject|close|archive|learn|debt|debt-resolve|lesson-retire)
     acquire_lock
     ;;
+  check)
+    # Comprobación previa a editar (Antigravity y uso manual): delega en pre-edit-check.sh,
+    # que reutiliza los hooks de Claude Code. Solo lee, así que no toma el lock.
+    shift
+    exec bash "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/pre-edit-check.sh" "$@"
+    ;;
   brain)
     # Solo los subcomandos que escriben toman el lock; search, for, doctor y stats son de lectura
     # (doctor lo ejecuta validate-state.sh desde el pre-commit)
@@ -1105,6 +1111,8 @@ EOF_ARCH
                                          Lección en lessons_learned.md (fuente única; rechaza
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
+  check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones
+                                         de esas rutas; exit 2 si alguna está bloqueada (Antigravity)
   brain search <términos...>             Busca en lecciones, gotchas y deuda
   brain for TASK-ID [ruta...]            Lecciones y deuda relevantes para una tarea (y rutas)
   brain scope LL-ID "<globs>"            Fija a qué rutas aplica una lección
