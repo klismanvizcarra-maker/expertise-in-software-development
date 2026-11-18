@@ -1057,6 +1057,44 @@
    "type": "especialista"
   },
   {
+   "id": "stk-10",
+   "prompt": "¿Cómo organizo una API modular con NestJS, Prisma y PostgreSQL con DTOs y Guards?",
+   "expect": [
+    "stack-nestjs-postgres"
+   ],
+   "accept": [
+    "iniciar-proyecto",
+    "backend-agent"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres",
+    "stack-nextjs-tailwind-prisma",
+    "stack-fastapi-postgres",
+    "stack-vue-nuxt-postgres",
+    "stack-react-vite-node"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "stk-11",
+   "prompt": "Tengo un fallo circular 'Nest cannot resolve dependencies' al importar un servicio entre módulos en NestJS",
+   "expect": [
+    "stack-nestjs-postgres"
+   ],
+   "accept": [
+    "backend-agent",
+    "bugfix"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres",
+    "stack-nextjs-tailwind-prisma",
+    "stack-fastapi-postgres",
+    "stack-vue-nuxt-postgres",
+    "stack-react-vite-node"
+   ],
+   "type": "especialista"
+  },
+  {
    "id": "ref-01",
    "prompt": "Refactoriza el OrderService, tiene 600 líneas y mezcla cálculo de impuestos con acceso a base de datos",
    "expect": [
