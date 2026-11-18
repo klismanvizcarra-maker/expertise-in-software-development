@@ -1,0 +1,23 @@
+{
+  "task_id": "TASK-056",
+  "summary": "Skill stack-nestjs-postgres (NestJS modular enterprise backend + Prisma/TypeORM)",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-18T07:23:39Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/stack-nestjs-postgres/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/stack-nestjs-postgres/references/guards-and-interceptors.md" },
+    { "type": "file", "path": ".agents/skills/stack-nestjs-postgres/references/modular-architecture.md" },
+    { "type": "file", "path": ".agents/skills/stack-react-vite-node/SKILL.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/README.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "bash tests/test-scripts.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
