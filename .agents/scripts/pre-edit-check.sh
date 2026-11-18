@@ -54,8 +54,15 @@ print(json.dumps({"tool_name": "Edit", "tool_input": {"file_path": p}}))' "$1"
 
 RC=0
 for path in "$@"; do
-  JSON=$(hook_json "$path")
+  JSON=$(hook_json "$path" 2>/dev/null)
   printf '── %s\n' "$path"
+  if [ -z "$JSON" ]; then
+    # p. ej. el directorio actual se borró (os.getcwd() falla): sin JSON el hook recibiría una
+    # entrada vacía y dejaría pasar la edición, así que se bloquea (TD-006)
+    printf '   ⛔ No se pudo resolver la ruta (¿existe el directorio actual?). Ejecuta el comando desde un directorio válido.\n' >&2
+    RC=2
+    continue
+  fi
 
   if MSG=$(printf '%s' "$JSON" | CLAUDE_PROJECT_DIR="$ROOT" bash "$HERE/require-active-task.sh" 2>&1); then
     printf '   ✅ Se puede editar.\n'

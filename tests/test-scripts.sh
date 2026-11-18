@@ -791,6 +791,65 @@ check "--verify-baselines falla si una eval pasa sin que la skill haga nada" '! 
 printf '%s\n' '{"evals":[{"id":"setup-roto","skill":"aprender","setup":"exit 3","prompt":"x","checks":[["falla","false"]]}]}' > "$WORK/evals-setup.json"
 check "--verify-baselines falla si el setup de una eval falla" '! python3 "$ROOT/tests/evals/run_evals.py" --verify-baselines --file "$WORK/evals-setup.json" >/dev/null 2>&1'
 check "--verify-baselines con --only inexistente falla" '! python3 "$ROOT/tests/evals/run_evals.py" --verify-baselines --only no-existe >/dev/null 2>&1'
+printf '%s\n' '{"evals":[{"id":"sin-herramienta","skill":"aprender","setup":"true","prompt":"x","checks":[["usa una herramienta que no existe","herramienta-que-no-existe-xyz --version"],["pasa","true"]]}]}' > "$WORK/evals-127.json"
+check "--verify-baselines trata un check con exit 127 como error del entorno, no como FAIL_INIT" '! python3 "$ROOT/tests/evals/run_evals.py" --verify-baselines --file "$WORK/evals-127.json" >/dev/null 2>&1 && python3 "$ROOT/tests/evals/run_evals.py" --verify-baselines --file "$WORK/evals-127.json" 2>&1 | grep -q "exit 127"'
+mkdir -p "$WORK/tmp-evals"
+check "si git falla al preparar el proyecto, no quedan temporales skill-eval-* huérfanos" 'PY3=$(command -v python3); env -i PATH=/nonexistent HOME="$HOME" TMPDIR="$WORK/tmp-evals" "$PY3" "$ROOT/tests/evals/run_evals.py" --verify-baselines --only qa-reject-idor >/dev/null 2>&1; [ -z "$(ls -A "$WORK/tmp-evals")" ]'
+
+# TD-005: soluciones correctas que las evals rechazaban (y las trampas siguen fallando)
+eval_check() {  # eval_check <id> <prefijo del nombre del check> <directorio>
+  local script
+  script=$(python3 - "$ROOT/tests/evals/evals.json" "$1" "$2" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+evs = d if isinstance(d, list) else d["evals"]
+ev = next(e for e in evs if e["id"] == sys.argv[2])
+print(next(s for n, s in ev["checks"] if n.startswith(sys.argv[3])))
+PY
+)
+  (cd "$3" && bash -c "$script" >/dev/null 2>&1)
+}
+D="$WORK/td005-docker"; mkdir -p "$D"
+printf '%s\n' 'FROM node:24 AS build' 'RUN npm ci' 'FROM node:24-slim' '# JWT_SECRET se inyecta en tiempo de ejecucion, nunca aqui' 'USER node' > "$D/Dockerfile"
+check "devops: un comentario que menciona JWT_SECRET no cuenta como secreto" 'eval_check devops-docker-no-root "sin secretos" "$D"'
+printf '%s\n' 'FROM node:24 AS build' 'FROM node:24-slim' 'ENV JWT_SECRET=x' 'USER node' > "$D/Dockerfile"
+check "devops: un ENV JWT_SECRET sigue fallando" '! eval_check devops-docker-no-root "sin secretos" "$D"'
+if command -v node >/dev/null 2>&1; then
+  C="$WORK/td005-clock"; mkdir -p "$C/src" "$C/test"
+  printf '%s\n' '{ "name": "x", "type": "module" }' > "$C/package.json"
+  printf '%s\n' "export const TTL_MS = 15 * 60 * 1000;" \
+    "export function createLink(userId, { now = Date.now, newId = () => Math.random().toString(36).slice(2) } = {}) { return { token: newId(), userId, expiresAt: now() + TTL_MS }; }" \
+    "export function isExpired(link, { now = Date.now } = {}) { return now() >= link.expiresAt; }" \
+    "export const describeTtl = () => '15 min';" > "$C/src/links.js"
+  printf '%s\n' "export const fixedClock = (t) => () => t;" > "$C/src/clock.js"
+  printf '%s\n' "import { test } from 'node:test';" "import assert from 'node:assert/strict';" \
+    "import { createLink, isExpired, TTL_MS, describeTtl } from '../src/links.js';" "import { fixedClock } from '../src/clock.js';" \
+    "const T0 = new Date('2026-01-01T00:00:00Z').getTime();" \
+    "test('caduca justo en expiresAt', () => { const l = createLink('u', { now: fixedClock(T0), newId: () => 'a' }); assert.equal(isExpired(l, { now: fixedClock(T0 + TTL_MS) }), true); assert.equal(isExpired(l, { now: fixedClock(T0 + TTL_MS - 1) }), false); });" \
+    "test('ttl', () => assert.equal(describeTtl(), '15 min'));" > "$C/test/links.test.js"
+  check "testing: new Date con fecha fija en los tests ya no se rechaza" 'eval_check testing-reloj-determinista "los tests no usan el reloj real" "$C"'
+  check "testing: el mutante acepta módulos auxiliares en src/ y exports nuevos" 'eval_check testing-reloj-determinista "los tests pasan con una implementacion correcta" "$C"'
+  printf '%s\n' "import { test } from 'node:test';" "test('x', () => { const n = new Date(); });" > "$C/test/extra.test.js"
+  check "testing: new Date() sin argumentos en los tests sigue fallando" '! eval_check testing-reloj-determinista "los tests no usan el reloj real" "$C"'
+  rm -f "$C/test/extra.test.js"
+  sed -i.bak 's/fixedClock(T0 + TTL_MS) }), true/fixedClock(T0 + TTL_MS + 1) }), true/' "$C/test/links.test.js"
+  check "testing: tests que no cubren el límite exacto siguen fallando el mutante" '! eval_check testing-reloj-determinista "los tests pasan con una implementacion correcta" "$C"'
+  W="$WORK/td005-worker"; mkdir -p "$W/src"
+  printf '%s\n' '{ "name": "x", "type": "module" }' > "$W/package.json"
+  printf '%s\n' "const TRANSIENT = new Set(['ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN']);" \
+    "export function computeBackoff(attempt, random = Math.random) { const base = Math.min(1000 * 2 ** (attempt - 1), 3600000); return Math.floor(base / 2 + random() * base / 2); }" \
+    "export async function handleMessage(msg, deps) {" \
+    "  if (await deps.store.has(msg.id)) return;" \
+    "  try { await deps.mailer.send(msg.to, msg.template); } catch (err) {" \
+    "    if (!TRANSIENT.has(err.code) || msg.attempt >= deps.maxAttempts) { deps.queue.deadLetter(msg, err); return; }" \
+    "    deps.queue.retry({ ...msg, attempt: msg.attempt + 1 }, computeBackoff(msg.attempt)); return; }" \
+    "  await deps.store.add(msg.id);" "}" > "$W/src/worker.js"
+  check "async: clasificar los fallos transitorios por err.code ya no se rechaza" 'eval_check async-worker-idempotente "fallo transitorio" "$W" && eval_check async-worker-idempotente "deduplica" "$W"'
+  sed -i.bak 's/  await deps.store.add(msg.id);//; s/if (await deps.store.has(msg.id)) return;/if (await deps.store.has(msg.id)) return; await deps.store.add(msg.id);/' "$W/src/worker.js"
+  check "async: marcar como enviado antes de enviar sigue fallando" '! eval_check async-worker-idempotente "deduplica" "$W"'
+else
+  printf "  ⚠️  sin node: se omiten las comprobaciones de TD-005 que ejecutan JavaScript\n"
+fi
 
 # ------------------------------------------------------------------------------
 section "task.sh check / pre-edit-check.sh (paridad Antigravity)"
@@ -804,6 +863,7 @@ mkdir -p docs
 check "desde un subdirectorio, ../src bloquea igual que el hook con la ruta absoluta" '(cd docs && ../.agents/scripts/task.sh check ../src/app.ts >/dev/null 2>&1; [ $? -eq 2 ])'
 check "desde un subdirectorio, una ruta relativa exenta sigue permitida" '(cd docs && ../.agents/scripts/task.sh check guia.md >/dev/null 2>&1)'
 check "check normaliza .. (no se cuela por una ruta exenta)" '$T check .agents/../src/app.ts >/dev/null 2>&1; [ $? -eq 2 ]'
+check "con el directorio actual borrado, check bloquea (exit 2) en vez de dejar pasar" 'P="$PWD"; d=$(mktemp -d); (cd "$d" && rmdir "$d" && bash "$P/.agents/scripts/pre-edit-check.sh" src/app.ts >/dev/null 2>&1; [ $? -eq 2 ])'
 $T add "Tarea para comprobar ediciones" "backend-agent" "criterio" >/dev/null
 $T start "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" >/dev/null 2>&1
 $T learn "Consulta sin indice en el listado de pedidos de clientes" database "c" "Crear indice en la FK" --paths "src/db/*.ts" >/dev/null
