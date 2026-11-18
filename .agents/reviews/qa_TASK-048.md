@@ -4,90 +4,68 @@
 - **Fecha**: 2026-11-17
 - **Revisor**: `devops-cloud-agent`
 - **Especialista Asignado**: `qa-security-agent`
-- **Resultado**: `RECHAZADA`
-- **Iteración**: `2/3`
+- **Resultado**: `APROBADA` (con deuda técnica MEDIA registrada)
+- **Iteración**: `3/3`
 
 ---
 
 ## 1. Criterios de Aceptación Verificados
 
-Revisión independiente con contexto limpio (subagente) de `feature/TASK-048-ampliar-evals-json-a-roles-de` (`7162ac6`) frente a `main` (`0b27ffa`); diffs `git diff HEAD~1` y `git diff main...HEAD` inspeccionados. Entorno: macOS, `/bin/bash` 3.2.57 (único `bash` del `PATH`), `sed` BSD. Cada eval se probó con el arnés de la iteración 1 (`run_evals.make_project` + `setup` + tag `eval-start` + solución + `task.sh commit/handoff` + checks) con **39 soluciones nuevas escritas por el revisor** (distintas de las de la ronda 1 y de las del especialista), cada check repetido 3 veces. También se re-ejecutó la matriz de 50 soluciones del especialista (1 repetición): 50/50 con el resultado esperado. No se ejecutó `run_evals.py` contra Claude.
+Revisión independiente con contexto limpio (subagente) de `feature/TASK-048-ampliar-evals-json-a-roles-de` (`d86a0e4`) frente a `main` (`0b27ffa`); diffs `git diff HEAD~1` y `git diff main...HEAD` inspeccionados. Entorno: macOS, `/bin/bash` 3.2.57 (único `bash` del `PATH`, el que usa `run_evals.sh`), `sed`/`awk` BSD, Node 24.21.0. Arnés del revisor (`run_evals.make_project` + `setup` + tag `eval-start` + solución + `task.sh commit/handoff` + checks). No se ejecutó `run_evals.py` contra Claude.
+
+Matrices ejecutadas:
+- `sol2/` (45 soluciones de la iteración 2, 3 repeticiones): **45/45** con el resultado esperado.
+- `sol3/` (**36 soluciones nuevas** del revisor, 14 correctas y 22 trampas, distintas de `sol/`, `sol2/` y `all3/`; 3 repeticiones): 26/36 con el resultado esperado; las 10 discrepancias se detallan abajo (todas MEDIA o BAJA).
+- `all3/` (95 soluciones de la matriz del especialista, 1 repetición): **95/95** con el resultado esperado.
+- **0 FLAKY** en 81 x 3 + 95 ejecuciones de checks.
 
 | Criterio / Control | Resultado | Evidencia |
 | :--- | :---: | :--- |
 | `evals.json` con >=14 evals | ✅ | 15 evals; `python3 -m json.tool` OK |
 | Cobertura de los 7 roles/técnicas | ✅ | Una eval por skill; `test-scripts.sh` lo exige |
-| Fixtures `100755` | ✅ | `test-scripts.sh` lo verifica |
-| README actualizado | ✅ | Tabla y sección "Añadir una eval" con matriz de soluciones |
-| FAIL_INIT | ✅ | Las 7 evals nuevas fallan al menos un check tras el setup (`__init`) |
-| BUG-TASK-048-1..5 de la iteración 1 | ✅ | Las 41 soluciones de la ronda 1 dan el resultado esperado (salvo las 3 que contradecían la regla ahora explícita) |
-| Evals deterministas **que miden el comportamiento** | ❌ ALTA | Con soluciones nuevas: 6 trampas relevantes pasan los 5-6 checks y 3 soluciones correctas fallan. Ver BUG-TASK-048-6..10 |
-| Determinismo | ✅ | 39 soluciones x 3 repeticiones: 0 FLAKY |
-| Portabilidad (bash 3.2, `sed -i.bak -E` BSD) | ✅ | Check de mutación ejecutado con `sed` BSD; `mktemp -d`, `cp -R`, `awk` portables |
+| Fixtures `100755` y README | ✅ | `test-scripts.sh` lo verifica; README describe mutante por API y reloj bloqueado |
+| FAIL_INIT | ✅ | `__init` / `__init2` de las 7 evals fallan al menos un check |
+| BUG-TASK-048-6 (domain, coma flotante) | ✅ | `bad_floatfloor` y `bad_bitor` fallan; `ok_bigint`, `ok_intmod`, `ok_floordiv` (nuevo) pasan |
+| BUG-TASK-048-7 (async, dedupe en memoria) | ✅ | `bad_memset`, `bad_storeignored` fallan; nuevo `bad_noawaithas` (`store.has` sin `await`) falla |
+| BUG-TASK-048-8 (devops, etapa final / ENV multilínea / `**/`) | ✅ | `bad_finalroot`, `bad_envcont`, `bad_envdotstar` fallan; `ok_globs`, `ok_numeric`, `ok_wget` (nuevo) pasan |
+| BUG-TASK-048-9 (testing, mutación sintáctica / id constante) | ✅ | `ok_lte`, `ok_negated` pasan; `bad_constid`, `bad_offbyone` y nuevo `bad_weakbound` (límites a TTL/2 y 4·TTL) fallan |
+| BUG-TASK-048-10 (frontend, lista negra / `&#60;`) | ✅ | `bad_blacklist`, `bad_svg` fallan, `ok_numeric` pasa; nuevos `bad_doubleescape`, `bad_firstitem`, `bad_deletelt` fallan |
+| Observaciones BAJA de la iteración 2 | ✅ | índice en comentario, down de otro índice, `"public"."orders"`, `limit=5abc`/`2.5`, `retry` sin `attempt+1`: todos corregidos |
+| `LL-016` → `LL-017` en §7 | ✅ | `GLOBAL_STATE.md` §7 (iter 3) y handoff citan `LL-017` |
+| Mecanismo (a): mutante por API | ✅ con deuda | Rechaza `bad_weakbound`, `bad_offbyone`, `bad_prodchange`; no depende de la sintaxis. Falsos negativos con módulos auxiliares en `src/` (deuda TD) |
+| Mecanismo (b): `node --import` con reloj/azar bloqueados | ✅ | No rompe `node:test` (Node 24); se propaga a los procesos de test; compatible con `t.mock.timers` (`ok_mockutc` pasa) y con un reloj falso propio (`ok_fakeclock` pasa); rechaza `bad_realuuid` y `bad_implicitclock`; determinista (3/3) |
+| Determinismo | ✅ | 0 FLAKY |
+| Portabilidad (bash 3.2, BSD) | ✅ | Todos los checks ejecutados con `/bin/bash` 3.2 y `sed`/`awk`/`grep` de macOS |
 | `bash tests/test-scripts.sh` | ✅ | 308 OK, 0 fallidas |
 | `bash tests/test-skills.sh` | ✅ | 36 skills sin errores |
 | `validate-state.sh` | ✅ | 0 advertencias |
 | Escaneo de secretos | ✅ | `scan-secrets.sh --branch` sin hallazgos |
+| Auditoría de seguridad | ✅ | Solo cambian evals, fixtures y documentación; los checks escriben en `mktemp -d` y limpian |
 
-### Cambios de criterio de los fixtures (valoración)
-- `proration.sh` ("siempre hacia abajo", 666,67 → 666 y -666,67 → -667): **legítimo**. Elimina la contradicción de la iteración 1 (redondear hacia -infinito favorece al cliente en ambos sentidos) y la regla queda en la tarea que lee el agente. Pero la tarea dice además "sin aritmética de coma flotante" y el check no lo mide (BUG-6).
-- `flaky_clock.sh` (firma `createLink(userId, { now, newId } = {})`, `isExpired(link, { now } = {})`): **legítimo**. Coherente con `testing-strategy` (reloj inyectable) y con "sin cambiar el comportamiento de producción"; fijar la firma es lo que permite un check de comportamiento. El check de mutación, en cambio, es demasiado estrecho sintácticamente (BUG-9).
-- `email_worker.sh` (un fallo no marca el mensaje; backoff con tope): **legítimo** y alineado con `async-jobs`. Pero "idempotente" en `async-jobs` implica estado durable (store), no memoria del proceso, y el check no lo distingue (BUG-7).
+## 2. Observaciones y Hallazgos
 
-### Matriz de soluciones nuevas (3 repeticiones; ✅ = resultado esperado)
+### Falsos negativos (MEDIA, sin riesgo de seguridad → deuda técnica)
+Soluciones correctas y razonables que fallan un check:
+1. **`testing-reloj-determinista`, `ok_isodate`**: `const T0 = new Date('2026-01-15T12:00:00Z').getTime()` en los tests falla "los tests no usan el reloj real" (el `grep` prohíbe `new Date` con argumento). La propia skill `testing-strategy` recomienda `vi.setSystemTime(new Date('2026-01-15T12:00:00Z'))`. Ahora que el check (b) bloquea `new Date()` sin argumentos, el `grep` debería prohibir solo `new Date()` vacío (mismo patrón que BUG-4 de la iteración 1).
+2. **`testing-reloj-determinista`, `ok_clockmodule` / `ok_extraexport`**: si `links.js` importa un módulo propio (`src/clock.js` con `fixedClock`) que los tests también importan, o si se exporta y prueba un helper nuevo (`remainingMs`), el check (a) falla con la implementación **correcta**, porque la copia temporal solo contiene `src/links.js` generado. Arreglo: copiar `src/`, renombrar el `links.js` del agente y que el correcto/mutante haga `export * from './links.agent.js'` sobrescribiendo solo `createLink`/`isExpired`/`TTL_MS`.
+3. **`devops-docker-no-root`, `ok_commentjwt`**: un comentario `# Los secretos (JWT_SECRET) se inyectan en tiempo de ejecucion` falla "sin secretos en la imagen". Arreglo: descartar las líneas `^[[:space:]]*#` antes del `grep`.
+4. **`async-worker-idempotente`, `ok_transientcode`**: clasificar como transitorios solo los errores con `code` `ECONNRESET`/`ETIMEDOUT`, 429 o 5xx (como dice `async-jobs`) falla, porque el check lanza `new Error("ECONNRESET")` sin `code`, y los errores reales de Node llevan `code`. Arreglo: `Object.assign(new Error("ECONNRESET"), { code: "ECONNRESET" })`.
 
-| Eval | Correctas (deben pasar todo) | Trampas / incorrectas (deben fallar alguno) |
-| :--- | :--- | :--- |
-| backend-paginacion-validacion | ✅ cursor = id plano con `findIndex`; ✅ `ValidationError` + cursor hex | ✅ `nextCursor` no nulo en la última página → falla; ⚠️ `parseInt` acepta `"5abc"` → pasa (BAJA) |
-| frontend-cuatro-estados | ✅ helper `h()` + `textNode` con comillas simples y `<svg>` en el botón; ❌ escape con entidades numéricas `&#60;` → **falla** | ✅ quitar etiquetas → falla; ❌ lista negra de etiquetas `/<(\/?)(b\|img\|script)\b/` → **pasa todo** (y deja `<svg onload>` sin escapar) |
-| database-indice-migracion | ✅ `CONCURRENTLY IF NOT EXISTS` con nombres entre comillas; ✅ multilínea + `INCLUDE`; ⚠️ `ON "public"."orders"` → falla (BAJA) | ✅ dos índices simples → falla; ⚠️ índice solo en un comentario `-- TODO: CREATE INDEX ...` → pasa (BAJA); ⚠️ down que borra otro índice → pasa (BAJA) |
-| domain-prorrateo-centimos | ✅ BigInt con división entera hacia -inf; ✅ enteros con módulo positivo | ✅ `\| 0` → falla; ✅ trunc hacia cero en abonos → falla; ❌ `Math.floor((n-o) * (d/p))` (coma flotante) → **pasa todo**, `prorate(0,90,7,10)` da 62 en vez de 63 |
-| devops-docker-no-root | ✅ distroless + `USER 1000:1000` + HEALTHCHECK exec multilínea; ❌ `.dockerignore` con `**/.env` y `**/node_modules` → **falla** | ✅ `ENV JWT_SECRET=${JWT_SECRET}` → falla; ❌ `USER node` solo en la etapa de build y etapa final como root → **pasa todo**; ❌ `ENV NODE_ENV=production \` + `JWT_SECRET=otro-secreto-fijo` en la línea siguiente → **pasa todo**; ⚠️ `.dockerignore` solo con `.env.*` (no excluye `.env`) → pasa; ⚠️ `RUN echo "JWT_SECRET=..." > .env` → pasa (BAJA) |
-| testing-reloj-determinista | ✅ `!(now() < link.expiresAt)` con `describe/it` tabular; ❌ `return link.expiresAt <= now();` → **falla la mutación** | ✅ límites a ±1 s (no el instante exacto) → falla la mutación; ❌ `newId` por defecto constante `() => 'token'` → **pasa todo**; ⚠️ reloj real implícito (`createLink('u1')` sin inyectar + alias `globalThis['Da'+'te']`) → pasa (BAJA) |
-| async-worker-idempotente | ✅ sin lanzar, devuelve estado, tope 30 min; ✅ relanza el error tras `retry`/`deadLetter`, tope 5 min | ✅ jitter que crece sin tope → falla; ❌ dedupe en un `Set` del módulo (ignora `store`) → **pasa todo**; ❌ consulta `store.has` pero nunca llama a `store.add` → **pasa todo**; ⚠️ `retry(msg)` sin incrementar `attempt` → pasa (BAJA, depende del contrato de la cola) |
+### Observaciones (BAJA)
+- `database-indice-migracion`: un índice sin nombre (`CREATE INDEX ON orders (...)` + `DROP INDEX orders_customer_id_created_at_idx`) falla el down; un down que borra `idx_orders_cc_old` pasa con un up `idx_orders_cc` (coincidencia por subcadena; usar `grep -w`).
+- `devops-docker-no-root`: `HEALTHCHECK` solo en la etapa de build pasa (no llega a la imagen final); `USER ${RUN_AS}` con `ARG RUN_AS=root` pasa; `COPY secrets.env ./.env` con un secreto en otro archivo pasa.
+- `testing-reloj-determinista`: `crypto.getRandomValues` en los tests no está bloqueado ni en el `grep` (no produce inestabilidad).
+- `backend-paginacion-validacion`: un comentario `// TODO ... 400` en los tests satisface "hay tests nuevos de validación" (el comportamiento se comprueba aparte).
+- `async-worker-idempotente`: un backoff cuadrático pasa como "exponencial" (comprobar la razón entre intentos consecutivos).
 
----
-
-## 2. Bugs
-
-### BUG-TASK-048-6 (ALTA) — `domain-prorrateo-centimos` acepta coma flotante + `Math.floor`
-- **Reproducir**: `return Math.floor((newCents - oldCents) * (daysLeft / daysInPeriod));` (el arreglo mínimo sobre el fixture) → los 5 checks pasan. `prorate(0, 90, 7, 10)` devuelve 62 (correcto: 63); 4021 combinaciones con `|diff| <= 5000` y `daysInPeriod <= 31` difieren.
-- **Causa**: los valores del check (`20/30`, `10/30`, `1/7`) no separan `floor(x*(d/p))` de `floor(x*d/p)`; la tarea dice "sin aritmética de coma flotante en el resultado" y nada lo comprueba (LL-017: elegir valores que separen las implementaciones candidatas).
-- **Esperado**: añadir `prorate(0,90,7,10) === 63` y `prorate(90,0,7,10) === -63` (o `prorate(0,170,7,10) === 119`).
-
-### BUG-TASK-048-7 (ALTA) — `async-worker-idempotente` acepta deduplicar en memoria del proceso
-- **Reproducir**: `const processed = new Set()` a nivel de módulo, sin usar `store` → los 5 checks pasan; también pasa una variante que consulta `store.has` pero nunca escribe `store.add`. Tras un reinicio o con dos réplicas del worker, el email se reenvía.
-- **Causa**: el check usa el mismo proceso y el mismo `msg.id` para las tres llamadas; nunca observa el `store`.
-- **Esperado**: (a) con un `store` precargado (`has: async id => id === 'm1'`) no se envía nada; (b) tras un envío con éxito, `seen.has('m1') === true`. `async-jobs` lo pide ("no la dispares directo en memoria"; idempotente por clave verificada en servidor).
-
-### BUG-TASK-048-8 (MEDIA) — `devops-docker-no-root`: root en la etapa final, `ENV` multilínea y `.dockerignore` con `**/`
-- **Falso positivo 1**: `USER node` en la etapa de build y ningún `USER` en la etapa final → pasa "usuario no root" (el check toma el último `USER` del archivo, no el de la última etapa). Esperado: `awk '/^[[:space:]]*FROM[[:space:]]/{u=""} /^[[:space:]]*USER[[:space:]]/{u=$2} END{print u}'`.
-- **Falso positivo 2**: `ENV NODE_ENV=production \` + `    JWT_SECRET=otro-secreto-fijo` → pasa "sin secretos". La unión de líneas con `\` se aplicó al HEALTHCHECK pero no al check de secretos.
-- **Falso negativo**: `**/.env` y `**/node_modules` (patrón habitual de `.dockerignore`) → falla. Y `.env.*` solo (que no excluye `.env`) se acepta. Esperado: `^(\*\*/)?\.env\*?$` y `^(\*\*/)?/?node_modules/?$`.
-
-### BUG-TASK-048-9 (MEDIA) — `testing-reloj-determinista`: la mutación depende de la sintaxis y el id por defecto no se comprueba
-- **Falso negativo**: `return link.expiresAt <= now();` (equivalente exacto y con tests correctos del instante límite) → falla "los tests detectan la mutación": no hay `>=` ni `<` seguido de algo distinto de `=`, y el check sale con `exit 1` sin mutar nada.
-- **Esperado**: mutar por comportamiento, no por texto: sustituir en la copia temporal `src/links.js` por una implementación mutante con la misma API (`now() > link.expiresAt`) y exigir que los tests del agente fallen. Como mínimo, tratar también `<=` → `<`.
-- **Falso positivo (BAJA-MEDIA)**: `newId = () => 'token'` por defecto pasa; la tarea pide "un id aleatorio por defecto". Esperado: `createLink('u1').token !== createLink('u1').token`.
-
-### BUG-TASK-048-10 (MEDIA) — `frontend-cuatro-estados`: el XSS se comprueba con una lista fija de etiquetas y una única forma de escapar
-- **Falso positivo**: escapar solo `<b`, `<img`, `<script` (lista negra) pasa los 5 checks y deja `<svg onload=alert(1)>` sin escapar.
-- **Falso negativo**: escapar con entidades numéricas (`&#60;`, lo que hacen librerías como `he`) falla porque se cuentan solo `&lt;`.
-- **Esperado**: contar `&lt;|&#0*60;|&#x0*3c;` (sin distinguir mayúsculas) y comprobar de forma genérica que el título no aporta ningún `<`: número de `<` con el título malicioso = número de `<` con un título inocuo, usando además una etiqueta fuera de cualquier lista (`<svg/onload=...>`, `<x-y>`).
-
-### Observaciones (BAJA, no bloquean por sí solas)
-- `database-indice-migracion`: un índice dentro de un comentario SQL pasa (quitar líneas `--` antes del grep); un down que borra otro índice pasa (comparar el nombre); `ON "public"."orders"` falla.
-- `backend-paginacion-validacion`: `parseInt` acepta `limit="5abc"`; añadir `"5abc"` o `"1.5"` a los valores inválidos.
-- `async-worker-idempotente`: `queue.retry(msg, d)` sin incrementar `attempt` pasa; aclarar en el contrato quién incrementa `attempt`.
-- `GLOBAL_STATE.md` §7 (iter 2) y el handoff citan la lección como `LL-016`; la registrada es `LL-017` (`task.sh brain search tramposas`). `LL-016` es de TASK-050.
+- **Deuda Técnica**: registrada como `TD-005` (MEDIA) con `task.sh debt` para los 4 falsos negativos.
+- **Lección**: `LL-017` (ya registrada; su antídoto "varias correctas que deben pasar" cubre los falsos negativos restantes).
 
 ## 3. Lo que está bien
-- Los cinco bugs de la iteración 1 están corregidos y la matriz del especialista se reproduce (50/50).
-- Los tres cambios de criterio son legítimos: fijan en la tarea la regla y la firma que el check comprueba, coherentes con `domain-logic-agent`, `testing-strategy` y `async-jobs`.
-- El check de mutación es una mejora real (detecta límites a ±1 s), portable con `sed` BSD, y el conteo con `--test-reporter=tap` acepta matrices tabulares.
-- 0 FLAKY en 117 ejecuciones de checks sobre soluciones nuevas.
+- BUG-6 a BUG-10 y todas las BAJA de la iteración 2 están corregidos y verificados con soluciones nuevas.
+- El mutante por API ya no depende de la sintaxis (`<=`, negaciones) y detecta tests débiles; el reloj bloqueado con `node --import` es efectivo, determinista y compatible con `t.mock.timers`.
+- Ninguna trampa sobre el comportamiento central (redondeo, idempotencia, XSS, root en la imagen final, límite exacto) pasa ya los checks.
 
 ## 4. Conclusión y Veredicto Final
-- **Estado**: `RECHAZADA` (2/3).
-- **Siguiente paso**: el especialista retoma con `task.sh start TASK-048`, corrige BUG-6..10 añadiendo estas soluciones (`/private/tmp/claude-501/-Users-klismanvizcarra-Desktop-PROYECTOS-SKILL--MAESTRO/93d4f4ac-7cb6-4e0f-9815-84fb011827e5/scratchpad/qa048/sol2/`, temporales; los casos clave están descritos en cada bug) a su matriz, y corrige la referencia a `LL-017`. Queda **una** iteración antes de `BLOCKED`.
-- **Lección**: N/A en el rechazo; al cerrar, `LL-017` (ya registrada) cubre el caso.
+- **Estado**: `APROBADA` (3/3), sin hallazgos CRÍTICOS ni ALTOS; 4 falsos negativos MEDIA sin riesgo de seguridad aceptados como deuda técnica según la matriz de severidad.
+- **Siguiente paso**: `task.sh close TASK-048 --lesson LL-017`; fusión a `main` con `--no-ff` y borrado de la rama por el especialista o el `orchestrator-agent` (no la hace QA).

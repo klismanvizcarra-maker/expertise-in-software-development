@@ -107,3 +107,4 @@ Solo las trampas del entorno en que se desarrolla **esta librería** (shell, git
 
 | ID | Tarea Vinculada | Descripción de la Deuda | Solución Temporal Aplicada | Acción Definitiva Pendiente | Prioridad |
 | :---: | :---: | :--- | :--- | :--- | :---: |
+| `TD-005` | `TASK-048` | Evals con falsos negativos: testing-reloj-determinista rechaza new Date(iso) en tests (lo recomienda testing-strategy) y modulos auxiliares en src/ o exports nuevos en el check de mutacion; devops-docker-no-root rechaza un comentario que menciona JWT_SECRET; async-worker-idempotente lanza Error sin code y rechaza clasificar transitorios por err.code | Workaround temporal | grep de tests solo contra new Date() vacio; mutante con copia de src/ y export * sobre el modulo del agente; ignorar comentarios # en el check de secretos; error simulado con code ECONNRESET; anadir esas soluciones a la matriz | `MEDIA` |
