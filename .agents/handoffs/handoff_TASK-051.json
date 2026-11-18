@@ -1,0 +1,28 @@
+{
+  "task_id": "TASK-051",
+  "summary": "Fix: saldar TD-005 (falsos negativos de evals) y TD-006 (temporales huerfanos, exit 127 y cwd borrado)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-18T04:19:04Z",
+  "iteration": 2,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/brain/recurrences.md" },
+    { "type": "file", "path": ".agents/reviews/qa_TASK-051.md" },
+    { "type": "file", "path": ".agents/scripts/pre-edit-check.sh" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "tests/evals/README.md" },
+    { "type": "file", "path": "tests/evals/evals.json" },
+    { "type": "file", "path": "tests/evals/run_evals.py" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "python3 tests/evals/run_evals.py --verify-baselines --jobs 4",
+    "bash tests/test-flow.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

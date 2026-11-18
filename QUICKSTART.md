@@ -208,7 +208,7 @@ Instala los hooks con un solo comando:
 ```bash
 bash tests/test-scripts.sh
 ```
-Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (326 comprobaciones). Los colores de `task.sh` y `test-skills.sh` solo aparecen en una terminal y se desactivan con `NO_COLOR=1` o `TERM=dumb`.
+Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (338 comprobaciones). Los colores de `task.sh` y `test-skills.sh` solo aparecen en una terminal y se desactivan con `NO_COLOR=1` o `TERM=dumb`.
 
 ---
 

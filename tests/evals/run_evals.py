@@ -55,14 +55,19 @@ def sh(script: str, cwd: Path, timeout: int = 120) -> subprocess.CompletedProces
 
 def make_project(eval_id: str) -> Path:
     tmp = Path(tempfile.mkdtemp(prefix=f"skill-eval-{eval_id}-"))
-    for cmd in (["git", "init", "-q", "-b", "main"],
-                ["git", "config", "user.email", "eval@example.com"],
-                ["git", "config", "user.name", "eval"]):
-        subprocess.run(cmd, cwd=tmp, check=True)
-    subprocess.run(["bash", str(ROOT / ".agents/scripts/init-project.sh"), "Proyecto Eval", str(tmp)],
-                   check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    subprocess.run(["git", "add", "-A"], cwd=tmp, check=True)
-    subprocess.run(["git", "commit", "-qm", "chore(TASK-000): instalar sistema", "--no-verify"], cwd=tmp, check=True)
+    try:
+        for cmd in (["git", "init", "-q", "-b", "main"],
+                    ["git", "config", "user.email", "eval@example.com"],
+                    ["git", "config", "user.name", "eval"]):
+            subprocess.run(cmd, cwd=tmp, check=True)
+        subprocess.run(["bash", str(ROOT / ".agents/scripts/init-project.sh"), "Proyecto Eval", str(tmp)],
+                       check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "add", "-A"], cwd=tmp, check=True)
+        subprocess.run(["git", "commit", "-qm", "chore(TASK-000): instalar sistema", "--no-verify"], cwd=tmp, check=True)
+    except BaseException:
+        # Sin esto, un fallo de git o de init-project.sh deja el temporal huérfano (TD-006)
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
     return tmp
 
 
@@ -121,6 +126,12 @@ def verify_baseline(ev: dict) -> dict:
         subprocess.run(["git", "tag", "eval-start"], cwd=project, check=True)
         for name, script in ev["checks"]:
             r = sh(script, project, timeout=300)
+            if r.returncode in (126, 127):
+                # Comando no encontrado o no ejecutable: es el entorno, no la eval (TD-006).
+                # Contarlo como fallo daría por buena una línea base que no se ha medido.
+                out["error"] = (f"el check «{name}» no pudo ejecutarse (exit {r.returncode}, "
+                                f"¿falta una herramienta?): {(r.stderr or r.stdout).strip()[-200:]}")
+                break
             out["checks"].append({"name": name, "pass": r.returncode == 0})
     except subprocess.TimeoutExpired as exc:
         out["error"] = f"timeout: {exc}"

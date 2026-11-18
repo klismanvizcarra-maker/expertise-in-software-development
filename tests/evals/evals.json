@@ -312,8 +312,8 @@
           "awk '{ if (sub(/\\\\[[:space:]]*$/, \" \")) { buf = buf $0; next } print buf $0; buf = \"\" }' Dockerfile | grep -iE '^[[:space:]]*HEALTHCHECK' | grep -q '/healthz'"
         ],
         [
-          "sin secretos en la imagen (JWT_SECRET no aparece en el Dockerfile)",
-          "! grep -qi 'supersecreto' Dockerfile && ! awk '{ if (sub(/\\\\[[:space:]]*$/, \" \")) { buf = buf $0; next } print buf $0; buf = \"\" }' Dockerfile | grep -qi 'JWT_SECRET'"
+          "sin secretos en la imagen (JWT_SECRET no aparece fuera de comentarios del Dockerfile)",
+          "! grep -qi 'supersecreto' Dockerfile && ! grep -vE '^[[:space:]]*#' Dockerfile | awk '{ if (sub(/\\\\[[:space:]]*$/, \" \")) { buf = buf $0; next } print buf $0; buf = \"\" }' | grep -qi 'JWT_SECRET'"
         ],
         [
           "JWT_SECRET en .env.example sin valor real",
@@ -341,11 +341,11 @@
         ],
         [
           "los tests pasan con una implementacion correcta y fallan con una mutante (> en vez de >=)",
-          "tmp=$(mktemp -d) && cp -R test package.json \"$tmp/\" && mkdir \"$tmp/src\" && for op in '>=' '>'; do printf '%s\\n' 'export const TTL_MS = 15 * 60 * 1000;' 'export function createLink(userId, { now = Date.now, newId = () => Math.random().toString(36).slice(2) } = {}) { return { token: newId(), userId, expiresAt: now() + TTL_MS }; }' 'export function isExpired(link, { now = Date.now } = {}) { return now() OP link.expiresAt; }' | sed \"s/ OP / $op /\" > \"$tmp/src/links.js\"; if [ \"$op\" = '>=' ]; then for i in 1 2 3; do (cd \"$tmp\" && node --test >/dev/null 2>&1) || { rm -rf \"$tmp\"; exit 1; }; done; else (cd \"$tmp\" && node --test >/dev/null 2>&1) && { rm -rf \"$tmp\"; exit 1; }; fi; done; rm -rf \"$tmp\""
+          "tmp=$(mktemp -d) && cp -R test src package.json \"$tmp/\" && mv \"$tmp/src/links.js\" \"$tmp/src/__orig_links.js\" && for op in '>=' '>'; do printf '%s\\n' \"import * as orig from './__orig_links.js';\" \"export * from './__orig_links.js';\" 'export const TTL_MS = orig.TTL_MS;' 'export function createLink(userId, { now = Date.now, newId = () => Math.random().toString(36).slice(2) } = {}) { return { token: newId(), userId, expiresAt: now() + TTL_MS }; }' 'export function isExpired(link, { now = Date.now } = {}) { return now() OP link.expiresAt; }' | sed \"s/ OP / $op /\" > \"$tmp/src/links.js\"; if [ \"$op\" = '>=' ]; then for i in 1 2 3; do (cd \"$tmp\" && node --test >/dev/null 2>&1) || { rm -rf \"$tmp\"; exit 1; }; done; else (cd \"$tmp\" && node --test >/dev/null 2>&1) && { rm -rf \"$tmp\"; exit 1; }; fi; done; rm -rf \"$tmp\""
         ],
         [
-          "los tests no usan el reloj real ni esperas aleatorias",
-          "! grep -rqE 'setTimeout|setInterval|Math\\.random|Date\\.now|new Date|performance\\.now|randomBytes|randomUUID' test/"
+          "los tests no usan el reloj real ni esperas aleatorias (new Date con fecha fija si se permite)",
+          "! grep -rqE 'setTimeout|setInterval|Math\\.random|Date\\.now|performance\\.now|randomBytes|randomUUID|new Date[[:space:]]*(\\([[:space:]]*\\)|[;,)]|$)' test/"
         ],
         [
           "los tests pasan con el reloj y la aleatoriedad del sistema bloqueados",
@@ -368,12 +368,12 @@
       "prompt": "/async-jobs Implementa la tarea en curso TASK-003 en src/worker.js con sus tests y entrégala a QA con /handoff sin pedirme confirmación.",
       "checks": [
         [
-          "deduplica en el store: no reenvia lo ya enviado, un fallo no lo marca y un exito si",
-          "node -e 'import(\"./src/worker.js\").then(async m => { const q={retry(){},deadLetter(){}}; const mk=(seen,fail)=>{ const sent=[]; return { sent, deps:{mailer:{send:async t=>{ if(fail.n-->0) throw new Error(\"ECONNRESET\"); sent.push(t) }},store:{has:async i=>seen.has(i),add:async i=>{seen.add(i)}},queue:q,maxAttempts:5} } }; const s1=new Set(); const a=mk(s1,{n:1}); const msg={id:\"m1\",attempt:1,to:\"a@x.com\",template:\"w\"}; try { await m.handleMessage(msg,a.deps) } catch {} const notMarked=!s1.has(\"m1\"); try { await m.handleMessage({...msg,attempt:2},a.deps) } catch {} const marked=s1.has(\"m1\"); await m.handleMessage({...msg,attempt:3},a.deps); const once=a.sent.length===1; const b=mk(new Set([\"pre\"]),{n:0}); await m.handleMessage({...msg,id:\"pre\"},b.deps); process.exit(notMarked&&marked&&once&&b.sent.length===0?0:1) })'"
+          "deduplica en el store: no reenvia lo ya enviado, un fallo (con o sin code) no lo marca y un exito si",
+          "node -e 'import(\"./src/worker.js\").then(async m => { const q={retry(){},deadLetter(){}}; const mk=(seen,fail)=>{ const sent=[]; return { sent, deps:{mailer:{send:async t=>{ if(fail.n-->0) throw Object.assign(new Error(\"ECONNRESET: socket hang up\"),{code:\"ECONNRESET\"}); sent.push(t) }},store:{has:async i=>seen.has(i),add:async i=>{seen.add(i)}},queue:q,maxAttempts:5} } }; const s1=new Set(); const a=mk(s1,{n:1}); const msg={id:\"m1\",attempt:1,to:\"a@x.com\",template:\"w\"}; try { await m.handleMessage(msg,a.deps) } catch {} const notMarked=!s1.has(\"m1\"); try { await m.handleMessage({...msg,attempt:2},a.deps) } catch {} const marked=s1.has(\"m1\"); await m.handleMessage({...msg,attempt:3},a.deps); const once=a.sent.length===1; const b=mk(new Set([\"pre\"]),{n:0}); await m.handleMessage({...msg,id:\"pre\"},b.deps); const s3=new Set(); const c=mk(s3,{n:0}); c.deps.mailer.send=async()=>{ throw new Error(\"550 mailbox unavailable\") }; try { await m.handleMessage({...msg,id:\"m3\"},c.deps) } catch {} const plainNotMarked=!s3.has(\"m3\"); process.exit(notMarked&&marked&&once&&b.sent.length===0&&plainNotMarked?0:1) })'"
         ],
         [
           "fallo transitorio: reintenta con attempt+1 y tras maxAttempts va a la DLQ",
-          "node -e 'import(\"./src/worker.js\").then(async m => { const retried=[], dead=[]; const deps={mailer:{send:async()=>{throw new Error(\"ECONNRESET\")}},store:{has:async()=>false,add:async()=>{}},queue:{retry:(msg,d)=>retried.push([msg.attempt,d]),deadLetter:(msg,e)=>dead.push(msg.id)},maxAttempts:3}; const run=async a=>{ try { await m.handleMessage({id:\"m2\",attempt:a,to:\"b@x.com\",template:\"w\"},deps) } catch {} }; await run(1); await run(3); process.exit(retried.length===1&&retried[0][0]===2&&retried[0][1]>0&&dead.length===1?0:1) })'"
+          "node -e 'import(\"./src/worker.js\").then(async m => { const retried=[], dead=[]; const deps={mailer:{send:async()=>{throw Object.assign(new Error(\"ECONNRESET: socket hang up\"),{code:\"ECONNRESET\"})}},store:{has:async()=>false,add:async()=>{}},queue:{retry:(msg,d)=>retried.push([msg.attempt,d]),deadLetter:(msg,e)=>dead.push(msg.id)},maxAttempts:3}; const run=async a=>{ try { await m.handleMessage({id:\"m2\",attempt:a,to:\"b@x.com\",template:\"w\"},deps) } catch {} }; await run(1); await run(3); process.exit(retried.length===1&&retried[0][0]===2&&retried[0][1]>0&&dead.length===1?0:1) })'"
         ],
         [
           "backoff exponencial con jitter acotado",
