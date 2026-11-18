@@ -16,7 +16,7 @@ Actúas como `orchestrator-agent` (carga su skill).
    - Qué se construye y para quién (una frase).
    - Plataformas: web, móvil, ambas, API.
    - Preferencias o restricciones de stack, hosting y presupuesto.
-   Si la idea es difusa, propone pasar antes por `/product-manager-agent`.
+   Si la idea es difusa, propone pasar antes por `/product-manager-agent`. Si hay productos de referencia que conviene estudiar (p. ej. Uber o InDrive para una app de taxis), propone `/research-agent` primero.
 3. **Proponer el stack** (frontend, backend, persistencia, auth, despliegue) con una línea de justificación por pieza y pide confirmación.
 4. **Completar `GLOBAL_STATE.md`**: metadatos (§1), stack (§2), la decisión de stack como primera fila ADR (§6) y un hito en el registro (§7). Elimina las tareas de ejemplo `TASK-001`/`TASK-002` de la plantilla si siguen sin tocar.
 5. **Planificar la fase 1** con el flujo de `/nueva-tarea`: típicamente estructura del repositorio y CI, sistema de diseño, esquema base y autenticación.

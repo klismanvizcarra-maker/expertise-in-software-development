@@ -1,0 +1,31 @@
+{
+  "task_id": "TASK-052",
+  "summary": "Anadir skill research-agent (investigador): benchmark de productos de referencia y propuesta para el proyecto",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-18T06:26:00Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/system_map.md" },
+    { "type": "file", "path": ".agents/skills/iniciar-proyecto/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/orchestrator-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/product-manager-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/research-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/research-agent/references/dimensiones.md" },
+    { "type": "file", "path": ".agents/templates/GLOBAL_STATE_TEMPLATE.md" },
+    { "type": "file", "path": ".agents/templates/research_report_template.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "README.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "bash tests/test-scripts.sh",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

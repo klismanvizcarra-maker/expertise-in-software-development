@@ -60,6 +60,7 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | Agente | Skill (`/nombre`) | Especialidad |
 | :--- | :--- | :--- |
 | **Orchestrator** | [`orchestrator-agent`](.agents/skills/orchestrator-agent/SKILL.md) | Líder de proyecto, descomposición (`TASK-XXX`), SSOT y prevención de bucles. |
+| **Research** | [`research-agent`](.agents/skills/research-agent/SKILL.md) | Investiga competidores y productos de referencia con fuentes citadas, matriz comparativa y propuesta adaptada al proyecto. |
 | **Product Manager** | [`product-manager-agent`](.agents/skills/product-manager-agent/SKILL.md) | Discovery, Historias de Usuario Gherkin, User Journeys, estados UI y analítica. |
 | **Backend & Data** | [`backend-agent`](.agents/skills/backend-agent/SKILL.md) | APIs REST/GraphQL, arquitectura en capas, esquemas Zod/DTOs, auth JWT/RBAC. |
 | **Frontend & UI** | [`frontend-agent`](.agents/skills/frontend-agent/SKILL.md) | Vistas reactivas, componentes desacoplados, PWA offline, accesibilidad WCAG. |
@@ -130,6 +131,9 @@ Los presets `--stack nextjs|angular|fastapi` cubren los tres stacks preempaqueta
 ---
 
 ## 4. Prompts Útiles para el Usuario
+
+* **Para investigar productos de referencia antes de construir**:
+  > *"/research-agent Vamos a desarrollar una app de taxis en Lima. Investiga a fondo Uber e InDrive y propón cómo debería ser la nuestra en docs/research/taxis.md."*
 
 * **Para conceptualizar y aterrizar una nueva idea o pantalla**:
   > *"/product-manager-agent Quiero crear una app de reservas. Define el User Flow, las Historias de Usuario con criterios Gherkin y los 4 estados de pantalla en docs/product/reservas.md."*

@@ -30,6 +30,7 @@
 | Agente | Rol Principal | Skill Asociada |
 | :--- | :--- | :--- |
 | **Orchestrator** | Coordinación, backlog y gestión de SSOT | `orchestrator-agent` |
+| **Research** | Investigación de referentes y competencia, propuesta para el proyecto | `research-agent` |
 | **Product Manager** | Alcance de producto, User Stories (Gherkin) y flujos | `product-manager-agent` |
 | **Backend & Data** | APIs, lógica de negocio y seguridad server | `backend-agent` |
 | **Frontend & UI** | Componentes, vistas y experiencia web | `frontend-agent` |
