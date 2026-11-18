@@ -987,6 +987,40 @@
    "type": "especialista"
   },
   {
+   "id": "stk-06",
+   "prompt": "¿Cómo organizo un proyecto con Nuxt 3, Nitro, Pinia y Drizzle ORM sobre PostgreSQL?",
+   "expect": [
+    "stack-vue-nuxt-postgres"
+   ],
+   "accept": [
+    "iniciar-proyecto",
+    "frontend-agent"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres",
+    "stack-nextjs-tailwind-prisma",
+    "stack-fastapi-postgres"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "stk-07",
+   "prompt": "Tengo un error de hydration mismatch en Nuxt 3 al usar $fetch dentro del setup de un componente de Vue",
+   "expect": [
+    "stack-vue-nuxt-postgres"
+   ],
+   "accept": [
+    "frontend-agent",
+    "bugfix"
+   ],
+   "forbid": [
+    "stack-angular-express-postgres",
+    "stack-nextjs-tailwind-prisma",
+    "stack-fastapi-postgres"
+   ],
+   "type": "especialista"
+  },
+  {
    "id": "ref-01",
    "prompt": "Refactoriza el OrderService, tiene 600 líneas y mezcla cálculo de impuestos con acceso a base de datos",
    "expect": [
