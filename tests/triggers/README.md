@@ -4,7 +4,7 @@ Comprueba que, ante una petición típica, se carga la skill correcta (y no otra
 
 | Archivo | Para qué |
 | :--- | :--- |
-| `cases.json` | 92 peticiones con la skill esperada (`expect`), alternativas válidas (`accept`) y prohibidas (`forbid`) |
+| `cases.json` | 94 peticiones con la skill esperada (`expect`), alternativas válidas (`accept`) y prohibidas (`forbid`) |
 | `lint_descriptions.py` | Análisis estático gratuito: casos que apuntan a skills inexistentes, skills con menos de dos casos y pares de descripciones demasiado parecidas sin límite explícito |
 | `run_claude.py` | Ejecución real contra Claude Code en modo `--print`, solo con herramientas de lectura |
 
@@ -20,7 +20,7 @@ Requisito único: la CLI debe tener sesión iniciada (la de la app de escritorio
 ```
 Después:
 ```bash
-python3 tests/triggers/run_claude.py                     # todos los casos (92 en cases.json)
+python3 tests/triggers/run_claude.py                     # todos los casos (94 en cases.json)
 python3 tests/triggers/run_claude.py --only db-01,be-01  # solo algunos
 python3 tests/triggers/run_claude.py --model sonnet      # con otro modelo
 ```
