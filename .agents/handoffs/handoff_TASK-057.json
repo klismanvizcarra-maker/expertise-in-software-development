@@ -1,0 +1,21 @@
+{
+  "task_id": "TASK-057",
+  "summary": "Soporte de nuevos stacks en init-project.sh, AGENTS.md y bateria de triggers",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "--deliverable",
+  "timestamp": "2026-11-18T07:29:17Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

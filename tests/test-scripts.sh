@@ -68,7 +68,17 @@ check "init-project con --stack angular pre-configura GLOBAL_STATE.md" 'grep -q 
 
 bash "$ROOT/.agents/scripts/init-project.sh" "Mi API" "$WORK/fastapi-app" --stack fastapi >/dev/null 2>&1
 check "init-project con --stack fastapi pre-configura GLOBAL_STATE.md" 'grep -q "stack-fastapi-postgres" "$WORK/fastapi-app/GLOBAL_STATE.md" && grep -q "SQLAlchemy" "$WORK/fastapi-app/GLOBAL_STATE.md"'
-for st in nextjs angular fastapi; do
+
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi Nuxt App" "$WORK/nuxt-app" --stack nuxt >/dev/null 2>&1
+check "init-project con --stack nuxt pre-configura GLOBAL_STATE.md" 'grep -q "stack-vue-nuxt-postgres" "$WORK/nuxt-app/GLOBAL_STATE.md" && grep -q "Nitro" "$WORK/nuxt-app/GLOBAL_STATE.md"'
+
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi React Vite App" "$WORK/react-vite-app" --stack react-vite >/dev/null 2>&1
+check "init-project con --stack react-vite pre-configura GLOBAL_STATE.md" 'grep -q "stack-react-vite-node" "$WORK/react-vite-app/GLOBAL_STATE.md" && grep -q "TanStack" "$WORK/react-vite-app/GLOBAL_STATE.md"'
+
+bash "$ROOT/.agents/scripts/init-project.sh" "Mi NestJS API" "$WORK/nestjs-app" --stack nestjs >/dev/null 2>&1
+check "init-project con --stack nestjs pre-configura GLOBAL_STATE.md" 'grep -q "stack-nestjs-postgres" "$WORK/nestjs-app/GLOBAL_STATE.md" && grep -q "ValidationPipe" "$WORK/nestjs-app/GLOBAL_STATE.md"'
+
+for st in nextjs angular fastapi nuxt react-vite nestjs; do
   [ -d "$WORK/$st-app" ] || bash "$ROOT/.agents/scripts/init-project.sh" "App $st" "$WORK/$st-app" --stack $st >/dev/null 2>&1
   check "--stack $st no deja placeholders ni líneas corruptas en GLOBAL_STATE.md" '! grep -qE "\[Breve descripci|\[Plataforma|Elección del stack base" "$WORK/$st-app/GLOBAL_STATE.md" && [ "$(grep -c "Infraestructura" "$WORK/$st-app/GLOBAL_STATE.md")" -eq 1 ] && grep -q "^- \*\*Descripción\*\*: \`[^\`]*\`$" "$WORK/$st-app/GLOBAL_STATE.md"'
 done
