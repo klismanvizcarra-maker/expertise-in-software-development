@@ -2,33 +2,45 @@
 
 Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado, [SemVer](https://semver.org/lang/es/). La versión instalada en un proyecto está en `.agents/VERSION`; `init-project.sh --update` la sincroniza.
 
-## [Unreleased]
+## [1.2.0] - 2026-11-18
 
 ### Añadido
-- Skill de flujo `/crear-plan` (la ejecuta el `orchestrator-agent`): plan maestro del proyecto completo en `docs/plan/plan-maestro.md` con la plantilla `plan_maestro_template.md` (alcance MVP/v1/v2, arquitectura con Mermaid y ADR candidatos, módulos con agente y skills, fases con criterio de salida, tareas candidatas y dependencias, Gantt con camino crítico y estimaciones por rangos, riesgos, calidad y lanzamiento). Con la aprobación del usuario registra solo la fase 1; `/cerrar-fase` toma de él la fase siguiente y anota lo real frente a lo planificado. Integrada en `AGENTS.md` (§2.5 y §8), `orchestrator-agent`, `iniciar-proyecto`, `cerrar-fase`, `product-manager-agent`, `research-agent` y la batería de activación (TASK-053).
-- Skill `research-agent` (investigador): a partir de la idea del proyecto elige los productos de referencia (directos, con otro modelo, locales y análogos), los investiga con fuentes citadas y fechadas en 12 dimensiones más una guía por tipo de producto (transporte, delivery, e-commerce, SaaS), los compara en una matriz y propone un MVP, diferenciadores, modelo de negocio, riesgos e implicaciones técnicas. Entrega en `docs/research/` con la plantilla `research_report_template.md` y alimenta al `product-manager-agent`; integrada en `AGENTS.md` (§2.3 y §8), `orchestrator-agent`, `iniciar-proyecto`, `product-manager-agent` y la batería de activación (TASK-052).
-- `tests/test-skills.sh` endurecido para exigir cierre YAML `---`, palabra clave `Usar`, secciones obligatorias por tipo de skill y enlaces relativos a raíz, plantillas y referencias (TASK-040).
-- `tests/evals/evals.json` ampliado de 5 a 8 evals deterministas con `handoff-verificacion`, `refactor-caracterizacion` y `security-hardening-sql-idor` (fixtures en `tests/evals/fixtures/`), cubiertos junto a los nuevos linters en `tests/test-scripts.sh` (265 comprobaciones) y alineados en `QUICKSTART.md` (TASK-040).
-- `tests/evals/evals.json` pasa de 8 a 15 evals deterministas: una por cada rol que escribe código (`backend-agent`, `frontend-agent`, `database-architect-agent`, `domain-logic-agent`, `devops-cloud-agent`) y por `testing-strategy` y `async-jobs`, con sus fixtures. Todas fallan en el estado inicial y pasan con una solución de referencia; `tests/test-scripts.sh` exige al menos 14, cobertura de esos roles y fixtures con permisos `755` (TASK-048).
-- `task.sh check <rutas>` y `.agents/scripts/pre-edit-check.sh`: antes de editar, aplican el control de "cero código sin tarea" (exit 2 si alguna ruta está bloqueada) y muestran las lecciones de esas rutas, reutilizando los dos hooks de Claude Code. Da a Antigravity, que no tiene hooks, el mismo control; `AGENTS.md` §2.4 y §7.4 y las skills de rol lo piden antes de editar (TASK-049).
-- `run_evals.py --verify-baselines`: sin LLM ni coste, comprueba que cada eval falla tras su setup (FAIL_INIT) y que el setup funciona; lo ejecutan `tests/test-scripts.sh` y la CI (`library.yml`) (TASK-049).
+- **6 skills nuevas** (de 32 a 38 skills):
+  - `research-agent` (investigador): benchmark de productos de referencia en 12 dimensiones y propuesta para el proyecto en `docs/research/` (TASK-052).
+  - `/crear-plan`: plan maestro completo en `docs/plan/plan-maestro.md` con alcance MVP/v1/v2, arquitectura Mermaid, fases y cronograma Gantt (TASK-053).
+  - `testing-strategy`: pirámide de pruebas, fakes reales vs mocks acoplados y relojes deterministas (TASK-044).
+  - `async-jobs`: colas en segundo plano, Transactional Outbox, consumidores idempotentes y DLQ (TASK-044).
+  - `pr-review`: revisiones estructuradas de pull requests y resolución limpia de conflictos (TASK-044).
+  - `/adoptar-proyecto`: adopción de proyectos brownfield sin sobreescribir código ni documentación previa (TASK-046).
+- **Modo adopción brownfield y archivado**:
+  - `init-project.sh --adopt`: inicialización segura sobre código existente conservando hooks y configuraciones previas (TASK-046).
+  - `task.sh archive [--keep N] [--phase "<fase>"]`: archivado de tareas `DONE` en `.agents/archive/` preservando `next_id`, métricas y validación (TASK-046).
+- **Desacople multi-stack y referencias operativas**:
+  - `references/` con recetas para Angular+Express, Next.js y FastAPI en `i18n`, `payments-stripe`, `seo-web` y `web-performance` (TASK-042).
+  - `references/` operativas verificables en las 6 skills base (`backend-agent`, `frontend-agent`, `database-architect-agent`, `domain-logic-agent`, `mobile-agent`, `docs-architecture-agent`) (TASK-045).
+  - CI multi-stack Python 3.12 y Node 24 LTS en `.agents/templates/ci_workflow_template.yml` (TASK-043).
+- **Paridad Antigravity y arnés de pruebas**:
+  - `task.sh check <rutas>` y `.agents/scripts/pre-edit-check.sh`: control de "cero código sin tarea" e inyección de lecciones aplicable en Antigravity (TASK-049).
+  - Evals deterministas ampliadas de 5 a 15 casos en `tests/evals/evals.json` cubriendo todos los roles de código (TASK-040, TASK-048).
+  - `run_evals.py --verify-baselines`: verificación de línea base sin coste ni LLM integrada en CI y `test-scripts.sh` (TASK-049).
+  - Batería de activación ampliada a 92 casos en `tests/triggers/cases.json` con `lint_descriptions.py` en verde (TASK-047, TASK-052, TASK-053).
+- `tests/test-skills.sh` endurecido para exigir cierre YAML `---`, palabra clave `Usar`, secciones obligatorias por tipo de skill y enlaces relativos (TASK-040).
 
 ### Cambiado
 - `orchestrator-agent` lista también `security-hardening` y `observability` entre las skills de técnica (TASK-041).
 - `qa-review` delega la verificación independiente en Antigravity con `TypeName: "self"` y documenta que citar `LL-XXX` en `task.sh reject` garantiza el registro de reincidencias (TD-004, TASK-041).
 - `devops-cloud-agent` y `.agents/templates/ci_workflow_template.yml` actualizados a Node 24 LTS (TASK-041).
-- Las skills de roles de código recuerdan ejecutar `./.agents/scripts/task.sh brain for TASK-XXX <rutas>` antes de editar (paridad con el hook `brain-context.sh` en Antigravity), y `e2e-testing` incorpora sección `## Prohibido` (TASK-041).
+- Las skills de roles de código recuerdan ejecutar `./.agents/scripts/task.sh brain for TASK-XXX <rutas>` antes de editar (TASK-041).
+- `e2e-testing` incorpora sección `## Prohibido` (TASK-041).
 
 ### Corregido
-- Evals sin falsos negativos (TD-005): `testing-reloj-determinista` acepta fechas fijas `new Date('…')` en los tests y su mutante conserva los módulos auxiliares y exports propios de `src/`; `devops-docker-no-root` ignora comentarios que mencionan `JWT_SECRET`; `async-worker-idempotente` simula el error transitorio con `code: 'ECONNRESET'`, de modo que clasificar transitorios por `err.code` es válido, y comprueba además que un error sin `code` tampoco marca el email como enviado. Las trampas siguen fallando (TASK-051).
-- `run_evals.py` no deja temporales `skill-eval-*` si falla la preparación del proyecto, y `--verify-baselines` trata un check con exit `127`/`126` como error del entorno en vez de como FAIL_INIT; `task.sh check` bloquea (exit 2) si el directorio actual se ha borrado, en lugar de dejar pasar la edición (TD-006, TASK-051).
-- Los hooks `require-active-task.sh` y `brain-context.sh` normalizan la ruta editada: `.agents/../src/app.ts` ya no esquiva "Cero Código sin Tarea", los symlinks se resuelven (`realpath`), un `file_path` que no es texto se bloquea y una ruta relativa fuera del proyecto (`../otro/x.ts`) deja de bloquearse (TASK-050).
-- `install-hooks.sh` e `init-project.sh` (instalación, `--update` y `--adopt`) funcionan en worktrees y submódulos (`.git` es un archivo): los hooks se instalan en el directorio que git usa de verdad (`git rev-parse --git-path hooks`), con `core.hooksPath` (husky, lefthook) no se pisan los existentes, y desde un subdirectorio de otro repositorio no se instalan en él (TASK-050).
-- `task.sh` sale con exit 1 ante un comando desconocido, en lugar de mostrar la ayuda con exit 0; `SIGINT` y `SIGTERM` terminan el script tras liberar el bloqueo (exit 130/143), en vez de continuar escribiendo sin él (TASK-050).
-- `task.sh` y `tests/test-skills.sh` emiten colores ANSI solo en una terminal y respetan `NO_COLOR` y `TERM=dumb`; los errores de `task.sh` solo llevan color si stderr es una terminal (TASK-050).
-- Saldadas `TD-003` (`brain-context.sh` valida `IN_PROGRESS` antes de emitir/marcar vista, usa bloqueo de sesión seguro sin robar locks y purga sesiones `>7` días) y `TD-004` (`recurrence_for` compara causa raíz y plurales simples; `task.sh close` exige emisor `qa-security-agent`) (TASK-039, TASK-041).
-- `debt_sync()` integrado en `task.sh brain sync`, `debt` y `debt-resolve` con guarda de cabecera y `FILENAME` (evita borrado de `BRAIN.md` ante `tech_debt.md` vacío); `brain doctor` valida §6 de `BRAIN.md` y la tabla de `tech_debt.md` (TASK-039).
-- Endurecidos `task.sh` (`next_id`, `handoff` con `-z`/`quotePath=false`, `close` con `git for-each-ref`, `Última Actualización`), `init-project.sh` (`--stack`, permisos en `strip_examples`, aviso de drift en `AGENTS.md`) y `validate-state.sh` (IDs duplicados y agentes desconocidos) (TASK-039).
+- Evals sin falsos negativos (TD-005): `testing-reloj-determinista` acepta fechas fijas `new Date('…')` en tests y mutante con módulos de `src/`; `devops-docker-no-root` ignora comentarios con `JWT_SECRET`; `async-worker-idempotente` clasifica transitorios con `err.code` (TASK-051).
+- `run_evals.py` no deja temporales `skill-eval-*` si falla el setup y trata `127`/`126` como error de entorno; `task.sh check` bloquea si el directorio actual se ha borrado (TD-006, TASK-051).
+- Normalización estricta de rutas en `require-active-task.sh` y `brain-context.sh` contra evasión con `..` y symlinks (TASK-050).
+- `install-hooks.sh` e `init-project.sh` compatibles con worktrees, submódulos y `core.hooksPath` (TASK-050).
+- `task.sh` sale con exit 1 ante comandos desconocidos, maneja traps de `SIGINT`/`SIGTERM` liberando el lock y emite colores ANSI solo en terminales respetando `NO_COLOR` (TASK-050).
+- Saldadas `TD-003` (sesión segura en `brain-context.sh`) y `TD-004` (reincidencias por causa raíz y filtro de `close`) (TASK-039, TASK-041).
+- Endurecidos `task.sh`, `init-project.sh` y `validate-state.sh` (TASK-039).
 
 ## [1.1.0] - 2026-11-11
 
