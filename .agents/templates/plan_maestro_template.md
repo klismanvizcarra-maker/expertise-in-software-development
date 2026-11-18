@@ -64,7 +64,7 @@ graph LR
 
 ```mermaid
 gantt
-    title Plan por fases (rangos estimados)
+    title Plan por fases (cada barra dibuja el extremo alto del rango)
     dateFormat YYYY-MM-DD
     section Fase 1
     Fundaciones        :f1, YYYY-MM-DD, 14d
@@ -73,7 +73,7 @@ gantt
 ```
 
 - **Camino crítico**: [F1-1 → F2-3 → F3-2 ...]
-- **Duración total estimada**: [rango] con los supuestos de equipo de la cabecera.
+- **Duración total estimada**: [rango] con los supuestos de equipo de la cabecera. Mermaid no admite rangos: el Gantt dibuja el extremo alto de cada uno.
 
 ## 7. Riesgos y supuestos
 

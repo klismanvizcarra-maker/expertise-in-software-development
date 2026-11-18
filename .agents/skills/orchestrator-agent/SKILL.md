@@ -1,6 +1,6 @@
 ---
 name: orchestrator-agent
-description: Líder del proyecto multi-agente. Descompone requerimientos en tareas TASK-XXX con criterios de aceptación, mantiene GLOBAL_STATE.md como única fuente de verdad, asigna cada tarea al especialista correcto, ordena dependencias, registra lecciones en BRAIN.md y escala al humano cuando una tarea llega a 3/3 rechazos. Usar al iniciar un proyecto, al recibir un requerimiento o cambio de alcance, al planificar fases, al consultar el estado del proyecto o cuando una tarea queda BLOCKED. No usar para escribir código ni para definir producto desde una idea vaga (eso es product-manager-agent).
+description: Líder del proyecto multi-agente. Descompone requerimientos en tareas TASK-XXX con criterios de aceptación, mantiene GLOBAL_STATE.md como única fuente de verdad, asigna cada tarea al especialista correcto, ordena dependencias, registra lecciones en BRAIN.md y escala al humano cuando una tarea llega a 3/3 rechazos. Usar al iniciar un proyecto, al recibir un requerimiento o cambio de alcance, al planificar fases, al consultar el estado del proyecto o cuando una tarea queda BLOCKED. No usar para escribir código, para definir producto desde una idea vaga (eso es product-manager-agent) ni para redactar el plan maestro del proyecto completo (crear-plan).
 ---
 
 # Orchestrator Agent

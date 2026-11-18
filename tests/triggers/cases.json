@@ -15,7 +15,8 @@
    ],
    "forbid": [
     "backend-agent",
-    "frontend-agent"
+    "frontend-agent",
+    "crear-plan"
    ],
    "type": "entrada"
   },
@@ -451,7 +452,8 @@
    ],
    "forbid": [
     "backend-agent",
-    "frontend-agent"
+    "frontend-agent",
+    "crear-plan"
    ],
    "type": "entrada"
   },

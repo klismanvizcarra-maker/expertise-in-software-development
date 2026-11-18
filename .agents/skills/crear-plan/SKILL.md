@@ -29,10 +29,10 @@ Lo ejecuta el `orchestrator-agent` (carga su skill). El plan es el mapa de **tod
 8. **Estrategia de calidad y salida a producción**: qué cubren las pruebas (`testing-strategy`, `e2e-testing`), revisión de seguridad (`security-hardening`), observabilidad (`observability`) y el criterio para lanzar (`/release`).
 9. **Plan de lanzamiento**: entornos, versiones y lo que se mide tras lanzar (métricas de producto del PRD).
 10. **Redactar y validar**: escribe `docs/plan/plan-maestro.md` con la plantilla [plan_maestro_template.md](../../templates/plan_maestro_template.md) en estado `DRAFT`. Presenta al usuario el resumen (alcance, fases, rango de duración, riesgos principales y preguntas abiertas). **En Antigravity**, publícalo además como artefacto (`UserFacing: true`, `RequestFeedback: true`). Ajusta hasta que lo apruebe y márcalo `APPROVED`.
-11. **Activar la fase 1**, solo con el plan aprobado:
-    - Actualiza la **Fase Actual** de `GLOBAL_STATE.md` §1 con el nombre de la fase 1 y añade un hito en §7 que enlace el plan.
-    - Registra **solo** las tareas de la fase 1 con el flujo de `/nueva-tarea` (`task.sh add`). Las de fases posteriores quedan como candidatas en el plan: se registran en `/cerrar-fase`.
-    - Si el stack estaba `PENDIENTE DE CONFIRMAR`, ejecuta antes `/iniciar-proyecto`.
+11. **Activar la fase 1**, solo con el plan aprobado. La activa **una sola** skill, para no registrar las tareas ni el hito dos veces:
+    - **Si el stack está `PENDIENTE DE CONFIRMAR`** o `GLOBAL_STATE.md` aún tiene placeholders: pasa a `/iniciar-proyecto`. Esa skill confirma el stack, completa `GLOBAL_STATE.md` (Fase Actual en §1 y un hito en §7 que enlaza el plan) y registra la fase 1 del plan (sus pasos 4 y 5). `/crear-plan` termina aquí y no registra nada.
+    - **Si no**, lo hace `/crear-plan`: actualiza la **Fase Actual** de `GLOBAL_STATE.md` §1 con el nombre de la fase 1, añade un hito en §7 que enlace el plan y registra **solo** las tareas de la fase 1 con el flujo de `/nueva-tarea` (`task.sh add`).
+    - En ambos casos, las tareas de fases posteriores quedan como candidatas en el plan: se registran en `/cerrar-fase`.
 12. **Mantener el plan vivo**: cuando cambie el alcance, actualiza el plan (nueva versión en su historial de cambios) con la confirmación del usuario; `/cerrar-fase` anota en él lo real frente a lo planificado al terminar cada fase.
 
 ## Checklist antes de dar el plan por aprobado
@@ -43,7 +43,7 @@ Lo ejecuta el `orchestrator-agent` (carga su skill). El plan es el mapa de **tod
 - [ ] Cronograma Gantt con camino crítico y estimaciones en rangos con sus supuestos.
 - [ ] Riesgos con mitigación, estrategia de calidad y plan de lanzamiento.
 - [ ] Plan en `docs/plan/plan-maestro.md` aprobado por el usuario (`APPROVED`).
-- [ ] Solo las tareas de la fase 1 registradas con `task.sh`; `validate-state.sh` en verde.
+- [ ] Solo las tareas de la fase 1 registradas con `task.sh`, una sola vez (por `/crear-plan` o por `/iniciar-proyecto`, no por ambas); `validate-state.sh` en verde.
 
 ## Prohibido
 - Registrar tareas o cambiar la fase en `GLOBAL_STATE.md` sin la aprobación del plan por el usuario.
