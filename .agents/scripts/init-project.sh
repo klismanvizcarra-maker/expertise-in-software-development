@@ -5,14 +5,14 @@
 # (.claude/skills + CLAUDE.md + .mcp.json) desde una única fuente.
 # ==============================================================================
 # Uso:
-#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular|fastapi] [--ci]
+#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular|fastapi|nuxt|react-vite|nestjs] [--ci]
 #   ./init-project.sh --adopt ["/ruta/al/proyecto-existente"] [--stack ...] [--ci] [--copy]
 #   O simplemente: ./init-project.sh "Mi Proyecto"
 #
 #   --copy               Copia las skills en .claude/skills en vez de crear un enlace
 #                        simbólico (útil en Windows o si el repositorio no admite symlinks).
 #   --stack <nombre>     Pre-configura el stack tecnológico en GLOBAL_STATE.md sin
-#                        placeholders (opciones: nextjs | angular | fastapi).
+#                        placeholders (opciones: nextjs | angular | fastapi | nuxt | react-vite | nestjs).
 #   --ci                 Instala el pipeline de GitHub Actions (.github/workflows/audit.yml)
 #                        a partir de ci_workflow_template.yml sin sobrescribir si ya existe.
 #   --adopt              Adopta un repositorio existente (brownfield): instala .agents/,
@@ -53,7 +53,7 @@ while [ $# -gt 0 ]; do
       ;;
     --stack)
       if [ -z "${2:-}" ] || [ "${2#-}" != "$2" ]; then
-        echo "❌ ERROR: --stack requiere un valor (nextjs, angular o fastapi)." >&2
+        echo "❌ ERROR: --stack requiere un valor (nextjs, angular, fastapi, nuxt, react-vite o nestjs)." >&2
         exit 1
       fi
       SELECTED_STACK="$2"
@@ -62,7 +62,7 @@ while [ $# -gt 0 ]; do
     --stack=*)
       SELECTED_STACK="${1#*=}"
       if [ -z "$SELECTED_STACK" ]; then
-        echo "❌ ERROR: --stack= requiere un valor (nextjs, angular o fastapi)." >&2
+        echo "❌ ERROR: --stack= requiere un valor (nextjs, angular, fastapi, nuxt, react-vite o nestjs)." >&2
         exit 1
       fi
       shift
@@ -81,10 +81,10 @@ fi
 
 if [ -n "$SELECTED_STACK" ]; then
   case "$SELECTED_STACK" in
-    nextjs|angular|fastapi) ;;
+    nextjs|angular|fastapi|nuxt|react-vite|nestjs) ;;
     *)
       echo "❌ ERROR: Stack desconocido: '$SELECTED_STACK'." >&2
-      echo "   Valores permitidos: nextjs, angular, fastapi." >&2
+      echo "   Valores permitidos: nextjs, angular, fastapi, nuxt, react-vite, nestjs." >&2
       exit 1
       ;;
   esac
@@ -372,6 +372,42 @@ with open(dst, 'w', encoding='utf-8') as f:
       "$TARGET_DIR/GLOBAL_STATE.md"
     rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
     echo "   (Stack FastAPI configurado en GLOBAL_STATE.md)"
+  elif [ "$SELECTED_STACK" = "nuxt" ]; then
+    sed -i.bak \
+      -e "s|- \*\*Frontend\*\*:.*|- **Frontend**: \`Vue 3 + Nuxt 3 (SSR, Composition API y Tailwind CSS)\`|g" \
+      -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Nitro server routes (server/api/) con validación Zod/H3\`|g" \
+      -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL con Drizzle ORM (migraciones versionadas)\`|g" \
+      -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Sesiones seguras con cookies HttpOnly / useCookie\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura \& Despliegue**: \`Docker multi-etapa / Nitro preset / VPS\`|g" \
+      -e "s|Elección del stack base|Elección del stack Vue 3 + Nuxt 3 + Pinia + Drizzle (stack-vue-nuxt-postgres)|g" \
+      -e "s|\[Breve descripción[^]]*\]|Aplicación web con Nuxt 3, Nitro, Pinia, Tailwind CSS y PostgreSQL con Drizzle.|g" \
+      "$TARGET_DIR/GLOBAL_STATE.md"
+    rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
+    echo "   (Stack Nuxt configurado en GLOBAL_STATE.md)"
+  elif [ "$SELECTED_STACK" = "react-vite" ]; then
+    sed -i.bak \
+      -e "s|- \*\*Frontend\*\*:.*|- **Frontend**: \`React 19 SPA con Vite, Tailwind CSS y TanStack Query v5\`|g" \
+      -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Node 24 LTS con Express 5 o Hono y validación Zod\`|g" \
+      -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL con Drizzle ORM o Prisma\`|g" \
+      -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Tokens JWT en cookies HttpOnly seguras\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura \& Despliegue**: \`SPA estática (Nginx / Vercel) + API containerizada\`|g" \
+      -e "s|Elección del stack base|Elección del stack React 19 + Vite + Node.js (stack-react-vite-node)|g" \
+      -e "s|\[Breve descripción[^]]*\]|Aplicación SPA en React 19 con Vite, TanStack Query y backend Node.js sobre PostgreSQL.|g" \
+      "$TARGET_DIR/GLOBAL_STATE.md"
+    rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
+    echo "   (Stack React+Vite configurado en GLOBAL_STATE.md)"
+  elif [ "$SELECTED_STACK" = "nestjs" ]; then
+    sed -i.bak \
+      -e "s|- \*\*Frontend\*\*:.*|- **Frontend**: \`Independiente (consume el contrato OpenAPI de la API)\`|g" \
+      -e "s|- \*\*Backend\*\*:.*|- **Backend**: \`Node 24 LTS con NestJS 11 y DTOs con ValidationPipe\`|g" \
+      -e "s|- \*\*Persistencia\*\*:.*|- **Persistencia**: \`PostgreSQL con Prisma ORM (PrismaService singleton)\`|g" \
+      -e "s|- \*\*Autenticación\*\*:.*|- **Autenticación**: \`Guards de autorización JWT y RBAC con decoradores\`|g" \
+      -e "s|- \*\*Infraestructura & Despliegue\*\*:.*|- **Infraestructura \& Despliegue**: \`Docker multi-etapa / VPS / Kubernetes\`|g" \
+      -e "s|Elección del stack base|Elección del stack NestJS + Prisma + PostgreSQL (stack-nestjs-postgres)|g" \
+      -e "s|\[Breve descripción[^]]*\]|API modular en TypeScript con NestJS 11, Prisma ORM y PostgreSQL.|g" \
+      "$TARGET_DIR/GLOBAL_STATE.md"
+    rm -f "$TARGET_DIR/GLOBAL_STATE.md.bak"
+    echo "   (Stack NestJS configurado en GLOBAL_STATE.md)"
   fi
 fi
 

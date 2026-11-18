@@ -135,6 +135,27 @@ Para prevenir colisiones o sobreescrituras accidentales entre especialistas, cad
 >   - **`domain-logic-agent`**: `lib/domain/`, funciones puras de cálculo matemático, tipos compartidos y máquinas de estado en `lib/`.
 >   - **`qa-security-agent`**: `e2e/`, `*.test.ts`, `*.spec.tsx` (tests unitarios/integración con Vitest y E2E con Playwright).
 >   - **`devops-cloud-agent`**: `next.config.ts`, `docker-compose.yml`, `Dockerfile`, `.github/workflows/`, presupuestos de build y `.env.example`.
+> - **Nuxt 3 + Drizzle (`stack-vue-nuxt-postgres`)**:
+>   - **`frontend-agent`**: `pages/`, `layouts/`, `components/`, `composables/`, `stores/`, `app.vue` (vistas, composición y estado reactivo).
+>   - **`backend-agent`**: `server/api/`, `server/routes/`, `server/middleware/` (handlers Nitro con validación Zod/H3).
+>   - **`database-architect-agent`**: `server/db/schema.ts`, `server/db/migrations/`, `drizzle.config.ts`, `server/utils/db.ts`.
+>   - **`ui-ux-agent`**: tokens CSS, `assets/css/`, `tailwind.config.ts`, temas visuales.
+>   - **`qa-security-agent`**: `e2e/`, `*.spec.ts`, `*.test.ts` (Vitest y Playwright).
+>   - **`devops-cloud-agent`**: `nuxt.config.ts`, `Dockerfile`, `docker-compose.yml`, `.github/workflows/`, `.env.example`.
+> - **React + Vite (`stack-react-vite-node`)**:
+>   - **`frontend-agent`**: `client/src/`, `client/index.html` (componentes React, features, hooks y enrutamiento SPA).
+>   - **`backend-agent`**: `server/src/controllers/`, `server/src/routes/`, `server/src/middlewares/`, `shared/` (contratos Zod).
+>   - **`database-architect-agent`**: `server/src/db/`, migraciones SQL, esquemas de base de datos.
+>   - **`ui-ux-agent`**: `client/src/index.css`, variables CSS, temas.
+>   - **`qa-security-agent`**: `e2e/`, `client/**/*.test.tsx`, `server/**/*.test.ts`.
+>   - **`devops-cloud-agent`**: `client/vite.config.ts`, `Dockerfile`, `docker-compose.yml`, `.github/workflows/`, `.env.example`.
+> - **NestJS (`stack-nestjs-postgres`)**:
+>   - **`backend-agent`**: `src/modules/`, `src/common/`, `src/app.module.ts`, `src/main.ts` (controllers, services, DTOs y guards).
+>   - **`database-architect-agent`**: `prisma/`, `src/prisma/`, migraciones SQL.
+>   - **`domain-logic-agent`**: `src/domain/`, funciones puras de cálculo matemático y máquinas de estado.
+>   - **`qa-security-agent`**: `test/`, `*.spec.ts` (Jest/Vitest unitarios y Supertest e2e).
+>   - **`devops-cloud-agent`**: `Dockerfile`, `docker-compose.yml`, `.github/workflows/`, `nest-cli.json`, `.env.example`.
+>   - **Frontend**: independiente; consume el contrato OpenAPI de `/api/docs`.
 
 > **Regla de Coordinación**: Si una tarea requiere cambios cruzados (ej. nuevo endpoint + nueva pantalla), el Orchestrator debe asignar subtareas independientes a cada especialista.
 
