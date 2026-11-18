@@ -1,0 +1,32 @@
+{
+  "task_id": "TASK-053",
+  "summary": "Anadir skill de flujo crear-plan: plan maestro completo del proyecto",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-18T06:42:08Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/system_map.md" },
+    { "type": "file", "path": ".agents/skills/cerrar-fase/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/crear-plan/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/iniciar-proyecto/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/nueva-tarea/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/orchestrator-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/product-manager-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/research-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/templates/plan_maestro_template.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "QUICKSTART.md" },
+    { "type": "file", "path": "README.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "bash tests/test-scripts.sh",
+    "./.agents/scripts/validate-state.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
