@@ -110,9 +110,10 @@ def run_eval(claude: str, ev: dict, args) -> dict:
 
 def verify_baseline(ev: dict) -> dict:
     """FAIL_INIT: tras el setup, sin que la skill haga nada, al menos un check debe fallar."""
-    project = make_project(ev["id"])
     out = {"id": ev["id"], "skill": ev["skill"], "error": None, "checks": []}
+    project = None
     try:
+        project = make_project(ev["id"])
         setup = sh(ev["setup"], project)
         if setup.returncode != 0:
             out["error"] = f"setup falló: {(setup.stderr or setup.stdout).strip()[-300:]}"
@@ -123,8 +124,11 @@ def verify_baseline(ev: dict) -> dict:
             out["checks"].append({"name": name, "pass": r.returncode == 0})
     except subprocess.TimeoutExpired as exc:
         out["error"] = f"timeout: {exc}"
+    except (subprocess.CalledProcessError, OSError) as exc:
+        out["error"] = f"no se pudo preparar el proyecto: {exc}"
     finally:
-        shutil.rmtree(project, ignore_errors=True)
+        if project is not None:
+            shutil.rmtree(project, ignore_errors=True)
     out["fail_init"] = bool(out["checks"]) and not all(c["pass"] for c in out["checks"])
     return out
 

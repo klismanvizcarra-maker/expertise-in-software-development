@@ -3,6 +3,7 @@
 # Comprobación previa a editar archivos (paridad Claude Code / Antigravity)
 # ==============================================================================
 # Uso: pre-edit-check.sh <ruta> [ruta...]      (también: task.sh check <ruta> [ruta...])
+# Las rutas relativas se toman del directorio actual (como en el editor), no de la raíz.
 #
 # Ejecuta, para cada ruta, los mismos controles que los hooks de Claude Code:
 #   1. "Cero Código sin Tarea" (require-active-task.sh, AGENTS.md §2.4): sin una tarea
@@ -30,12 +31,25 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 if ! command -v python3 >/dev/null 2>&1; then
+  # Mismas excepciones que el hook: escape explícito o proyecto sin GLOBAL_STATE.md
+  if [ "${MAESTRO_ALLOW_UNTRACKED:-0}" = "1" ] || [ ! -f "$ROOT/GLOBAL_STATE.md" ]; then
+    printf '✅ Se puede editar (sin python3 no se pueden mostrar las lecciones).\n'
+    exit 0
+  fi
   printf 'Bloqueado por AGENTS.md §2.4: se requiere python3 para comprobar la tarea activa y el cerebro.\n' >&2
   exit 2
 fi
 
+# JSON del hook con la ruta ABSOLUTA: las relativas se resuelven contra el directorio actual,
+# como hace Claude Code (que siempre envía rutas absolutas). Los hooks resuelven una ruta
+# relativa contra la raíz del proyecto, así que pasarla tal cual desde un subdirectorio
+# comprobaría otro archivo.
 hook_json() {
-  python3 -c 'import json, sys; print(json.dumps({"tool_name": "Edit", "tool_input": {"file_path": sys.argv[1]}}))' "$1"
+  python3 -c 'import json, os, sys
+p = sys.argv[1]
+if p and "\n" not in p and "\r" not in p and not os.path.isabs(p):
+    p = os.path.join(os.getcwd(), p)
+print(json.dumps({"tool_name": "Edit", "tool_input": {"file_path": p}}))' "$1"
 }
 
 RC=0

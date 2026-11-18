@@ -800,6 +800,9 @@ check "check sin tarea activa bloquea el código con exit 2 y el motivo" '$T che
 check "check deja editar Markdown y docs/ sin tarea activa" '$T check README.md docs/guia.md >/dev/null 2>&1'
 check "check con varias rutas sale con 2 si alguna está bloqueada" '$T check README.md src/app.ts >/dev/null 2>&1; [ $? -eq 2 ]'
 check "check sin rutas es un error de uso (exit 1)" '$T check >/dev/null 2>&1; [ $? -eq 1 ]'
+mkdir -p docs
+check "desde un subdirectorio, ../src bloquea igual que el hook con la ruta absoluta" '(cd docs && ../.agents/scripts/task.sh check ../src/app.ts >/dev/null 2>&1; [ $? -eq 2 ])'
+check "desde un subdirectorio, una ruta relativa exenta sigue permitida" '(cd docs && ../.agents/scripts/task.sh check guia.md >/dev/null 2>&1)'
 check "check normaliza .. (no se cuela por una ruta exenta)" '$T check .agents/../src/app.ts >/dev/null 2>&1; [ $? -eq 2 ]'
 $T add "Tarea para comprobar ediciones" "backend-agent" "criterio" >/dev/null
 $T start "$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | sort -u | tail -1)" >/dev/null 2>&1
@@ -809,6 +812,7 @@ check "muestra las lecciones cuyo ámbito cubre la ruta, con su antídoto" '$T c
 check "muestra las lecciones siempre (sin deduplicar por sesión)" '$T check src/db/orders.ts 2>&1 | grep -q "Consulta sin indice" && $T check src/db/orders.ts 2>&1 | grep -q "Consulta sin indice"'
 check "no muestra lecciones de otras rutas" '$T check src/app.ts 2>&1 | grep -q "Sin lecciones específicas"'
 check "usa el proyecto del script aunque CLAUDE_PROJECT_DIR apunte a otro" 'CLAUDE_PROJECT_DIR="$WORK" $T check src/db/orders.ts 2>&1 | grep -q "Consulta sin indice"'
+check "desde un subdirectorio, las rutas relativas se toman del directorio actual (lecciones)" '(cd src && "$PWD/../.agents/scripts/task.sh" check db/orders.ts 2>&1 | grep -q "Consulta sin indice")'
 check "check no modifica ningún archivo" 'cp GLOBAL_STATE.md "$WORK/gs" && cp BRAIN.md "$WORK/br" && $T check src/db/a.ts README.md >/dev/null 2>&1; cmp -s GLOBAL_STATE.md "$WORK/gs" && cmp -s BRAIN.md "$WORK/br"'
 git checkout -q main 2>/dev/null
 cd "$WORK" || exit 1
