@@ -19,6 +19,9 @@ La batería de `tests/triggers/` mide **qué skill se carga**. Estas evals miden
 | `devops-docker-no-root` | `devops-cloud-agent` | Dockerfile multi-etapa no root con `HEALTHCHECK` a `/healthz`, sin secretos, `.env.example` y `.dockerignore` |
 | `testing-reloj-determinista` | `testing-strategy` | Reloj e id inyectables con la firma de la tarea; los tests pasan con una implementación correcta y fallan con una mutante (`>` en vez de `>=`, que conserva los módulos y exports propios de `src/`), siguen pasando con `Date.now`, `new Date()` sin argumentos, `Math.random` y `crypto` bloqueados (una fecha fija `new Date('…')` está permitida), y 20 ejecuciones seguidas en verde |
 | `async-worker-idempotente` | `async-jobs` | Consumidor idempotente por `msg.id` que no marca como enviado un mensaje cuyo envío falló, reintento con backoff exponencial con jitter y tope, y DLQ tras `maxAttempts` |
+| `research-benchmark-report` | `research-agent` | Genera benchmark comparativo con fuentes fechadas, pros/contras y propuesta con MVP MoSCoW en `docs/research/` sin inventar métricas ni copiar texto de referencia |
+| `plan-maestro-fases` | `crear-plan` | Elabora `docs/plan/plan-maestro.md` con arquitectura Mermaid, fases con criterios de salida, cronograma Gantt y registra solo las tareas de la Fase 1 tras aprobación |
+| `adoptar-proyecto-brownfield` | `adoptar-proyecto` | Incorpora gobierno en proyecto existente: detecta stack, mapea componentes en `GLOBAL_STATE.md` sin sobreescribir código y planifica la primera tarea incremental |
 
 ## Ejecutar
 ```bash

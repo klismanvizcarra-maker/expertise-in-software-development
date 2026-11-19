@@ -388,6 +388,86 @@
           "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
         ]
       ]
+    },
+    {
+      "id": "research-benchmark-report",
+      "skill": "research-agent",
+      "setup": "bash \"$FIXTURES/research.sh\"",
+      "prompt": "/research-agent Investiga a Uber y Cabify para un nuevo servicio de movilidad urbana y genera el informe en docs/research/movilidad-urbana.md siguiendo el protocolo.",
+      "checks": [
+        [
+          "genera el informe en docs/research/ con formato markdown",
+          "[ -f docs/research/movilidad-urbana.md ] || ls docs/research/*.md >/dev/null 2>&1"
+        ],
+        [
+          "cubre modelo de negocio, comisiones o precios de los referentes",
+          "grep -qiE 'modelo de negocio|precio|comisi' docs/research/*.md 2>/dev/null"
+        ],
+        [
+          "distingue hechos de inferencias y cita fuentes",
+          "grep -qiE '\\[Hecho\\]|\\[Inferencia\\]|fuente' docs/research/*.md 2>/dev/null"
+        ],
+        [
+          "entrega matriz comparativa o propuesta MoSCoW",
+          "grep -qiE 'matriz comparativa|MoSCoW|must have|propuesta' docs/research/*.md 2>/dev/null"
+        ],
+        [
+          "no crea código productivo en src/ ni server/",
+          "! [ -d src ] && ! [ -d server ]"
+        ]
+      ]
+    },
+    {
+      "id": "plan-maestro-fases",
+      "skill": "crear-plan",
+      "setup": "bash \"$FIXTURES/plan.sh\"",
+      "prompt": "/crear-plan Redacta el plan maestro en docs/plan/plan-maestro.md a partir de docs/research/ y docs/product/, desglosando fases, arquitectura y cronograma.",
+      "checks": [
+        [
+          "genera docs/plan/plan-maestro.md",
+          "[ -f docs/plan/plan-maestro.md ]"
+        ],
+        [
+          "incluye diagrama de arquitectura Mermaid",
+          "grep -q '```mermaid' docs/plan/plan-maestro.md 2>/dev/null"
+        ],
+        [
+          "define fases con criterios de salida",
+          "grep -qiE 'fase 1|fase 2' docs/plan/plan-maestro.md 2>/dev/null && grep -qiE 'criterio de salida' docs/plan/plan-maestro.md 2>/dev/null"
+        ],
+        [
+          "incluye cronograma o camino crítico",
+          "grep -qiE 'gantt|cronograma|camino cr[íi]tico' docs/plan/plan-maestro.md 2>/dev/null"
+        ],
+        [
+          "no deja placeholders de plantilla sin sustituir",
+          "[ -f docs/plan/plan-maestro.md ] && ! grep -qE '\\[Nombre del Proyecto\\]|\\[Objetivo medible\\]' docs/plan/plan-maestro.md 2>/dev/null"
+        ]
+      ]
+    },
+    {
+      "id": "adoptar-proyecto-brownfield",
+      "skill": "adoptar-proyecto",
+      "setup": "bash \"$FIXTURES/adopt.sh\"",
+      "prompt": "/adoptar-proyecto Inspecciona el repositorio legacy en Node/Express, actualiza GLOBAL_STATE.md con el stack real sin placeholders y registra las primeras tareas en el tablero.",
+      "checks": [
+        [
+          "el código preexistente se conserva intacto",
+          "[ -f src/index.js ] && [ -f test/health.test.js ] && grep -q 'legacy-express-api' package.json"
+        ],
+        [
+          "GLOBAL_STATE.md refleja la arquitectura y stack real detectado",
+          "grep -qiE 'express' GLOBAL_STATE.md"
+        ],
+        [
+          "GLOBAL_STATE.md no conserva placeholders de plantilla",
+          "! grep -qE '\\[Nombre del Proyecto\\]|\\[Breve descripción\\]|\\[Elegir:' GLOBAL_STATE.md"
+        ],
+        [
+          "registra tareas iniciales en el tablero de tareas",
+          "awk -F'|' '/^\\| *`?TASK-/ { s=$5; gsub(/[ `]/,\"\",s); if (s==\"TODO\" || s==\"IN_PROGRESS\" || s==\"BACKLOG\") f=1 } END { exit !f }' GLOBAL_STATE.md"
+        ]
+      ]
     }
   ]
 }
