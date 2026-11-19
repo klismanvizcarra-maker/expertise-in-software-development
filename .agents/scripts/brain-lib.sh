@@ -724,3 +724,92 @@ PY
   replace_file "$tmp" "$pref_file"
   say "✅ Preferencia registrada en [$cat]: $rule"
 }
+
+# Linter activo de antipatrones históricos del cerebro
+brain_lint() {
+  local target_paths=("$@")
+  local violations=0
+  local files=()
+
+  if [ ${#target_paths[@]} -eq 0 ]; then
+    while IFS= read -r f; do
+      [ -f "$f" ] && files+=("$f")
+    done < <(git ls-files 2>/dev/null || find . -type f -not -path '*/.*/*')
+  else
+    for p in "${target_paths[@]}"; do
+      if [ -f "$p" ]; then
+        files+=("$p")
+      elif [ -d "$p" ]; then
+        while IFS= read -r f; do
+          [ -f "$f" ] && files+=("$f")
+        done < <(find "$p" -type f)
+      fi
+    done
+  fi
+
+  [ ${#files[@]} -gt 0 ] || { say "ℹ️  No hay archivos que auditar para brain lint."; return 0; }
+
+  for f in "${files[@]}"; do
+    case "$f" in
+      *.sh)
+        # Excluir archivos de prueba y el propio linter que citan los patrones como strings de test
+        local bn
+        bn="$(basename "$f")"
+        if [ "$bn" = "test-scripts.sh" ] || [ "$bn" = "brain-lib.sh" ] || [ "$bn" = "task.sh" ]; then
+          continue
+        fi
+
+        # LL-001: awk BSD no reconoce \s
+        local m_ll001
+        m_ll001=$(grep -nE "awk .*\\\\s|awk '.*\\\\s" "$f" 2>/dev/null || true)
+        if [ -n "$m_ll001" ]; then
+          say "❌ [LL-001] Uso de '\\s' en awk no portable en $f:"
+          printf '%s\n' "$m_ll001" | sed 's/^/     /'
+          say "   Antídoto: Usar clases POSIX [[:space:]] o [ \\t] para compatibilidad entre macOS y Linux."
+          violations=$((violations + 1))
+        fi
+
+        # LL-007: sed y/// no normaliza en locale C
+        local m_ll007
+        m_ll007=$(grep -nE "sed .*y/[a-zA-Zá-úÁ-Ú]" "$f" 2>/dev/null || true)
+        if [ -n "$m_ll007" ]; then
+          say "❌ [LL-007] Uso de transliteración 'sed y///' no portable en $f:"
+          printf '%s\n' "$m_ll007" | sed 's/^/     /'
+          say "   Antídoto: Usar python3 unicodedata o sustituciones explícitas sed -e 's/.../.../g'."
+          violations=$((violations + 1))
+        fi
+
+        # LL-012: awk FNR==NR sin validación de archivo no vacío
+        local m_ll012
+        m_ll012=$(grep -nE "FNR[[:space:]]*==[[:space:]]*NR" "$f" 2>/dev/null || true)
+        if [ -n "$m_ll012" ]; then
+          say "❌ [LL-012] Uso de 'FNR==NR' propenso a fallos con primer archivo vacío en $f:"
+          printf '%s\n' "$m_ll012" | sed 's/^/     /'
+          say "   Antídoto: Usar FILENAME==ENVIRON[...] o validar archivo no vacío previamente."
+          violations=$((violations + 1))
+        fi
+
+        # LL-016: trap de INT/TERM sin exit
+        local m_ll016
+        m_ll016=$(awk '
+          /trap.*INT/ && !/exit 130/ && !/kill/ && !/return/ { print NR ":" $0 }
+          /trap.*TERM/ && !/exit 143/ && !/kill/ && !/return/ { print NR ":" $0 }
+        ' "$f" 2>/dev/null || true)
+        if [ -n "$m_ll016" ]; then
+          say "❌ [LL-016] Trap de INT o TERM sin código de salida exit 130/143 en $f:"
+          printf '%s\n' "$m_ll016" | sed 's/^/     /'
+          say "   Antídoto: Separar trap de EXIT del trap de INT/TERM con exit 130/143."
+          violations=$((violations + 1))
+        fi
+        ;;
+    esac
+  done
+
+  if [ "$violations" -gt 0 ]; then
+    say "❌ [brain lint] Se encontraron $violations violación(es) de antipatrones aprendidos."
+    return 1
+  fi
+
+  say "✅ [brain lint] 0 violaciones de antipatrones del cerebro detectadas."
+  return 0
+}
