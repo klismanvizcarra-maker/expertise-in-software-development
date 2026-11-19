@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-063",
+  "summary": "Comprobacion activa de antipatrones del cerebro: task.sh brain lint",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-19T16:12:35Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/brain-context.sh" },
+    { "type": "file", "path": ".agents/scripts/brain-lib.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/task.sh brain lint",
+    "./.agents/scripts/task.sh doctor"
+  ]
+}
