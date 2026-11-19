@@ -849,6 +849,163 @@ EOF_ARCH
     say "Rechazos de QA acumulados: 1/3 → $(count_iter 1/3) · 2/3 → $(count_iter 2/3) · 3/3 → $(count_iter 3/3)"
     ;;
 
+  doctor)
+    require_state
+    say "${BLUE}${BOLD}=== Diagnóstico General del Proyecto (task.sh doctor) ===${NC}"
+    say "Directorio: $PROJECT_ROOT"
+    say ""
+    DOCTOR_FAILED=0
+
+    # 1. Validación de estado global y tablero
+    say "${BOLD}[1/4] Estado Global (validate-state.sh)...${NC}"
+    VALIDATE_SCRIPT="$SCRIPT_DIR/validate-state.sh"
+    [ -f "$VALIDATE_SCRIPT" ] || VALIDATE_SCRIPT="$PROJECT_ROOT/.agents/scripts/validate-state.sh"
+    if [ -f "$VALIDATE_SCRIPT" ]; then
+      if VAL_OUT=$(bash "$VALIDATE_SCRIPT" "$STATE_FILE" 2>&1); then
+        say "  ${GREEN}✅ Estado global íntegro y sin errores${NC}"
+      else
+        say "  ${RED}❌ Error en validación de estado global:${NC}"
+        printf '%s\n' "$VAL_OUT" | sed 's/^/     /'
+        DOCTOR_FAILED=1
+      fi
+    else
+      say "  ${YELLOW}⚠️  validate-state.sh no encontrado en $VALIDATE_SCRIPT${NC}"
+    fi
+
+    # 2. Salud del cerebro (lecciones, sincronía y deuda)
+    say "${BOLD}[2/4] Salud del Cerebro (task.sh brain doctor)...${NC}"
+    DOC_RC=0
+    DOC_OUT=$(brain_doctor 2>&1) || DOC_RC=1
+    if [ "$DOC_RC" -eq 0 ]; then
+      say "  ${GREEN}✅ Cerebro sano y sincronizado${NC}$( [ -n "$DOC_OUT" ] && printf ' (con avisos)' )"
+      if [ -n "$DOC_OUT" ]; then
+        printf '%s\n' "$DOC_OUT" | sed 's/^/     /'
+      fi
+    else
+      say "  ${RED}❌ Errores detectados en el cerebro:${NC}"
+      printf '%s\n' "$DOC_OUT" | sed 's/^/     /'
+      DOCTOR_FAILED=1
+    fi
+
+    # 3. Escaneo de secretos expuestos
+    say "${BOLD}[3/4] Escaneo de Secretos (scan-secrets.sh)...${NC}"
+    SCAN_SCRIPT="$SCRIPT_DIR/scan-secrets.sh"
+    [ -f "$SCAN_SCRIPT" ] || SCAN_SCRIPT="$PROJECT_ROOT/.agents/scripts/scan-secrets.sh"
+    if [ -f "$SCAN_SCRIPT" ]; then
+      if in_git; then
+        if SEC_OUT=$(bash "$SCAN_SCRIPT" --all 2>&1); then
+          say "  ${GREEN}✅ Repositorio limpio de secretos y archivos .env expuestos${NC}"
+        else
+          say "  ${RED}❌ Posibles secretos detectados:${NC}"
+          printf '%s\n' "$SEC_OUT" | sed 's/^/     /'
+          DOCTOR_FAILED=1
+        fi
+      else
+        say "  ${YELLOW}⚠️  No es un repositorio Git; escaneo de secretos omitido${NC}"
+      fi
+    else
+      say "  ${YELLOW}⚠️  scan-secrets.sh no encontrado en $SCAN_SCRIPT${NC}"
+    fi
+
+    # 4. Estructura y calidad de skills
+    say "${BOLD}[4/4] Estructura de Skills (test-skills.sh)...${NC}"
+    SKILLS_SCRIPT="$PROJECT_ROOT/tests/test-skills.sh"
+    [ -f "$SKILLS_SCRIPT" ] || SKILLS_SCRIPT="$PARENT_ROOT/tests/test-skills.sh"
+    if [ -f "$SKILLS_SCRIPT" ]; then
+      if SKILL_OUT=$(bash "$SKILLS_SCRIPT" 2>&1); then
+        SKILL_COUNT=$(printf '%s\n' "$SKILL_OUT" | grep -oE '[0-9]+ skills auditadas' | head -n 1 || true)
+        [ -n "$SKILL_COUNT" ] || SKILL_COUNT="Skills verificadas"
+        say "  ${GREEN}✅ Estructura y calidad de skills ($SKILL_COUNT)${NC}"
+      else
+        say "  ${RED}❌ Errores en la validación de skills:${NC}"
+        printf '%s\n' "$SKILL_OUT" | sed 's/^/     /'
+        DOCTOR_FAILED=1
+      fi
+    else
+      say "  ${CYAN}ℹ️  tests/test-skills.sh no presente en el proyecto (omitido)${NC}"
+    fi
+
+    say ""
+    say "================================================================="
+    if [ "$DOCTOR_FAILED" -eq 0 ]; then
+      say "${GREEN}${BOLD}✅ Diagnóstico completado sin errores. El proyecto está listo y sano.${NC}"
+      exit 0
+    else
+      die "El diagnóstico encontró problemas que deben corregirse (ver detalle arriba)."
+    fi
+    ;;
+
+  diff)
+    in_git || die "No se detectó un repositorio Git en $PROJECT_ROOT."
+    shift # descartar 'diff'
+    STAT_ONLY=0
+    TARGET_TASK=""
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --stat) STAT_ONLY=1; shift ;;
+        --stat=*) STAT_ONLY=1; shift ;;
+        *) TARGET_TASK="$1"; shift ;;
+      esac
+    done
+
+    BASE_REF="main"
+    git -C "$PROJECT_ROOT" rev-parse --verify main >/dev/null 2>&1 || BASE_REF="master"
+
+    BRANCH=""
+    TASK_LABEL=""
+    if [ -n "$TARGET_TASK" ]; then
+      TASK_ID=$(normalize_id "$TARGET_TASK")
+      TASK_LABEL="$TASK_ID"
+      BRANCH=$(git -C "$PROJECT_ROOT" for-each-ref --format='%(refname:short)' refs/heads/ | grep -E "^(feature|fix|refactor)/${TASK_ID}(-[^/]+)?$" | head -n 1 || true)
+      if [ -z "$BRANCH" ]; then
+        CUR=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+        if [[ "$CUR" =~ ^(feature|fix|refactor)/${TASK_ID} ]]; then
+          BRANCH="$CUR"
+        fi
+      fi
+      if [ -z "$BRANCH" ]; then
+        die "No se encontró una rama Git para la tarea '$TASK_ID'."
+      fi
+    else
+      CUR=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+      if [ "$CUR" = "main" ] || [ "$CUR" = "master" ] || [ "$CUR" = "HEAD" ] || [ -z "$CUR" ]; then
+        IN_PROG=$(board_rows | awk -F'|' '{ id=$2; st=$5; gsub(/[ \t`]/,"",id); gsub(/[ \t`]/,"",st); if (st=="IN_PROGRESS") { print id; exit } }')
+        if [ -n "$IN_PROG" ]; then
+          TASK_LABEL="$IN_PROG"
+          BRANCH=$(git -C "$PROJECT_ROOT" for-each-ref --format='%(refname:short)' refs/heads/ | grep -E "^(feature|fix|refactor)/${IN_PROG}(-[^/]+)?$" | head -n 1 || true)
+        fi
+        if [ -z "$BRANCH" ]; then
+          die "Uso: ./task.sh diff [TASK-ID] [--stat]. No estás en una rama de tarea ni hay una tarea IN_PROGRESS con rama local."
+        fi
+      else
+        BRANCH="$CUR"
+        TASK_LABEL=$(printf '%s' "$BRANCH" | grep -oE 'TASK-[0-9]+' || echo "$BRANCH")
+      fi
+    fi
+
+    MERGE_BASE=$(git -C "$PROJECT_ROOT" merge-base "$BASE_REF" "$BRANCH" 2>/dev/null || true)
+    [ -n "$MERGE_BASE" ] || die "No se pudo determinar el punto de divergencia (merge-base) entre '$BASE_REF' y '$BRANCH'."
+
+    CUR_BRANCH=$(git -C "$PROJECT_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+    DIFF_TARGET="$MERGE_BASE..$BRANCH"
+    if [ "$CUR_BRANCH" = "$BRANCH" ]; then
+      DIFF_TARGET="$MERGE_BASE"
+    fi
+
+    # Comprobar si hay cambios
+    if git -C "$PROJECT_ROOT" diff --quiet "$DIFF_TARGET"; then
+      say "No hay cambios en '$BRANCH' respecto a '$BASE_REF' ($MERGE_BASE)."
+      exit 0
+    fi
+
+    say "${BLUE}${BOLD}=== Diff de $TASK_LABEL ($BRANCH vs $BASE_REF) ===${NC}"
+    git -C "$PROJECT_ROOT" -c core.quotePath=false diff --stat "$DIFF_TARGET"
+    if [ "$STAT_ONLY" -eq 0 ]; then
+      say ""
+      git -C "$PROJECT_ROOT" -c core.quotePath=false diff "$DIFF_TARGET"
+    fi
+    ;;
+
   commit)
     [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh commit TASK-001 \"descripción\" [feat|fix|test|refactor|docs|perf|chore|style|build|ci] [--trailer \"Clave: valor\"]..."
     TASK_ID=$(normalize_id "$2")
@@ -1094,6 +1251,8 @@ EOF_ARCH
 =================================================================
   list                                   Ver el tablero
   metrics                                Progreso y salud de QA
+  doctor                                 Diagnóstico integral (estado, cerebro, secretos y skills)
+  diff [TASK-ID] [--stat]                Diff y estadísticas de la tarea frente a main
   add "<desc>" "<agente>" "<criterios>"  Crear tarea (TODO)
   start TASK-ID                          TODO/rechazada -> IN_PROGRESS + rama Git
   handoff TASK-ID [revisor] [--verify "cmd"]...  IN_PROGRESS -> IN_REVIEW_QA + JSON + historial

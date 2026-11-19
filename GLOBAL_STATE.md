@@ -10,7 +10,7 @@
 - **Descripción**: `Framework y catálogo multi-agente para Claude Code y Antigravity: directrices de gobernanza, roles especializados, scripts de ciclo de vida de tareas y batería de evals.`
 - **Estado Actual**: `IN_PROGRESS`
 - **Fase Actual**: `FASE 3: Expansión de Stacks Tecnológicos (stack-*)`
-- **Última Actualización**: `2026-11-18`
+- **Última Actualización**: `2026-11-19`
 - **Iteraciones Críticas Acumuladas**: `0 / 3`
 
 ---
@@ -64,6 +64,10 @@
 | `TASK-055` | Skill stack-react-vite-node (React 19 + Vite + Tailwind + Node/Express + PostgreSQL) | docs-architecture-agent | `DONE` | `0/3` | Skill en .agents/skills/stack-react-vite-node/ con SKILL.md y references/ (spa-architecture, tanstack-query-state); convenciones de SPA, bundles con Vite y JWT HTTP-only; test-skills.sh y linters en verde |
 | `TASK-056` | Skill stack-nestjs-postgres (NestJS modular enterprise backend + Prisma/TypeORM) | docs-architecture-agent | `DONE` | `0/3` | Skill en .agents/skills/stack-nestjs-postgres/ con SKILL.md y references/ (modular-architecture, guards-and-interceptors); convenciones de DTOs, OpenAPI y transacciones; test-skills.sh y linters en verde |
 | `TASK-057` | Soporte de nuevos stacks en init-project.sh, AGENTS.md y bateria de triggers | devops-cloud-agent | `DONE` | `0/3` | init-project.sh admite --stack nuxt, react-vite y nestjs; AGENTS.md §8 mapea sus rutas; >=2 casos por stack en cases.json y lint_descriptions.py sin problemas; test-scripts.sh al 100% |
+| `TASK-058` | Nuevas herramientas en task.sh: task.sh doctor unificado y task.sh diff | devops-cloud-agent | `IN_PROGRESS` | `0/3` | task.sh doctor ejecuta validate-state.sh, task.sh brain doctor, scan-secrets.sh y test-skills.sh con salida semaforica y exit 0/1; task.sh diff [TASK-XXX] muestra estadisticas y diff contra main/merge-base; documentados en task.sh help, AGENTS.md y QUICKSTART.md; tests en test-scripts.sh al 100% |
+| `TASK-059` | Nuevas evals deterministas para research-agent, crear-plan y adoptar-proyecto | qa-security-agent | `TODO` | `0/3` | 3 fixtures en tests/evals/fixtures/ (research.sh, plan.sh, adopt.sh) con permisos 755; 3 evals nuevas en evals.json (18 totales); run_evals.py --verify-baselines verifica FAIL_INIT sin LLM y paso con referencia; test-scripts.sh exige >=18 evals; suite al 100% |
+| `TASK-060` | Sincronizacion documental post-Fase 3: catalogo a 41 skills y 6 stacks en README y QUICKSTART | docs-architecture-agent | `TODO` | `0/3` | README.md actualizado a 41 skills y lista los 6 stacks; QUICKSTART.md s2.3 incluye la tabla completa de los 6 stacks; system_map.md sincronizado; test-skills.sh y lint_descriptions.py sin errores; suite al 100% |
+| `TASK-061` | Recetas tecnicas en references/ para Nuxt, React-Vite y NestJS en las 4 skills de tecnica | docs-architecture-agent | `TODO` | `0/3` | Recetas en references/ para nuxt, react-vite y nestjs en payments-stripe, seo-web, web-performance e i18n; probadas contra convenciones de stack; test-skills.sh y lint_descriptions.py sin errores; suite al 100% |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
