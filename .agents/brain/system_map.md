@@ -24,12 +24,12 @@ flowchart TD
 ## 2. Mapa de Componentes y Directorios Clave
 
 - **Catálogo de Skills (`.agents/skills/`)**:
-  - Contiene las 38 skills estándar de roles especializados (`orchestrator-agent`, `research-agent`, `backend-agent`, `frontend-agent`, `qa-security-agent`, etc.), flujos (`iniciar-proyecto`, `adoptar-proyecto`, `crear-plan`, `nueva-tarea`, `pr-review`, `handoff`, `qa-review`, `bugfix`, `refactor`, `cerrar-fase`, `release`, `aprender`, `estado`), stacks (`stack-*`) y técnicas (`testing-strategy`, `e2e-testing`, `async-jobs`, `payments-stripe`, `seo-web`, `web-performance`, `i18n`, `security-hardening`, `observability`).
+  - Contiene las 41 skills estándar de roles especializados (`orchestrator-agent`, `research-agent`, `backend-agent`, `frontend-agent`, `qa-security-agent`, etc.), flujos (`iniciar-proyecto`, `adoptar-proyecto`, `crear-plan`, `nueva-tarea`, `pr-review`, `handoff`, `qa-review`, `bugfix`, `refactor`, `cerrar-fase`, `release`, `aprender`, `estado`), 6 stacks (`stack-angular-express-postgres`, `stack-nextjs-tailwind-prisma`, `stack-fastapi-postgres`, `stack-vue-nuxt-postgres`, `stack-react-vite-node`, `stack-nestjs-postgres`) y técnicas (`testing-strategy`, `e2e-testing`, `async-jobs`, `payments-stripe`, `seo-web`, `web-performance`, `i18n`, `security-hardening`, `observability`).
   - Cada skill contiene frontmatter con nombre y descripción con límites negativos, protocolo paso a paso, checklist interactivo y sección `Prohibido`.
 - **Scripts de Automatización (`.agents/scripts/`)**:
-  - `task.sh`: CLI central de ciclo de vida (`add`, `start`, `handoff`, `reject`, `close`, `archive`, `move`, `learn`, `lesson-retire`, `debt`, `debt-resolve`, `list`, `metrics`, `commit`).
+  - `task.sh`: CLI central de ciclo de vida (`add`, `start`, `handoff`, `reject`, `close`, `archive`, `move`, `learn`, `lesson-retire`, `debt`, `debt-resolve`, `list`, `metrics`, `doctor`, `diff`, `commit`).
   - `brain-lib.sh`: Biblioteca del cerebro que carga `task.sh`: lecciones en fuente única (`lessons_learned.md`), sincronización de `BRAIN.md`, relevancia por ámbito/categoría/palabras y búsqueda (`task.sh brain sync|search|for|scope`).
-  - `init-project.sh`: Inicializador de proyectos nuevos, adopción brownfield (`--adopt`) y configuración de stack (`--stack nextjs|angular|fastapi`, `--ci`, `--update`).
+  - `init-project.sh`: Inicializador de proyectos nuevos, adopción brownfield (`--adopt`) y configuración de stack (`--stack nextjs|angular|fastapi|nuxt|react-vite|nestjs`, `--ci`, `--update`).
   - `install-hooks.sh`: Instalador de Git hooks locales (`commit-msg` y `pre-commit`, con `--preserve-existing` para proyectos heredados).
   - `scan-secrets.sh`: Escáner de secretos y claves criptográficas (`--staged`, `--branch`, `--all`).
   - `require-active-task.sh`: Hook de Claude Code (`.claude/settings.json`) que impone "Cero Código sin Tarea".
