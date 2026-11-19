@@ -866,7 +866,7 @@ EOF_ARCH
     DOCTOR_FAILED=0
 
     # 1. Validación de estado global y tablero
-    say "${BOLD}[1/4] Estado Global (validate-state.sh)...${NC}"
+    say "${BOLD}[1/5] Estado Global (validate-state.sh)...${NC}"
     VALIDATE_SCRIPT="$SCRIPT_DIR/validate-state.sh"
     [ -f "$VALIDATE_SCRIPT" ] || VALIDATE_SCRIPT="$PROJECT_ROOT/.agents/scripts/validate-state.sh"
     if [ -f "$VALIDATE_SCRIPT" ]; then
@@ -882,7 +882,7 @@ EOF_ARCH
     fi
 
     # 2. Salud del cerebro (lecciones, sincronía y deuda)
-    say "${BOLD}[2/4] Salud del Cerebro (task.sh brain doctor)...${NC}"
+    say "${BOLD}[2/5] Salud del Cerebro (task.sh brain doctor)...${NC}"
     DOC_RC=0
     DOC_OUT=$(brain_doctor 2>&1) || DOC_RC=1
     if [ "$DOC_RC" -eq 0 ]; then
@@ -896,8 +896,20 @@ EOF_ARCH
       DOCTOR_FAILED=1
     fi
 
-    # 3. Escaneo de secretos expuestos
-    say "${BOLD}[3/4] Escaneo de Secretos (scan-secrets.sh)...${NC}"
+    # 3. Linter activo de antipatrones históricos
+    say "${BOLD}[3/5] Linter de Antipatrones del Cerebro (task.sh brain lint)...${NC}"
+    LINT_RC=0
+    LINT_OUT=$(brain_lint 2>&1) || LINT_RC=1
+    if [ "$LINT_RC" -eq 0 ]; then
+      say "  ${GREEN}✅ 0 violaciones de antipatrones aprendidos${NC}"
+    else
+      say "  ${RED}❌ Violaciones de antipatrones detectadas:${NC}"
+      printf '%s\n' "$LINT_OUT" | sed 's/^/     /'
+      DOCTOR_FAILED=1
+    fi
+
+    # 4. Escaneo de secretos expuestos
+    say "${BOLD}[4/5] Escaneo de Secretos (scan-secrets.sh)...${NC}"
     SCAN_SCRIPT="$SCRIPT_DIR/scan-secrets.sh"
     [ -f "$SCAN_SCRIPT" ] || SCAN_SCRIPT="$PROJECT_ROOT/.agents/scripts/scan-secrets.sh"
     if [ -f "$SCAN_SCRIPT" ]; then
@@ -916,8 +928,8 @@ EOF_ARCH
       say "  ${YELLOW}⚠️  scan-secrets.sh no encontrado en $SCAN_SCRIPT${NC}"
     fi
 
-    # 4. Estructura y calidad de skills
-    say "${BOLD}[4/4] Estructura de Skills (test-skills.sh)...${NC}"
+    # 5. Estructura y calidad de skills
+    say "${BOLD}[5/5] Estructura de Skills (test-skills.sh)...${NC}"
     SKILLS_SCRIPT="$PROJECT_ROOT/tests/test-skills.sh"
     [ -f "$SKILLS_SCRIPT" ] || SKILLS_SCRIPT="$PARENT_ROOT/tests/test-skills.sh"
     if [ -f "$SKILLS_SCRIPT" ]; then
@@ -1251,8 +1263,12 @@ EOF_ARCH
       hotspots)
         brain_hotspots
         ;;
+      lint)
+        shift 2
+        brain_lint "$@"
+        ;;
       *)
-        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\" | doctor | stats | hotspots>"
+        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\" | doctor | stats | hotspots | lint [ruta...]>"
         ;;
     esac
     ;;
@@ -1303,6 +1319,7 @@ EOF_ARCH
   brain doctor                           Valida el cerebro (columnas, IDs duplicados, estados, sincronía)
   brain stats                            Lecciones por categoría, reincidencias y deuda
   brain hotspots                         Identifica hotspots de riesgo según lecciones y reincidencias
+  brain lint [ruta...]                   Audita activamente antipatrones aprendidos en el código
   prefer "<categoría>" "<regla>"         Registra una preferencia en .agents/brain/preferences.md
   debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
   lesson-retire LL-ID                    Marca una lección como OBSOLETA

@@ -105,7 +105,8 @@ cleanup_seen_lock() {
   fi
 }
 trap 'cleanup_seen_lock' EXIT
-trap 'cleanup_seen_lock; exit 0' INT TERM
+trap 'cleanup_seen_lock; exit 130' INT
+trap 'cleanup_seen_lock; exit 143' TERM
 
 if [ -n "$SEEN_LOCK" ]; then
   tries=0
