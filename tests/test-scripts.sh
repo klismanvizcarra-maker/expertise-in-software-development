@@ -1086,5 +1086,50 @@ check "task.sh diff TASK-ID desde main muestra los cambios de esa rama" 'OUT=$($
 check "task.sh diff TASK-999 inexistente falla con exit 1" '! $T diff TASK-999 >/dev/null 2>&1'
 cd "$WORK" || exit 1
 
+# ------------------------------------------------------------------------------
+section "evolución del cerebro: alertas de reincidencia, hotspots, prefer, stack filter y brain lint"
+new_project brain_evol
+
+# 1. Alertas visuales de reincidencia
+$T add "Probar parser" backend-agent "criterios" >/dev/null
+$T start TASK-001 >/dev/null
+$T learn "Fallo recurrente en parseo" TESTING "Parser antiguo" "Usar parser nuevo" --paths "src/parser/*.ts" >/dev/null
+LL_REC_ID="$(grep -oE "LL-[0-9]+" .agents/brain/lessons_learned.md | tail -1)"
+printf "| \`2026-11-19\` | \`TASK-001\` | %s | Fallo recurrente en parseo |\n" "$LL_REC_ID" >> .agents/brain/recurrences.md
+check "task.sh brain for muestra ALERTA CRITICA y reincidencias históricas" 'OUT=$($T brain for TASK-001 src/parser/index.ts); printf "%s" "$OUT" | grep -q "ALERTA CRÍTICA" && printf "%s" "$OUT" | grep -q "reincidencias históricas"'
+check "task.sh check muestra ALERTA CRITICA y REINCIDENTE x1 ante ruta reincidente" 'OUT=$($T check src/parser/index.ts); printf "%s" "$OUT" | grep -q "ALERTA CRÍTICA" && printf "%s" "$OUT" | grep -q "REINCIDENTE x1"'
+
+# 2. task.sh brain hotspots
+check "task.sh brain hotspots calcula el ranking de riesgo y sale con 0" 'OUT=$($T brain hotspots); [ $? -eq 0 ] && printf "%s" "$OUT" | grep -q "Hotspots de Riesgo" && printf "%s" "$OUT" | grep -q "src/parser/\*\.ts"'
+
+# 3. task.sh prefer
+check "task.sh prefer registra una regla en preferences.md" '$T prefer "Estilo de Código" "Usar const en vez de let si no se reasigna" >/dev/null && grep -q "Usar const en vez de let" .agents/brain/preferences.md'
+check "task.sh prefer es idempotente y no duplica la regla existente" 'OUT=$($T prefer "Estilo de Código" "Usar const en vez de let si no se reasigna"); printf "%s" "$OUT" | grep -q "ya está registrada" && [ $(grep -c "Usar const en vez de let" .agents/brain/preferences.md) -eq 1 ]'
+check "task.sh prefer crea una categoria nueva si no existe" '$T prefer "Seguridad Web" "Configurar cabeceras CSP estrictas" >/dev/null && grep -qE "## .*Seguridad Web" .agents/brain/preferences.md'
+
+# 4. Filtrado de lecciones por stack
+$T learn "Quirk específico de FastAPI" "BACKEND:fastapi" "Pydantic v2" "Usar model_dump" --paths "app/*.py" >/dev/null
+LL_FASTAPI_ID="$(grep -oE "LL-[0-9]+" .agents/brain/lessons_learned.md | tail -1)"
+check "lección con etiqueta :fastapi no aparece si MAESTRO_STACK es angular-express" 'OUT=$(MAESTRO_STACK=angular-express $T brain for TASK-001 app/main.py); ! printf "%s" "$OUT" | grep -q "$LL_FASTAPI_ID"'
+check "lección con etiqueta :fastapi aparece si MAESTRO_STACK es fastapi" 'OUT=$(MAESTRO_STACK=fastapi $T brain for TASK-001 app/main.py); printf "%s" "$OUT" | grep -q "$LL_FASTAPI_ID"'
+
+# 5. task.sh brain lint
+printf '#!/usr/bin/env bash\nawk -v x=1 "{ print \\\s }" test.txt\n' > bad_awk.sh
+check "task.sh brain lint detecta antipatrón LL-001 (\\s en awk) y sale con 1" '! $T brain lint bad_awk.sh >/dev/null 2>&1'
+check "task.sh brain lint muestra el antídoto de LL-001" 'OUT=$($T brain lint bad_awk.sh 2>&1 || true); printf "%s" "$OUT" | grep -q "LL-001" && printf "%s" "$OUT" | grep -q "Antídoto"'
+printf '#!/usr/bin/env bash\nsed "y/á/a/" test.txt\n' > bad_sed.sh
+check "task.sh brain lint detecta antipatrón LL-007 (sed y///) y sale con 1" '! $T brain lint bad_sed.sh >/dev/null 2>&1'
+printf '#!/usr/bin/env bash\nawk "{ print \$1 }" test.txt\n' > clean.sh
+check "task.sh brain lint sale con 0 en script sin antipatrones" '$T brain lint clean.sh >/dev/null'
+rm -f bad_awk.sh bad_sed.sh clean.sh
+
+# 6. task.sh doctor con linter integrado
+check "task.sh doctor incluye el paso de brain lint y completa los 5 pasos" 'OUT=$($T doctor); [ $? -eq 0 ] && printf "%s" "$OUT" | grep -q "\[3/5\] Linter de Antipatrones" && printf "%s" "$OUT" | grep -q "\[5/5\]"'
+printf '#!/usr/bin/env bash\nawk -v x=1 "{ print \\\s }" test.txt\n' > bad_in_repo.sh
+check "task.sh doctor falla (exit 1) si hay antipatrón detectado por brain lint" '! $T doctor >/dev/null 2>&1'
+rm -f bad_in_repo.sh
+
+cd "$WORK" || exit 1
+
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ]
