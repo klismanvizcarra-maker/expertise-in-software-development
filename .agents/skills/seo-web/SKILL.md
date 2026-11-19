@@ -12,6 +12,9 @@ Carga la referencia que corresponda al stack del proyecto (`GLOBAL_STATE.md` §2
 - **Angular + Express (`@angular/ssr`)**: [references/angular-express.md](references/angular-express.md)
 - **Next.js (App Router)**: [references/nextjs.md](references/nextjs.md)
 - **FastAPI (API + Jinja2/TrustedHost)**: [references/fastapi.md](references/fastapi.md)
+- **Vue + Nuxt (SSR + Nitro)**: [references/nuxt.md](references/nuxt.md)
+- **React + Vite (SPA + Prerender)**: [references/react-vite.md](references/react-vite.md)
+- **NestJS (API Headers + Robots)**: [references/nestjs.md](references/nestjs.md)
 - **Otro stack**: aplica este protocolo agnóstico y registra los detalles de SSR/metadatos en un ADR (`docs-architecture-agent`).
 
 ## Protocolo

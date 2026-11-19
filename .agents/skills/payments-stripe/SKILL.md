@@ -12,6 +12,9 @@ Carga la referencia que corresponda al stack del proyecto (`GLOBAL_STATE.md` §2
 - **Angular + Express + Drizzle**: [references/angular-express.md](references/angular-express.md)
 - **Next.js + Prisma**: [references/nextjs.md](references/nextjs.md)
 - **FastAPI + SQLAlchemy 2**: [references/fastapi.md](references/fastapi.md)
+- **Vue + Nuxt + Drizzle**: [references/nuxt.md](references/nuxt.md)
+- **React + Vite + Node**: [references/react-vite.md](references/react-vite.md)
+- **NestJS + Prisma/TypeORM**: [references/nestjs.md](references/nestjs.md)
 - **Otro stack**: aplica este protocolo agnóstico y registra los detalles concretos en un ADR (`docs-architecture-agent`).
 
 ## Protocolo
