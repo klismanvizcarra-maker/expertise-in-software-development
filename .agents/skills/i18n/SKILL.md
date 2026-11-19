@@ -12,6 +12,9 @@ Carga la referencia que corresponda al stack del proyecto (`GLOBAL_STATE.md` §2
 - **Angular + Express**: [references/angular-express.md](references/angular-express.md) (`@angular/localize`, `.xlf` y extracción en build)
 - **Next.js + Prisma**: [references/nextjs.md](references/nextjs.md) (rutas `[locale]`, catálogos JSON en servidor y `Intl`)
 - **FastAPI + PostgreSQL**: [references/fastapi.md](references/fastapi.md) (códigos de error, `Accept-Language`, perfil de usuario y correos localizados)
+- **Vue + Nuxt + Drizzle**: [references/nuxt.md](references/nuxt.md) (`@nuxtjs/i18n`, rutas prefijadas y catálogos JSON lazy)
+- **React + Vite + Node**: [references/react-vite.md](references/react-vite.md) (`i18next`, carga asíncrona de namespaces y errores semánticos)
+- **NestJS + PostgreSQL**: [references/nestjs.md](references/nestjs.md) (`nestjs-i18n`, resolución por cabecera y filtros globales)
 - **Otro stack**: aplica este protocolo agnóstico y registra la elección de librería en un ADR (`docs-architecture-agent`).
 
 ## Protocolo

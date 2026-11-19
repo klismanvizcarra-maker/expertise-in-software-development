@@ -1,0 +1,32 @@
+{
+  "task_id": "TASK-061",
+  "summary": "Recetas tecnicas en references/ para Nuxt, React-Vite y NestJS en las 4 skills de tecnica",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-19T15:19:30Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/i18n/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/i18n/references/nestjs.md" },
+    { "type": "file", "path": ".agents/skills/i18n/references/nuxt.md" },
+    { "type": "file", "path": ".agents/skills/i18n/references/react-vite.md" },
+    { "type": "file", "path": ".agents/skills/payments-stripe/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/payments-stripe/references/nestjs.md" },
+    { "type": "file", "path": ".agents/skills/payments-stripe/references/nuxt.md" },
+    { "type": "file", "path": ".agents/skills/payments-stripe/references/react-vite.md" },
+    { "type": "file", "path": ".agents/skills/seo-web/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/seo-web/references/nestjs.md" },
+    { "type": "file", "path": ".agents/skills/seo-web/references/nuxt.md" },
+    { "type": "file", "path": ".agents/skills/seo-web/references/react-vite.md" },
+    { "type": "file", "path": ".agents/skills/web-performance/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/web-performance/references/nestjs.md" },
+    { "type": "file", "path": ".agents/skills/web-performance/references/nuxt.md" },
+    { "type": "file", "path": ".agents/skills/web-performance/references/react-vite.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
