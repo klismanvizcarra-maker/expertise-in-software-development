@@ -402,7 +402,16 @@ case "$COMMAND" in
       REL="$REL" LESSONS="$LESSONS" awk '
         BEGIN {
           nr = split(ENVIRON["REL"], r, "\n"); shown = 0
-          for (i = 1; i <= nr; i++) if (r[i] != "") { split(r[i], f, "\t"); seen[f[1]] = 1; printf "     %s  [%s] %s  (%s)\n", f[1], f[2], substr(f[3], 1, 90), f[4]; shown++ }
+          for (i = 1; i <= nr; i++) if (r[i] != "") {
+            split(r[i], f, "\t"); seen[f[1]] = 1
+            rc = (length(f) >= 6) ? f[6] + 0 : 0
+            if (rc > 0) {
+              printf "  ⚠️  ALERTA CRÍTICA: %s [%s] (🚨 REINCIDENTE x%d) %s  (%s)\n", f[1], f[2], rc, substr(f[3], 1, 80), f[4]
+            } else {
+              printf "     %s  [%s] %s  (%s)\n", f[1], f[2], substr(f[3], 1, 90), f[4]
+            }
+            shown++
+          }
           nl = split(ENVIRON["LESSONS"], l, "\n"); rest = 5 - shown; if (rest < 0) rest = 0
           others = 0; for (i = 1; i <= nl; i++) { split(l[i], f, "\t"); if (l[i] != "" && !(f[1] in seen)) others++ }
           skip = others - rest; k = 0
@@ -1152,6 +1161,11 @@ EOF_ARCH
     say "${YELLOW}🗄  Lección retirada:${NC} $LL_ID marcada como OBSOLETA (ya no cuenta como antídoto vigente)."
     ;;
 
+  prefer)
+    [ "$#" -ge 3 ] || die "Uso: ./task.sh prefer \"<categoría>\" \"<regla>\""
+    brain_prefer "$2" "$3"
+    ;;
+
   brain)
     SUB="${2:-}"
     case "$SUB" in
@@ -1202,7 +1216,14 @@ EOF_ARCH
         REL=$(relevant_lessons "$(agent_category "$AGENT")" "$(task_field "$TASK_ID" 3) $(task_field "$TASK_ID" 7)" "$PATHS")
         say "🧠 Cerebro para $TASK_ID ($AGENT):"
         if [ -n "$REL" ]; then
-          printf '%s\n' "$REL" | awk -F'\t' '{ printf "  %s [%s] %s\n     ↳ %s\n     (motivo: %s)\n", $1, $2, $3, $5, $4 }'
+          printf '%s\n' "$REL" | awk -F'\t' '{
+            rc = ($6 != "") ? $6 + 0 : 0
+            if (rc > 0) {
+              printf "  ⚠️  %s [%s] (🚨 ALERTA CRÍTICA: %d reincidencias históricas) %s\n     ↳ Antídoto: %s\n     (motivo: %s)\n", $1, $2, rc, $3, $5, $4
+            } else {
+              printf "  %s [%s] %s\n     ↳ Antídoto: %s\n     (motivo: %s)\n", $1, $2, $3, $5, $4
+            }
+          }'
         else
           say "  Sin lecciones específicas para esta tarea."
         fi
@@ -1227,8 +1248,11 @@ EOF_ARCH
         say "🧠 Estado del cerebro:"
         brain_stats
         ;;
+      hotspots)
+        brain_hotspots
+        ;;
       *)
-        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\" | doctor | stats>"
+        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\" | doctor | stats | hotspots>"
         ;;
     esac
     ;;
@@ -1278,6 +1302,8 @@ EOF_ARCH
   brain sync                             Regenera la tabla de BRAIN.md desde lessons_learned.md
   brain doctor                           Valida el cerebro (columnas, IDs duplicados, estados, sincronía)
   brain stats                            Lecciones por categoría, reincidencias y deuda
+  brain hotspots                         Identifica hotspots de riesgo según lecciones y reincidencias
+  prefer "<categoría>" "<regla>"         Registra una preferencia en .agents/brain/preferences.md
   debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
   lesson-retire LL-ID                    Marca una lección como OBSOLETA
 =================================================================

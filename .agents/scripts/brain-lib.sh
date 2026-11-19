@@ -301,17 +301,40 @@ similar_lesson() {
   '
 }
 
-# Lecciones activas relevantes, como "LL-NNN<TAB>CAT<TAB>problema<TAB>motivo<TAB>solución".
+# Detecta el stack activo del proyecto según GLOBAL_STATE.md §2 o variable MAESTRO_STACK
+project_stack() {
+  if [ -n "${MAESTRO_STACK:-}" ]; then
+    printf '%s' "$MAESTRO_STACK"
+    return 0
+  fi
+  [ -f "$STATE_FILE" ] || return 0
+  local sline
+  sline=$(grep -iE "Stack / Tecnolog|stack-(angular|nextjs|fastapi|nuxt|react-vite|nestjs)" "$STATE_FILE" 2>/dev/null | head -1)
+  sline=$(printf '%s' "$sline" | norm_text)
+  case "$sline" in
+    *nuxt*)                          echo nuxt ;;
+    *react-vite*|*react*vite*)       echo react-vite ;;
+    *nestjs*)                        echo nestjs ;;
+    *nextjs*|*next*)                 echo nextjs ;;
+    *fastapi*)                       echo fastapi ;;
+    *angular*)                       echo angular ;;
+    *)                               echo "" ;;
+  esac
+}
+
+# Lecciones activas relevantes, como "LL-NNN<TAB>CAT<TAB>problema<TAB>motivo<TAB>solución<TAB>reincidencias".
 #   $1 = categoría (puede ir vacía)   $2 = texto de la tarea (descripción + criterios)
 #   $3 = rutas, una por línea (pueden ir vacías)
 # Motivos, por prioridad: el ámbito de la lección cubre una ruta; es de la categoría del
 # agente; comparte 2 o más palabras significativas (5+ letras) con la tarea.
 relevant_lessons() {
-  local lessons norm
+  local lessons norm recs stk
   lessons=$(active_lessons)
   [ -n "$lessons" ] || return 0
   norm=$(printf '%s\n' "$lessons" | norm_text)
-  LESSONS="$lessons" NORM="$norm" CAT="$1" PATHS="$3" \
+  recs=$(all_recurrences)
+  stk=$(project_stack)
+  LESSONS="$lessons" NORM="$norm" RECS="$recs" CURR_STACK="$stk" CAT="$1" PATHS="$3" \
   TASKTXT="$(printf '%s\n' "$2" | norm_text)" awk '
     function words(str, arr,    n, i, w, parts, c) {
       gsub(/[^a-z0-9]+/, " ", str); n = split(str, parts, " "); c = 0
@@ -342,21 +365,38 @@ relevant_lessons() {
     BEGIN {
       nl = split(ENVIRON["LESSONS"], raw, "\n"); split(ENVIRON["NORM"], nrm, "\n")
       np = split(ENVIRON["PATHS"], paths, "\n"); cat = ENVIRON["CAT"]
+      cur_stk = tolower(ENVIRON["CURR_STACK"])
+      nr = split(ENVIRON["RECS"], rlines, "\n")
+      for (r = 1; r <= nr; r++) {
+        if (rlines[r] == "") continue
+        split(rlines[r], rf, "\t")
+        reccount[rf[1]]++
+      }
       words(ENVIRON["TASKTXT"], tw)
       for (k = 1; k <= nl; k++) {
         if (raw[k] == "") continue
         split(raw[k], f, "\t"); split(nrm[k], g, "\t")
+
+        # Filtro de stack si la categoría incluye etiqueta :stack (ej. BACKEND:fastapi)
+        stk_tag = ""
+        if (index(f[2], ":") > 0) {
+          split(f[2], cparts, ":")
+          stk_tag = tolower(cparts[2]); gsub(/[^a-z0-9_-]/, "", stk_tag)
+        }
+        if (stk_tag != "" && cur_stk != "" && stk_tag != cur_stk) continue
+
         reason = ""
         hit = scope_hit(f[4])
         if (hit != "") reason = "ámbito " hit
-        else if (cat != "" && f[2] == cat) reason = "categoría " cat
+        else if (cat != "" && (f[2] == cat || f[2] ~ ("^" cat ":"))) reason = "categoría " cat
         else {
           for (w in ow) delete ow[w]
           words(g[3] " " g[5], ow); c = 0
           for (w in tw) if (w in ow) c++
           if (c >= 2) reason = "palabras en común con la tarea"
         }
-        if (reason != "") print f[1] "\t" f[2] "\t" f[3] "\t" reason "\t" f[5]
+        rc = (f[1] in reccount) ? reccount[f[1]] : 0
+        if (reason != "") print f[1] "\t" f[2] "\t" f[3] "\t" reason "\t" f[5] "\t" rc
       }
     }
   '
@@ -577,4 +617,110 @@ brain_stats() {
     awk -F'|' '/^\|/ { id = $2; gsub(/[ \t`]/, "", id); if (id ~ /^TD-[0-9]+$/) { p = $(NF-1); gsub(/[ \t`]/, "", p); if (p == "SALDADA") paid++; else { pend++; if (p == "ALTA") high++ } } }
       END { printf "Deuda técnica: %d pendiente (%d de prioridad ALTA), %d saldada\n", pend, high, paid }' "$DEBT_FILE"
   fi
+}
+
+# Identifica los hotspots de riesgo (rutas con mayor concentración de lecciones y reincidencias)
+brain_hotspots() {
+  local lessons recs
+  lessons=$(active_lessons)
+  recs=$(all_recurrences)
+  [ -n "$lessons" ] || { printf '%s\n' "No hay lecciones activas."; return 0; }
+  LESSONS="$lessons" RECS="$recs" awk '
+    BEGIN {
+      split(ENVIRON["RECS"], rlines, "\n")
+      for (i in rlines) {
+        if (rlines[i] == "") continue
+        split(rlines[i], rf, "\t")
+        reccount[rf[1]]++
+      }
+      nl = split(ENVIRON["LESSONS"], llines, "\n")
+      for (k = 1; k <= nl; k++) {
+        if (llines[k] == "") continue
+        split(llines[k], lf, "\t")
+        id = lf[1]; scope = lf[4]
+        if (scope == "" || scope == "*") continue
+        nparts = split(scope, parts, ",")
+        rc = (id in reccount) ? reccount[id] : 0
+        for (p = 1; p <= nparts; p++) {
+          gl = parts[p]; gsub(/^[ \t`]+|[ \t`]+$/, "", gl)
+          if (gl == "" || gl == "*") continue
+          globs[gl]++
+          recs_by_glob[gl] += rc
+        }
+      }
+      for (g in globs) {
+        score = (globs[g] * 2) + (recs_by_glob[g] * 3)
+        printf "%d\t%s\t%d\t%d\n", score, g, globs[g], recs_by_glob[g]
+      }
+    }
+  ' | sort -rn -k1,1 | head -10 | awk -F'\t' '
+    BEGIN { printf "🔥 Hotspots de Riesgo del Código (rutas con mayor concentración de lecciones):\n" }
+    {
+      score = $1; path = $2; count = $3; recs = $4
+      level = "[MEDIO]"
+      if (score >= 12 || recs >= 2) level = "[RIESGO CRÍTICO]"
+      else if (score >= 6 || recs >= 1) level = "[RIESGO ALTO]"
+      printf "  %2d. %-35s · %d lecciones · %d reincidencias  %s\n", NR, path, count, recs, level
+    }
+    END {
+      if (NR == 0) printf "  Sin hotspots de riesgo definidos en ámbitos.\n"
+    }
+  '
+}
+
+# Registra una preferencia del desarrollador en .agents/brain/preferences.md
+brain_prefer() {
+  local cat="$1" rule="$2"
+  [ -n "$cat" ] && [ -n "$rule" ] || die "Uso: task.sh prefer \"<categoría>\" \"<regla>\""
+  local pref_file="$(dirname "$LL_FILE")/preferences.md"
+  local tpl="$(dirname "$LL_FILE")/../templates/preferences_template.md"
+  if [ ! -f "$pref_file" ]; then
+    mkdir -p "$(dirname "$pref_file")"
+    if [ -f "$tpl" ]; then
+      cp "$tpl" "$pref_file"
+    else
+      printf '%s\n\n' '# Preferencias del Desarrollador y Convenciones del Proyecto (Preferences)' > "$pref_file"
+    fi
+  fi
+  # Comprobar si la regla ya existe (mismo texto normalizado)
+  local r_norm
+  r_norm=$(printf '%s\n' "$rule" | norm_text)
+  if norm_text < "$pref_file" | grep -Fq "$r_norm"; then
+    say "ℹ️  La preferencia ya está registrada en preferences.md."
+    return 0
+  fi
+  # Añadir bajo la categoría o crear la sección correspondiente
+  local tmp; tmp=$(mktemp)
+  python3 - "$pref_file" "$tmp" "$cat" "$rule" <<'PY'
+import sys, re, pathlib
+
+pref_path = pathlib.Path(sys.argv[1])
+tmp_path = pathlib.Path(sys.argv[2])
+cat = sys.argv[3].strip()
+rule = sys.argv[4].strip()
+
+content = pref_path.read_text(encoding="utf-8")
+cat_pattern = re.compile(rf"^##\s+([0-9]+\.\s*)?{re.escape(cat)}\b", re.IGNORECASE | re.MULTILINE)
+
+m = cat_pattern.search(content)
+if m:
+    pos = m.end()
+    next_sec = re.search(r"^##\s+", content[pos:], re.MULTILINE)
+    if next_sec:
+        insert_at = pos + next_sec.start()
+        prefix = content[:insert_at].rstrip()
+        suffix = content[insert_at:]
+        new_content = f"{prefix}\n- {rule}\n\n{suffix.lstrip()}"
+    else:
+        new_content = f"{content.rstrip()}\n- {rule}\n"
+else:
+    sections = re.findall(r"^##\s+([0-9]+)\.", content, re.MULTILINE)
+    next_num = len(sections) + 1 if sections else ""
+    header = f"## {next_num}. {cat}" if next_num else f"## {cat}"
+    new_content = f"{content.rstrip()}\n\n---\n\n{header}\n- {rule}\n"
+
+tmp_path.write_text(new_content, encoding="utf-8")
+PY
+  replace_file "$tmp" "$pref_file"
+  say "✅ Preferencia registrada en [$cat]: $rule"
 }
