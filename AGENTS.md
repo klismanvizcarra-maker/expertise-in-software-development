@@ -51,6 +51,10 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
 
 `move` nunca lleva a `DONE`, `IN_REVIEW_QA` ni `BLOCKED`, ni a `IN_PROGRESS` salvo desde `BLOCKED`: esas transiciones solo existen con `close`, `handoff`, `reject` y `start`, que aplican sus controles.
 
+**Diagnóstico e Inspección**:
+- `task.sh doctor`: diagnóstico integral del proyecto ejecutando validación de estado, salud del cerebro, escaneo de secretos y auditoría de skills en un solo paso semafórico (exit 0/1).
+- `task.sh diff [TASK-XXX] [--stat]`: muestra estadísticas y diff de la tarea especificada (o de la rama activa) contra el punto de divergencia (`merge-base`) con `main`.
+
 **Traspaso formal (*hand-off*)**: el especialista nunca marca su propia tarea como terminada. Antes de `task.sh handoff` debe cumplir el checklist de su skill y dejar en el historial de `GLOBAL_STATE.md` los entregables y los comandos exactos para verificarlos (formato: `.agents/templates/handoff_template.json`).
 
 **Fusión a `main` y Limpieza de Ramas**: Tras la aprobación de QA (`task.sh close TASK-XXX`), el especialista asignado o el `orchestrator-agent` fusiona la rama a `main` ejecutando `git checkout main && git merge --no-ff <rama>` para preservar el historial completo de commits de la tarea, seguido inmediatamente de `git branch -d <rama>` para eliminar la rama local y mantener el repositorio limpio. Ninguna tarea se considera completamente integrada sin esta fusión.

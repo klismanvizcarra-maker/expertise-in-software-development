@@ -188,6 +188,8 @@ Todas las operaciones de escritura emplean bloqueo atómico (`mkdir .agents/.tas
 ```bash
 ./.agents/scripts/task.sh list       # Tablero
 ./.agents/scripts/task.sh metrics    # Progreso y salud de QA
+./.agents/scripts/task.sh doctor     # Diagnóstico integral (estado, cerebro, secretos y skills)
+./.agents/scripts/task.sh diff       # Diff y estadísticas de la tarea actual frente a main (o diff TASK-XXX)
 
 # Commit con formato tipo(TASK-ID): mensaje. Si no hay nada preparado añade solo
 # archivos ya versionados; los archivos nuevos se listan para que los añadas tú.

@@ -1058,6 +1058,32 @@ git checkout -q main 2>/dev/null
 check "tras las señales el lock queda liberado y task.sh sigue operativo" '$T add "Tras la señal" backend-agent "c" >/dev/null'
 check "con stdout en terminal, los errores redirigidos a un log no llevan códigos ANSI" 'TERM=xterm tty_out bash -c "$T clsoe 2>\"$WORK/err.log\"" >/dev/null; [ -s "$WORK/err.log" ] && ! grep -q $(printf "\033") "$WORK/err.log"'
 check "test-skills.sh usa colores en terminal y los desactiva con NO_COLOR" '[ "$(TERM=xterm tty_out bash "$ROOT/tests/test-skills.sh")" = ESC ] && [ "$(TERM=xterm NO_COLOR=1 tty_out bash "$ROOT/tests/test-skills.sh")" = PLAIN ]'
+
+# ------------------------------------------------------------------------------
+section "task.sh: doctor y diff"
+new_project doc_diff
+check "task.sh doctor sale con 0 en un proyecto limpio" '$T doctor >/dev/null'
+check "task.sh doctor falla (exit 1) si GLOBAL_STATE.md tiene errores" 'printf "\n| \`TASK-001\` | dup | backend-agent | \`TODO\` | \`0/3\` | c |\n" >> GLOBAL_STATE.md; ! $T doctor >/dev/null'
+git checkout -q GLOBAL_STATE.md
+check "task.sh doctor falla (exit 1) si hay un secreto expuesto" 'printf "%s\n" "$FAKE_KEY" > secret.txt; git add secret.txt; ! $T doctor >/dev/null; git reset -q HEAD secret.txt 2>/dev/null; rm -f secret.txt'
+
+$T add "Probar diff" backend-agent "criterios" >/dev/null
+git commit -qm "chore(TASK-001): registrar tarea" GLOBAL_STATE.md --no-verify
+TASK_DIFF_ID="$(grep -oE "TASK-[0-9]+" GLOBAL_STATE.md | tail -1)"
+check "task.sh diff sin rama de tarea ni IN_PROGRESS falla con exit 1" '! $T diff >/dev/null 2>&1'
+$T start "$TASK_DIFF_ID" >/dev/null
+DIFF_BRANCH="$(git for-each-ref --format='%(refname:short)' refs/heads/ | grep -E "^(feature|fix|refactor)/${TASK_DIFF_ID}" | head -1)"
+git checkout -q main 2>/dev/null
+check "task.sh diff sin cambios informa y sale con 0" 'OUT=$($T diff "$TASK_DIFF_ID"); [ $? -eq 0 ] && printf "%s" "$OUT" | grep -q "No hay cambios"'
+git checkout -q "$DIFF_BRANCH" 2>/dev/null
+printf "console.log(\x27cambio\x27);\n" > app.js
+git add app.js
+check "task.sh diff en la rama activa muestra el diff" 'OUT=$($T diff); [ $? -eq 0 ] && printf "%s" "$OUT" | grep -q "cambio"'
+check "task.sh diff --stat muestra el resumen de archivos" 'OUT=$($T diff --stat); [ $? -eq 0 ] && printf "%s" "$OUT" | grep -q "app.js" && ! printf "%s" "$OUT" | grep -q "console.log"'
+$T commit "$TASK_DIFF_ID" "anadir app.js" feat >/dev/null
+git checkout -q main 2>/dev/null
+check "task.sh diff TASK-ID desde main muestra los cambios de esa rama" 'OUT=$($T diff "$TASK_DIFF_ID"); [ $? -eq 0 ] && printf "%s" "$OUT" | grep -q "cambio"'
+check "task.sh diff TASK-999 inexistente falla con exit 1" '! $T diff TASK-999 >/dev/null 2>&1'
 cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
