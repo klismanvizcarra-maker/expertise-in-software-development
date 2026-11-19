@@ -1,0 +1,21 @@
+{
+  "task_id": "TASK-059",
+  "summary": "Nuevas evals deterministas para research-agent, crear-plan y adoptar-proyecto",
+  "source_agent": "qa-security-agent",
+  "target_agent": "orchestrator-agent",
+  "timestamp": "2026-11-19T15:08:18Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/evals/README.md" },
+    { "type": "file", "path": "tests/evals/evals.json" },
+    { "type": "file", "path": "tests/evals/fixtures/adopt.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/plan.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/research.sh" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "python3 tests/evals/run_evals.py --verify-baselines --jobs 4",
+    "bash tests/test-scripts.sh"
+  ]
+}
