@@ -1,0 +1,19 @@
+{
+  "task_id": "TASK-062",
+  "summary": "Evolucion del cerebro: alertas de reincidencia, hotspots, task.sh prefer y filtrado por stack",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-19T16:07:39Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/brain-context.sh" },
+    { "type": "file", "path": ".agents/scripts/brain-lib.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/task.sh brain hotspots",
+    "./.agents/scripts/task.sh prefer 'Pruebas' 'Regla de test'",
+    "bash tests/test-scripts.sh"
+  ]
+}
