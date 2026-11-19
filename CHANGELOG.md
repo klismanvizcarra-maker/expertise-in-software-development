@@ -2,6 +2,32 @@
 
 Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado, [SemVer](https://semver.org/lang/es/). La versión instalada en un proyecto está en `.agents/VERSION`; `init-project.sh --update` la sincroniza.
 
+## [1.3.0] - 2026-11-19
+
+### Añadido
+- **3 nuevos stacks tecnológicos preconfigurados** (de 38 a 41 skills en el catálogo):
+  - `stack-vue-nuxt-postgres`: convenciones de Vue 3 + Nuxt 3 (SSR/Nitro) + Pinia + Tailwind + PostgreSQL con Drizzle ORM (TASK-054).
+  - `stack-react-vite-node`: convenciones SPA con React 19 + Vite + Tailwind + Node.js (Express) + PostgreSQL y TanStack Query (TASK-055).
+  - `stack-nestjs-postgres`: arquitectura modular backend con NestJS + Prisma/TypeORM + PostgreSQL, validación DTO y Guards (TASK-056).
+  - Soporte multi-stack en `init-project.sh` (`--stack nuxt`, `--stack react-vite`, `--stack nestjs`) y mapeo de rutas por rol en `AGENTS.md` §8 (TASK-057).
+  - Recetas operativas en `references/` para Nuxt, React-Vite y NestJS en las 4 skills técnicas (`payments-stripe`, `seo-web`, `web-performance` e `i18n`) (TASK-061).
+- **Herramientas de diagnóstico y control de versiones en `task.sh`**:
+  - `task.sh doctor`: diagnóstico semafórico unificado de 5 etapas (`validate-state`, `brain doctor`, `brain lint`, `scan-secrets`, `test-skills`) con salida 0/1 (TASK-058).
+  - `task.sh diff [TASK-XXX] [--stat]`: visualización de estadísticas y diff contra `main` (`merge-base`) de la tarea activa o especificada (TASK-058).
+- **Evolución del Cerebro y memoria persistente**:
+  - `task.sh brain lint`: linter activo de código contra antipatrones aprendidos con antídotos deterministas (`LL-001`, `LL-007`, `LL-012`, `LL-016`) integrado en `task.sh doctor` (TASK-063).
+  - `task.sh brain hotspots`: mapa de calor de riesgo en el código basado en acumulación de lecciones y reincidencias (TASK-062).
+  - `task.sh prefer "<categoría>" "<regla>"`: registro instantáneo y sin duplicados de preferencias en `.agents/brain/preferences.md` (TASK-062).
+  - Alertas visuales reforzadas ante lecciones reincidentes (`🚨 REINCIDENTE xN`) en `task.sh start`, `task.sh brain for` y `task.sh check` (TASK-062).
+  - Filtrado dinámico de lecciones según el stack activo declarado en `GLOBAL_STATE.md` (TASK-062).
+- **Ampliación de evals deterministas**:
+  - 3 nuevas evals deterministas en `tests/evals/` para `research-agent`, `crear-plan` y `adoptar-proyecto`, totalizando 18 evals verificadas (TASK-059).
+  - Batería de activación ampliada a 98 casos en `tests/triggers/cases.json` (TASK-057).
+
+### Cambiado
+- Catálogo general sincronizado a **41 skills** y **6 stacks tecnológicos** en `README.md`, `QUICKSTART.md` y `.agents/brain/system_map.md` (TASK-060).
+- Suite de pruebas de scripts ampliada a 344 checks automatizados (TASK-057, TASK-064).
+
 ## [1.2.0] - 2026-11-18
 
 ### Añadido

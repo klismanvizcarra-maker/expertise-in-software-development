@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-065",
+  "summary": "Release v1.3.0",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "--deliverable",
+  "timestamp": "2026-11-19T21:43:09Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/VERSION" },
+    { "type": "file", "path": ".agents/archive/tasks_2026-11-19.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/task.sh doctor",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
