@@ -166,10 +166,15 @@ Para evitar que los agentes olviden decisiones pasadas al compactar el chat o ab
 1. **Memoria Inmediata (Chat)**: La conversación activa en la ventana de contexto.
 2. **Memoria Operativa ([`GLOBAL_STATE.md`](.agents/templates/GLOBAL_STATE_TEMPLATE.md))**: Tablero Kanban de tareas vivas y contratos activos.
 3. **Memoria a Largo Plazo ([`BRAIN.md`](BRAIN.md) / [`.agents/brain/`](.agents/brain))**:
-   - `lessons_learned.md`: Errores superados para que ningún agente vuelva a cometerlos.
+   - `lessons_learned.md`: Errores superados para que ningún agente vuelva a cometerlos (con filtrado inteligente por stack y alertas visuales `⚠️ ALERTA CRÍTICA` si son reincidentes).
+   - `recurrences.md`: Historial de reincidencias detectadas en revisiones de QA.
    - `system_map.md`: Mapa mental del flujo de datos del proyecto.
    - `domain_glossary.md`: Invariantes y términos exactos del negocio.
-   - `preferences.md`: Tus preferencias personales de estilo y código.
+   - `preferences.md`: Tus preferencias personales de estilo y código (gestión rápida con `task.sh prefer`).
+
+Herramientas proactivas del cerebro:
+- **Hotspots de Riesgo (`task.sh brain hotspots`)**: Identifica rutas con mayor acumulación de lecciones y reincidencias para enfocar auditorías de calidad.
+- **Linter de Antipatrones (`task.sh brain lint`)**: Detecta proactivamente patrones defectuosos aprendidos en el código antes de que lleguen a QA o producción.
 
 ---
 
@@ -189,10 +194,13 @@ Manipula el tablero de `GLOBAL_STATE.md`, crea ramas Git y genera traspasos desd
 Todas las operaciones de escritura emplean bloqueo atómico (`mkdir .agents/.task_lock`) con liberación garantizada por `trap`, previniendo colisiones de concurrencia.
 
 ```bash
-./.agents/scripts/task.sh list       # Tablero
-./.agents/scripts/task.sh metrics    # Progreso y salud de QA
-./.agents/scripts/task.sh doctor     # Diagnóstico integral (estado, cerebro, secretos y skills)
-./.agents/scripts/task.sh diff       # Diff y estadísticas de la tarea actual frente a main (o diff TASK-XXX)
+./.agents/scripts/task.sh list           # Tablero
+./.agents/scripts/task.sh metrics        # Progreso y salud de QA
+./.agents/scripts/task.sh doctor         # Diagnóstico integral de 5 pasos (estado, cerebro, linter, secretos, skills)
+./.agents/scripts/task.sh diff           # Diff y estadísticas de la tarea actual frente a main (o diff TASK-XXX)
+./.agents/scripts/task.sh brain hotspots # Identifica hotspots de riesgo según lecciones y reincidencias
+./.agents/scripts/task.sh brain lint     # Linter activo de antipatrones aprendidos en el código
+./.agents/scripts/task.sh prefer "Estilo" "Usar const en vez de let si no se reasigna" # Preferencia sin duplicados
 
 # Commit con formato tipo(TASK-ID): mensaje. Si no hay nada preparado añade solo
 # archivos ya versionados; los archivos nuevos se listan para que los añadas tú.

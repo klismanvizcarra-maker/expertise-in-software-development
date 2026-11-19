@@ -734,7 +734,7 @@ brain_lint() {
   if [ ${#target_paths[@]} -eq 0 ]; then
     while IFS= read -r f; do
       [ -f "$f" ] && files+=("$f")
-    done < <(git ls-files 2>/dev/null || find . -type f -not -path '*/.*/*')
+    done < <(git ls-files --cached --others --exclude-standard 2>/dev/null || find . -type f -not -path '*/.*/*')
   else
     for p in "${target_paths[@]}"; do
       if [ -f "$p" ]; then
