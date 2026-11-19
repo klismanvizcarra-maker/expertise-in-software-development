@@ -153,7 +153,12 @@ for line in os.environ["HITS_NEW"].split("\n"):
     f = line.split("\t")
     if len(f) < 5:
         continue
-    out.append("- %s [%s] %s" % (f[0], f[1], f[2]))
+    rc = int(f[5]) if len(f) > 5 and f[5].strip().isdigit() else 0
+    if rc > 0:
+        out.append("⚠️  ALERTA CRÍTICA (🚨 REINCIDENTE x%d):" % rc)
+        out.append("- %s [%s] %s" % (f[0], f[1], f[2]))
+    else:
+        out.append("- %s [%s] %s" % (f[0], f[1], f[2]))
     out.append("  Antídoto: %s" % f[4])
 out.append("Detalle: .agents/brain/lessons_learned.md · Consulta dirigida: ./.agents/scripts/task.sh brain for TASK-XXX <ruta>")
 print(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "additionalContext": "\n".join(out)}}, ensure_ascii=False))
