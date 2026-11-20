@@ -1,0 +1,21 @@
+{
+  "task_id": "TASK-067",
+  "summary": "Skills de flujo hotfix e incidente para respuesta y contencion de fallos en produccion",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "--deliverable",
+  "timestamp": "2026-11-20T16:57:43Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/hotfix/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/incidente/SKILL.md" },
+    { "type": "file", "path": ".agents/templates/post_mortem_template.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

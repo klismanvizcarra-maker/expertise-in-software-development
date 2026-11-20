@@ -1509,6 +1509,68 @@
     "backend-agent"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "hot-01",
+   "prompt": "Hay una caída en producción porque la pasarela de pagos rechaza todos los cobros, saca un hotfix urgente",
+   "expect": [
+    "hotfix"
+   ],
+   "accept": [
+    "incidente",
+    "payments-stripe"
+   ],
+   "forbid": [
+    "bugfix",
+    "nueva-tarea"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "hot-02",
+   "prompt": "Se rompió el login en producción tras el último release; aplica un parche hotfix inmediato",
+   "expect": [
+    "hotfix"
+   ],
+   "accept": [
+    "incidente"
+   ],
+   "forbid": [
+    "bugfix",
+    "refactor"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "inc-01",
+   "prompt": "Alerta SEV-1: el servidor backend está respondiendo 500 a todos los usuarios; gestiona el incidente y contiene el fallo",
+   "expect": [
+    "incidente"
+   ],
+   "accept": [
+    "hotfix",
+    "devops-cloud-agent"
+   ],
+   "forbid": [
+    "nueva-tarea",
+    "bugfix"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "inc-02",
+   "prompt": "Indisponibilidad crítica en la base de datos de producción; declara el incidente, haz rollback o activa mitigación y redacta el post-mortem",
+   "expect": [
+    "incidente"
+   ],
+   "accept": [
+    "hotfix"
+   ],
+   "forbid": [
+    "nueva-tarea",
+    "refactor"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
