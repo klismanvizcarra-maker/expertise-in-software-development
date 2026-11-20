@@ -1,0 +1,20 @@
+{
+  "task_id": "TASK-070",
+  "summary": "Skill tecnica resilience-engineering con patrones de circuit breaker timeouts fallbacks y jitter",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "--deliverable",
+  "timestamp": "2026-11-20T17:04:54Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/resilience-engineering/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/resilience-engineering/references/resilience-patterns.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
