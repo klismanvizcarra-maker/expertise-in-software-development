@@ -63,8 +63,9 @@
 | `TASK-069` | Skill tecnica accessibility-testing con auditoria automatizada Axe-core y WCAG 2.1 AA | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/accessibility-testing/SKILL.md con references/ (wcag-checklist, playwright-axe); integracion CI; casos en cases.json y test-skills.sh en verde |
 | `TASK-070` | Skill tecnica resilience-engineering con patrones de circuit breaker timeouts fallbacks y jitter | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/resilience-engineering/SKILL.md con references/resilience-patterns.md; patrones en Node y Python; casos en cases.json y test-skills.sh en verde |
 | `TASK-071` | Comando task.sh dashboard para generacion de visor visual interactivo de tareas | devops-cloud-agent | `DONE` | `0/3` | Comando ./task.sh dashboard que genera docs/dashboard.html o artefacto autonomo con kanban, metricas, salud del cerebro y estado de tareas; documentado en help y AGENTS.md; tests en test-scripts.sh |
+| `TASK-072` | Estado formal AWAITING_HUMAN_APPROVAL y comando task.sh approve para control humano | devops-cloud-agent | `DONE` | `0/3` | Soporte de estado AWAITING_HUMAN_APPROVAL en task.sh y validate-state.sh; comandos task.sh hold y task.sh approve; skill de flujo /aprobar; documentado en AGENTS.md y help; tests en test-scripts.sh al 100% |
 
-> **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
+> **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
 ---
 
@@ -274,3 +275,5 @@
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-070` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
 | `2026-11-20` | devops-cloud-agent | qa-security-agent | `TASK-071` | Comando task.sh dashboard y generador interactivo HTML docs/dashboard.html con 369 tests pasando al 100%. Comandos: `bash tests/test-scripts.sh` |
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-071` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
+| `2026-11-20` | devops-cloud-agent | qa-security-agent | `TASK-072` | Estado AWAITING_HUMAN_APPROVAL, comandos hold y approve, skill /aprobar y 375 tests pasando. Comandos: `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `bash tests/test-scripts.sh` |
+| `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-072` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |

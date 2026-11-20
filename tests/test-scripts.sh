@@ -1133,6 +1133,17 @@ rm -f bad_in_repo.sh
 check "task.sh dashboard genera el archivo HTML por defecto" 'rm -f docs/dashboard.html; $T dashboard >/dev/null && [ -f docs/dashboard.html ] && grep -q "<!DOCTYPE html>" docs/dashboard.html'
 check "task.sh dashboard --output personalizado funciona" 'rm -f custom.html; $T dashboard --output custom.html >/dev/null && [ -f custom.html ] && grep -q "Dashboard" custom.html && rm -f custom.html'
 
+# 8. AWAITING_HUMAN_APPROVAL, task.sh hold y approve
+$T add "Tarea para punto de control humano" "backend-agent" "criterios" >/dev/null
+TASK_CTRL=$(grep "Tarea para punto de control humano" GLOBAL_STATE.md | grep -oE "TASK-[0-9]+" | head -1)
+check "task.sh hold pone la tarea en AWAITING_HUMAN_APPROVAL" '$T hold "$TASK_CTRL" "esperando visto bueno" >/dev/null && grep "$TASK_CTRL" GLOBAL_STATE.md | grep -q "AWAITING_HUMAN_APPROVAL"'
+check "validate-state acepta AWAITING_HUMAN_APPROVAL sin errores" 'bash "$ROOT/.agents/scripts/validate-state.sh" >/dev/null'
+check "task.sh start sobre AWAITING_HUMAN_APPROVAL falla" '! $T start "$TASK_CTRL" >/dev/null 2>&1'
+check "task.sh approve reanuda a TODO y registra en historial" '$T approve "$TASK_CTRL" --status TODO --comment "Aprobado plan" >/dev/null && grep "$TASK_CTRL" GLOBAL_STATE.md | grep -q "| \`TODO\` |" && grep -q "Aprobado plan" GLOBAL_STATE.md'
+$T hold "$TASK_CTRL" "segundo hold" >/dev/null
+check "task.sh approve --status IN_PROGRESS reanuda a IN_PROGRESS" '$T approve "$TASK_CTRL" --status IN_PROGRESS >/dev/null && grep "$TASK_CTRL" GLOBAL_STATE.md | grep -q "| \`IN_PROGRESS\` |"'
+check "task.sh approve sobre tarea que no está en AWAITING_HUMAN_APPROVAL falla" '! $T approve "$TASK_CTRL" >/dev/null 2>&1'
+
 cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
