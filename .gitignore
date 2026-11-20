@@ -90,6 +90,7 @@ coverage/
 /test-results/
 /playwright-report/
 /blob-report/
+docs/dashboard.html
 
 # Claude Code (configuracion local por usuario)
 .claude/settings.local.json

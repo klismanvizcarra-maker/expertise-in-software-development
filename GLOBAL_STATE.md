@@ -62,6 +62,7 @@
 | `TASK-068` | Skills de flujo onboarding y explain-codebase para induccion humana y mapa del proyecto | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/onboarding/SKILL.md y .agents/skills/explain-codebase/SKILL.md; plantilla onboarding_guide_template.md; casos en cases.json y test-skills.sh en verde |
 | `TASK-069` | Skill tecnica accessibility-testing con auditoria automatizada Axe-core y WCAG 2.1 AA | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/accessibility-testing/SKILL.md con references/ (wcag-checklist, playwright-axe); integracion CI; casos en cases.json y test-skills.sh en verde |
 | `TASK-070` | Skill tecnica resilience-engineering con patrones de circuit breaker timeouts fallbacks y jitter | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/resilience-engineering/SKILL.md con references/resilience-patterns.md; patrones en Node y Python; casos en cases.json y test-skills.sh en verde |
+| `TASK-071` | Comando task.sh dashboard para generacion de visor visual interactivo de tareas | devops-cloud-agent | `IN_PROGRESS` | `0/3` | Comando ./task.sh dashboard que genera docs/dashboard.html o artefacto autonomo con kanban, metricas, salud del cerebro y estado de tareas; documentado en help y AGENTS.md; tests en test-scripts.sh |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 

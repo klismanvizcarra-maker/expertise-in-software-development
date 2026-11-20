@@ -53,6 +53,7 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
 
 **Diagnóstico e Inspección**:
 - `task.sh doctor`: diagnóstico integral del proyecto ejecutando validación de estado, salud del cerebro, linter activo de antipatrones aprendidos (`brain lint`), escaneo de secretos y auditoría de skills en un solo paso semafórico de 5 etapas (exit 0/1).
+- `task.sh dashboard [--output ruta]`: genera un visor HTML visual interactivo autónomo con métricas, tablero Kanban, salud del cerebro, deuda técnica y filtros dinámicos (`docs/dashboard.html` por defecto).
 - `task.sh diff [TASK-XXX] [--stat]`: muestra estadísticas y diff de la tarea especificada (o de la rama activa) contra el punto de divergencia (`merge-base`) con `main`.
 - `task.sh brain lint [ruta...]`: audita activamente el código contra antipatrones aprendidos con antídotos deterministas (`LL-001`, `LL-007`, `LL-012`, `LL-016`), saliendo con 0 (limpio) o 1 (violaciones detectadas).
 - `task.sh brain hotspots`: calcula el ranking de riesgo de rutas según concentración de lecciones por ámbito y reincidencias acumuladas.
