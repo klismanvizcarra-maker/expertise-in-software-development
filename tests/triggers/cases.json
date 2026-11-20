@@ -1665,6 +1665,37 @@
     "backend-agent"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "res-01",
+   "prompt": "Protege la llamada a la API externa de envíos con un Circuit Breaker y fallback degradado en caso de timeout",
+   "expect": [
+    "resilience-engineering"
+   ],
+   "accept": [
+    "backend-agent",
+    "async-jobs"
+   ],
+   "forbid": [
+    "ui-ux-agent",
+    "database-architect-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "res-02",
+   "prompt": "Implementa reintentos con backoff exponencial y full jitter para llamadas de red transitorias con timeout estricto de 3s",
+   "expect": [
+    "resilience-engineering"
+   ],
+   "accept": [
+    "backend-agent"
+   ],
+   "forbid": [
+    "devops-cloud-agent",
+    "frontend-agent"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
