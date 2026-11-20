@@ -1445,6 +1445,70 @@
     "nueva-tarea"
    ],
    "type": "entrada"
+  },
+  {
+   "id": "uat-01",
+   "prompt": "Simula a un usuario novato navegando por la app para probar la pantalla de checkout y encontrar problemas de usabilidad o errores visuales",
+   "expect": [
+    "user-testing-agent"
+   ],
+   "accept": [
+    "probar-usuario",
+    "frontend-agent"
+   ],
+   "forbid": [
+    "backend-agent",
+    "database-architect-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "uat-02",
+   "prompt": "Abre el navegador y prueba como un usuario real el flujo de registro, haz doble clic rápido en los botones y revisa si se rompe la interfaz",
+   "expect": [
+    "user-testing-agent"
+   ],
+   "accept": [
+    "probar-usuario",
+    "e2e-testing"
+   ],
+   "forbid": [
+    "backend-agent",
+    "devops-cloud-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "uat-flow-01",
+   "prompt": "Ejecuta /probar-usuario sobre la tarea TASK-002 para verificar la experiencia interactiva en vivo antes de entregar a QA",
+   "expect": [
+    "probar-usuario"
+   ],
+   "accept": [
+    "user-testing-agent",
+    "qa-review"
+   ],
+   "forbid": [
+    "release",
+    "backend-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "uat-flow-02",
+   "prompt": "Inicia una sesión de pruebas de usuario UAT con /probar-usuario para explorar la pantalla de pedidos en vista móvil",
+   "expect": [
+    "probar-usuario"
+   ],
+   "accept": [
+    "user-testing-agent",
+    "frontend-agent"
+   ],
+   "forbid": [
+    "devops-cloud-agent",
+    "backend-agent"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [

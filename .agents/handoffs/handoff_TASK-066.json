@@ -1,0 +1,21 @@
+{
+  "task_id": "TASK-066",
+  "summary": "Rol user-testing-agent y skill de flujo probar-usuario para UAT exploratorio en navegador",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "--deliverable",
+  "timestamp": "2026-11-20T16:55:09Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/probar-usuario/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/user-testing-agent/SKILL.md" },
+    { "type": "file", "path": ".agents/templates/uat_bug_report_template.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
