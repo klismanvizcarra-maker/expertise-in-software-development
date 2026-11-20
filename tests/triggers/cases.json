@@ -1571,6 +1571,68 @@
     "refactor"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "onb-01",
+   "prompt": "Un nuevo desarrollador se acaba de unir al equipo; genera la guía de bienvenida y onboarding para que configure su entorno",
+   "expect": [
+    "onboarding"
+   ],
+   "accept": [
+    "explain-codebase",
+    "docs-architecture-agent"
+   ],
+   "forbid": [
+    "adoptar-proyecto",
+    "iniciar-proyecto"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "onb-02",
+   "prompt": "Prepara la documentación docs/onboarding/guide.md con el setup paso a paso para los nuevos compañeros",
+   "expect": [
+    "onboarding"
+   ],
+   "accept": [
+    "docs-architecture-agent"
+   ],
+   "forbid": [
+    "adoptar-proyecto",
+    "iniciar-proyecto"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "exp-01",
+   "prompt": "Explícame cómo está estructurado este repositorio, qué hace cada carpeta y cómo fluyen los datos entre front y back",
+   "expect": [
+    "explain-codebase"
+   ],
+   "accept": [
+    "onboarding",
+    "docs-architecture-agent"
+   ],
+   "forbid": [
+    "adoptar-proyecto",
+    "refactor"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "exp-02",
+   "prompt": "Soy nuevo en el proyecto, dame un recorrido guiado por el codebase para entender la arquitectura sin tocar código",
+   "expect": [
+    "explain-codebase"
+   ],
+   "accept": [
+    "onboarding"
+   ],
+   "forbid": [
+    "nueva-tarea",
+    "refactor"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
