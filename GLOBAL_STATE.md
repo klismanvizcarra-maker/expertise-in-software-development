@@ -9,7 +9,7 @@
 - **Proyecto**: `SKILL MAESTRO`
 - **Descripción**: `Framework y catálogo multi-agente para Claude Code y Antigravity: directrices de gobernanza, roles especializados, scripts de ciclo de vida de tareas y batería de evals.`
 - **Estado Actual**: `IN_PROGRESS`
-- **Fase Actual**: `FASE 4: Calidad Humana, Resiliencia y UX (v1.4.0)`
+- **Fase Actual**: `FASE 5: Ecosistema Enterprise, Datos, DevSecOps y Stacks Avanzados (v1.5.0)`
 - **Última Actualización**: `2026-11-20`
 - **Iteraciones Críticas Acumuladas**: `0 / 3`
 
@@ -43,6 +43,9 @@
 | **AI Integrator** | Modelos LLM (Ollama/Cloud), RAG y embeddings | `ai-integrator-agent` |
 | **Docs & Architecture** | Diagramas Mermaid, OpenAPI, ADRs y contratos | `docs-architecture-agent` |
 | **User Testing & UAT** | Pruebas exploratorias en vivo, simulación de usuarios y UAT | `user-testing-agent` |
+| **Data Engineering** | Pipelines de datos, ETL/ELT con dbt, modelado dimensional y streaming | `data-engineer-agent` |
+| **DevSecOps** | Seguridad en CI/CD, SAST, DAST, SCA (Trivy), SBOM y supply chain | `devsecops-agent` |
+| **Compliance & Legal** | Licencias Open Source, cumplimiento GDPR/HIPAA y privacidad/PII | `compliance-legal-agent` |
 
 ---
 
@@ -56,14 +59,12 @@
 
 | ID Tarea | Descripción | Asignado a | Estado | Iteración QA | Criterios de Aceptación |
 | :--- | :--- | :--- | :--- | :---: | :--- |
-| `TASK-065` | Release v1.3.0 | devops-cloud-agent | `DONE` | `0/3` | Bateria en verde; tag v1.3.0 publicado; prueba de humo en produccion OK |
-| `TASK-066` | Rol user-testing-agent y skill de flujo probar-usuario para UAT exploratorio en navegador | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/user-testing-agent/SKILL.md y .agents/skills/probar-usuario/SKILL.md con Protocolo, Checklist, Prohibido; personas de usuario; loop reject/handoff; plantilla uat_bug_report_template.md; casos en cases.json y test-skills.sh en verde |
-| `TASK-067` | Skills de flujo hotfix e incidente para respuesta y contencion de fallos en produccion | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/hotfix/SKILL.md y .agents/skills/incidente/SKILL.md; plantilla post_mortem_template.md; delimitadas de bugfix; casos en cases.json y test-skills.sh en verde |
-| `TASK-068` | Skills de flujo onboarding y explain-codebase para induccion humana y mapa del proyecto | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/onboarding/SKILL.md y .agents/skills/explain-codebase/SKILL.md; plantilla onboarding_guide_template.md; casos en cases.json y test-skills.sh en verde |
-| `TASK-069` | Skill tecnica accessibility-testing con auditoria automatizada Axe-core y WCAG 2.1 AA | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/accessibility-testing/SKILL.md con references/ (wcag-checklist, playwright-axe); integracion CI; casos en cases.json y test-skills.sh en verde |
-| `TASK-070` | Skill tecnica resilience-engineering con patrones de circuit breaker timeouts fallbacks y jitter | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/resilience-engineering/SKILL.md con references/resilience-patterns.md; patrones en Node y Python; casos en cases.json y test-skills.sh en verde |
-| `TASK-071` | Comando task.sh dashboard para generacion de visor visual interactivo de tareas | devops-cloud-agent | `DONE` | `0/3` | Comando ./task.sh dashboard que genera docs/dashboard.html o artefacto autonomo con kanban, metricas, salud del cerebro y estado de tareas; documentado en help y AGENTS.md; tests en test-scripts.sh |
-| `TASK-072` | Estado formal AWAITING_HUMAN_APPROVAL y comando task.sh approve para control humano | devops-cloud-agent | `DONE` | `0/3` | Soporte de estado AWAITING_HUMAN_APPROVAL en task.sh y validate-state.sh; comandos task.sh hold y task.sh approve; skill de flujo /aprobar; documentado en AGENTS.md y help; tests en test-scripts.sh al 100% |
+| `TASK-073` | Rol especialista data-engineer-agent para pipelines de datos ETL con dbt y modelado dimensional | docs-architecture-agent | `TODO` | `0/3` | Skill .agents/skills/data-engineer-agent/SKILL.md con Protocolo, Checklist y Prohibido; arquitectura medallion (bronze/silver/gold); integracion dbt; casos en cases.json y test-skills.sh en verde |
+| `TASK-074` | Rol especialista devsecops-agent para seguridad en CI/CD con SAST DAST SCA y SBOM | docs-architecture-agent | `TODO` | `0/3` | Skill .agents/skills/devsecops-agent/SKILL.md con Protocolo, Checklist y Prohibido; herramientas Trivy/Snyk/Gitleaks/Semgrep; generacion SBOM SPDX/CycloneDX; casos en cases.json y test-skills.sh en verde |
+| `TASK-075` | Rol especialista compliance-legal-agent para licencias open source y privacidad GDPR y PII | docs-architecture-agent | `TODO` | `0/3` | Skill .agents/skills/compliance-legal-agent/SKILL.md con Protocolo, Checklist y Prohibido; compatibilidad de licencias OSI (evitar copyleft viral no deseado); anonimizacion PII; casos en cases.json y test-skills.sh en verde |
+| `TASK-076` | Skill tecnica finops-cost-optimization para auditoria de costes cloud y dimensionamiento | docs-architecture-agent | `TODO` | `0/3` | Skill .agents/skills/finops-cost-optimization/SKILL.md con Protocolo, Checklist y Prohibido; optimizacion de consultas SQL, serverless execution y transferencia; references/finops-checklist.md; casos en cases.json y test-skills.sh en verde |
+| `TASK-077` | Skill de stack stack-fastapi-mongodb para aplicaciones backend basadas en documentos NoSQL | docs-architecture-agent | `TODO` | `0/3` | Skill .agents/skills/stack-fastapi-mongodb/SKILL.md con estructura, comandos, Beanie/Motor ODM, indices compuestos y trampas conocidas; casos en cases.json y test-skills.sh en verde |
+| `TASK-078` | Skill de stack stack-react-native-expo para aplicaciones moviles nativas multiplataforma | docs-architecture-agent | `TODO` | `0/3` | Skill .agents/skills/stack-react-native-expo/SKILL.md con Expo Router v3, TypeScript, persistencia local (MMKV/SQLite), safe areas y trampas conocidas; casos en cases.json y test-skills.sh en verde |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -75,6 +76,7 @@
 | :--- | :--- | :--- | :--- |
 | `2026-10-29` | Adopción de SKILL MAESTRO como autosuficiente y gobernado por sus propias reglas | Permite probar y perfeccionar el framework usando su propio ciclo de vida | `APROBADO` |
 | `2026-11-20` | Expansión Enterprise y Calidad Humana (v1.4 a v2.0): UAT en navegador, incidentes/hotfix, accesibilidad automatizada, resiliencia y dashboard interactivo | Cubre brechas operativas en producción, feedback interactivo de usuario y visibilidad en tiempo real | `APROBADO` |
+| `2026-11-20` | Expansión Enterprise y Especialización Avanzada (v1.5.0): data-engineer-agent, devsecops-agent, compliance-legal-agent, stack-fastapi-mongodb, stack-react-native-expo, finops-cost-optimization y protocolo de contratos | Cubre analítica/ETL, seguridad en CI/CD (SAST/SBOM), gobernanza legal (licencias/GDPR), persistencia NoSQL, mobile nativo y optimización de costes cloud | `APROBADO` |
 
 ---
 
@@ -277,3 +279,4 @@
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-071` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
 | `2026-11-20` | devops-cloud-agent | qa-security-agent | `TASK-072` | Estado AWAITING_HUMAN_APPROVAL, comandos hold y approve, skill /aprobar y 375 tests pasando. Comandos: `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `bash tests/test-scripts.sh` |
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-072` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
+| `2026-11-20` | orchestrator-agent | orchestrator-agent | `TASK-065..TASK-072` | Archivadas 8 tareas DONE (FASE 4: Calidad Humana, Resiliencia y UX (v1.4.0)) en .agents/archive/tasks_2026-11-20.md (--keep 0). |
