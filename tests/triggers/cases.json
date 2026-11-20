@@ -1633,6 +1633,38 @@
     "refactor"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "a11y-01",
+   "prompt": "Configura un test automatizado con axe-core y Playwright para auditar que el formulario de checkout cumpla con WCAG 2.1 AA",
+   "expect": [
+    "accessibility-testing"
+   ],
+   "accept": [
+    "e2e-testing",
+    "frontend-agent"
+   ],
+   "forbid": [
+    "backend-agent",
+    "database-architect-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "a11y-02",
+   "prompt": "Verifica que los botones tengan nombres accesibles, el contraste de color sea 4.5:1 y la navegación por teclado no tenga trampas de foco",
+   "expect": [
+    "accessibility-testing"
+   ],
+   "accept": [
+    "ui-ux-agent",
+    "frontend-agent"
+   ],
+   "forbid": [
+    "devops-cloud-agent",
+    "backend-agent"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
