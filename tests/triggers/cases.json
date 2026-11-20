@@ -1816,6 +1816,37 @@
     "devops-cloud-agent"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "fin-01",
+   "prompt": "Audita los costes cloud y optimiza las consultas SQL en BigQuery para evitar el escaneo completo de terabytes usando particiones",
+   "expect": [
+    "finops-cost-optimization"
+   ],
+   "accept": [
+    "data-engineer-agent",
+    "database-architect-agent"
+   ],
+   "forbid": [
+    "frontend-agent",
+    "ui-ux-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "fin-02",
+   "prompt": "Ajusta la memoria y timeouts de las funciones Lambda para reducir la factura mensual de AWS y configura alertas de presupuesto",
+   "expect": [
+    "finops-cost-optimization"
+   ],
+   "accept": [
+    "devops-cloud-agent"
+   ],
+   "forbid": [
+    "compliance-legal-agent",
+    "domain-logic-agent"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
