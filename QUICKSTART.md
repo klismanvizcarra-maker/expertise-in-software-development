@@ -72,6 +72,9 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | **UI/UX Craft** | [`ui-ux-agent`](.agents/skills/ui-ux-agent/SKILL.md) | Tokens de diseño, sistemas de color, micro-interacciones y consistencia visual. |
 | **Domain Logic** | [`domain-logic-agent`](.agents/skills/domain-logic-agent/SKILL.md) | Domain-Driven Design (DDD), máquinas de estado finitas y fórmulas de negocio. |
 | **AI & LLM** | [`ai-integrator-agent`](.agents/skills/ai-integrator-agent/SKILL.md) | Modelos locales (Ollama), APIs Cloud (Gemini/OpenAI), RAG, vectores y streaming. |
+| **Data Engineer** | [`data-engineer-agent`](.agents/skills/data-engineer-agent/SKILL.md) | Pipelines ETL/ELT con dbt, arquitectura medallion (Bronze/Silver/Gold) y warehouses. |
+| **DevSecOps** | [`devsecops-agent`](.agents/skills/devsecops-agent/SKILL.md) | Seguridad en CI/CD (SAST/DAST/SCA), escaneo de secretos (Gitleaks) y SBOM SPDX/CycloneDX. |
+| **Legal & Compliance** | [`compliance-legal-agent`](.agents/skills/compliance-legal-agent/SKILL.md) | Licencias Open Source (evitar copyleft viral), GDPR/CCPA/HIPAA y anonimización PII. |
 | **Docs & Arch** | [`docs-architecture-agent`](.agents/skills/docs-architecture-agent/SKILL.md) | Diagramas Mermaid, especificaciones OpenAPI/Swagger, ADRs y Changelogs. |
 
 ### Skills de Flujo (atajos del ciclo de vida)
@@ -110,6 +113,8 @@ Flujo típico: `/iniciar-proyecto` *(o `/adoptar-proyecto` en repos existentes)*
 | [`stack-vue-nuxt-postgres`](.agents/skills/stack-vue-nuxt-postgres/SKILL.md) | Convenciones de Vue 3 + Nuxt 3 (SSR, Nitro engine y Composition API) + Pinia + Tailwind CSS + PostgreSQL con Drizzle ORM y Zod. |
 | [`stack-react-vite-node`](.agents/skills/stack-react-vite-node/SKILL.md) | Convenciones de SPA React 19 + Vite + Tailwind CSS + Node.js (Express o Hono) con PostgreSQL y TanStack Query. |
 | [`stack-nestjs-postgres`](.agents/skills/stack-nestjs-postgres/SKILL.md) | Convenciones de NestJS modular enterprise en TypeScript + Prisma o TypeORM + PostgreSQL, con validación DTO, Guards de autorización y Swagger/OpenAPI. |
+| [`stack-fastapi-mongodb`](.agents/skills/stack-fastapi-mongodb/SKILL.md) | Convenciones de FastAPI + MongoDB 7 con Motor y Beanie ODM para proyectos NoSQL basados en documentos. |
+| [`stack-react-native-expo`](.agents/skills/stack-react-native-expo/SKILL.md) | Convenciones de React Native 0.76+ con Expo SDK 52+, Expo Router v3, New Architecture y SQLite/MMKV. |
 | [`testing-strategy`](.agents/skills/testing-strategy/SKILL.md) | Estrategia y arquitectura de pruebas unitarias, integración y contrato: pirámide de testing, fakes, aislamiento de BD y anti-flakiness. |
 | [`e2e-testing`](.agents/skills/e2e-testing/SKILL.md) | Pruebas end-to-end con Playwright a partir de los escenarios Gherkin del PRD. |
 | [`async-jobs`](.agents/skills/async-jobs/SKILL.md) | Colas y workers en segundo plano, Transactional Outbox, consumidores idempotentes, retries/DLQ, URLs pre-firmadas y emails transaccionales. |
@@ -121,10 +126,11 @@ Flujo típico: `/iniciar-proyecto` *(o `/adoptar-proyecto` en repos existentes)*
 | [`resilience-engineering`](.agents/skills/resilience-engineering/SKILL.md) | Patrones de tolerancia a fallos: circuit breakers, timeouts estrictos, backoff exponencial con full jitter y degradación graciosa. |
 | [`security-hardening`](.agents/skills/security-hardening/SKILL.md) | Seguridad desde el diseño: STRIDE por funcionalidad, autenticación, autorización por objeto, cabeceras, archivos subidos, SSRF y dependencias. |
 | [`observability`](.agents/skills/observability/SKILL.md) | Logs JSON con `request_id`, métricas RED y de negocio, OpenTelemetry, reporte de errores, `/healthz` y `/readyz`, alertas con runbook. |
+| [`finops-cost-optimization`](.agents/skills/finops-cost-optimization/SKILL.md) | Auditoría de costes cloud, rightsizing serverless/contenedores, optimización de consultas SQL y ciclo de vida de almacenamiento. |
 
 #### Cómo añadir un stack adicional (`stack-<nombre>`)
 
-Los presets `--stack nextjs|angular|fastapi|nuxt|react-vite|nestjs` cubren los seis stacks preempaquetados; para cualquier otro stack (Go, Django, Laravel, Rust, etc.):
+Los presets `--stack nextjs|angular|fastapi|nuxt|react-vite|nestjs` cubren los stacks web preempaquetados (además de `stack-fastapi-mongodb` y `stack-react-native-expo` disponibles en el catálogo); para cualquier otro stack (Go, Django, Laravel, Rust, etc.):
 1. Copia [`.agents/templates/stack_template.md`](.agents/templates/stack_template.md) en `.agents/skills/stack-<nombre>/SKILL.md` e iguala el `name:` del YAML frontmatter al nombre de la carpeta.
 2. Documenta las versiones, estructura de carpetas, comandos canónicos, *gotchas* y añade `No usar para...` en la descripción para no solaparse con los stacks existentes.
 3. Añade la correspondencia de directorios por rol en [`AGENTS.md`](AGENTS.md) §8 y declara el stack en `GLOBAL_STATE.md` §2.
@@ -238,7 +244,7 @@ Instala los hooks con un solo comando:
 ```bash
 bash tests/test-scripts.sh
 ```
-Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia y la instalación (344 comprobaciones). Los colores de `task.sh` y `test-skills.sh` solo aparecen en una terminal y se desactivan con `NO_COLOR=1` o `TERM=dumb`.
+Instala el sistema en proyectos temporales y verifica el ciclo completo de `task.sh`, los hooks, concurrencia, validación de contratos y la instalación (más de 380 comprobaciones). Los colores de `task.sh` y `test-skills.sh` solo aparecen en una terminal y se desactivan con `NO_COLOR=1` o `TERM=dumb`.
 
 ---
 

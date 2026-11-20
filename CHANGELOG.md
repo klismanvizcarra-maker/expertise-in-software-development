@@ -2,6 +2,42 @@
 
 Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado, [SemVer](https://semver.org/lang/es/). La versión instalada en un proyecto está en `.agents/VERSION`; `init-project.sh --update` la sincroniza.
 
+## [1.5.0] - 2026-11-20
+
+### Añadido
+- **3 nuevos roles especialistas enterprise** (de 50 a 56 skills en el catálogo):
+  - `data-engineer-agent`: pipelines ETL/ELT con dbt, arquitectura medallion (Bronze/Silver/Gold) y data warehouses (TASK-073).
+  - `devsecops-agent`: automatización de seguridad en CI/CD (SAST, DAST, SCA con Trivy/Snyk, SBOM con SPDX/CycloneDX y firma Cosign) (TASK-074).
+  - `compliance-legal-agent`: auditoría de licencias Open Source (detección copyleft viral), GDPR/CCPA/HIPAA y anonimización de PII (TASK-075).
+- **Nueva skill técnica de optimización de infraestructura**:
+  - `finops-cost-optimization`: auditoría de costes cloud, rightsizing de instancias/serverless, optimización de consultas SQL (BigQuery/Athena) y ciclo de vida de almacenamiento (TASK-076).
+- **2 nuevos stacks tecnológicos especializados**:
+  - `stack-fastapi-mongodb`: arquitectura backend Python 3.12 con FastAPI + MongoDB 7 + Motor + Beanie ODM para proyectos NoSQL basados en documentos (TASK-077).
+  - `stack-react-native-expo`: desarrollo móvil nativo multiplataforma con React Native 0.76+ (New Architecture/Hermes), Expo SDK 52+, Expo Router v3 y MMKV/SQLite (TASK-078).
+- **Protocolo formal de contratos de integración inter-agente (`contracts.json`)**:
+  - Plantilla oficial `.agents/templates/contracts_template.json` con especificación estricta de endpoints, métodos, headers, DTOs y respuestas de error (TASK-079).
+  - Subcomando `./task.sh contracts validate [ruta]` para validación determinista de contratos (TASK-079).
+  - Protocolo documentado en `AGENTS.md` §4 e integrado en el poder de veto de QA (TASK-079).
+- **Batería de pruebas y suite ampliada**:
+  - 128 casos de prueba de activación en `tests/triggers/cases.json` con 0 avisos en `lint_descriptions.py`.
+  - 382 checks automatizados en `tests/test-scripts.sh`.
+
+## [1.4.0] - 2026-11-20
+
+### Añadido
+- **Rol y flujo de pruebas exploratorias de usuario (UAT)**:
+  - `user-testing-agent`: simulación interactiva de personas de usuario reales en navegador con reporte de evidencias (TASK-065).
+  - `/probar-usuario`: flujo de pruebas de usuario con loop de verificación y rechazos UAT (TASK-066).
+- **Gestión operativa de incidentes y parches en caliente**:
+  - `/hotfix`: flujo quirúrgico urgente derivado del tag activo de producción con test de regresión y lección obligatoria (TASK-067).
+  - `/incidente`: protocolo de contención, degradación graciosa y post-mortem para caídas de servicio (TASK-068).
+- **Técnicas transversales de accesibilidad y resiliencia**:
+  - `accessibility-testing`: auditoría automatizada con Axe-core y Playwright bajo WCAG 2.1 AA (TASK-069).
+  - `resilience-engineering`: patrones circuit breaker, timeouts estrictos, backoff exponencial con jitter y bulkheads (TASK-070).
+- **Visor interactivo y control humano (Human-in-the-loop)**:
+  - `task.sh dashboard`: visor HTML autónomo para visualización gráfica del estado, métricas, tablero Kanban y salud del cerebro (TASK-071).
+  - Estado `AWAITING_HUMAN_APPROVAL` y subcomandos `task.sh hold` y `task.sh approve` para puntos de control formales (TASK-072).
+
 ## [1.3.0] - 2026-11-19
 
 ### Añadido
