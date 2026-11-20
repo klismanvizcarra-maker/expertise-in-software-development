@@ -1879,6 +1879,37 @@
     "stack-nestjs-postgres"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "rne-01",
+   "prompt": "Construye una app móvil en React Native con Expo SDK y Expo Router para navegación por pestañas y persistencia en MMKV",
+   "expect": [
+    "stack-react-native-expo"
+   ],
+   "accept": [
+    "mobile-agent"
+   ],
+   "forbid": [
+    "stack-nextjs-tailwind-prisma",
+    "stack-angular-express-postgres"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "rne-02",
+   "prompt": "Configura SafeAreaView con react-native-safe-area-context y gestiona el teclado en Android e iOS con Expo Router",
+   "expect": [
+    "stack-react-native-expo"
+   ],
+   "accept": [
+    "mobile-agent",
+    "ui-ux-agent"
+   ],
+   "forbid": [
+    "stack-fastapi-postgres",
+    "stack-vue-nuxt-postgres"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
