@@ -1129,6 +1129,10 @@ printf '#!/usr/bin/env bash\nawk -v x=1 "{ print \\\s }" test.txt\n' > bad_in_re
 check "task.sh doctor falla (exit 1) si hay antipatrón detectado por brain lint" '! $T doctor >/dev/null 2>&1'
 rm -f bad_in_repo.sh
 
+# 7. task.sh dashboard
+check "task.sh dashboard genera el archivo HTML por defecto" 'rm -f docs/dashboard.html; $T dashboard >/dev/null && [ -f docs/dashboard.html ] && grep -q "<!DOCTYPE html>" docs/dashboard.html'
+check "task.sh dashboard --output personalizado funciona" 'rm -f custom.html; $T dashboard --output custom.html >/dev/null && [ -f custom.html ] && grep -q "Dashboard" custom.html && rm -f custom.html'
+
 cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"

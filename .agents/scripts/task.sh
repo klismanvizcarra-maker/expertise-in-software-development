@@ -1027,6 +1027,27 @@ EOF_ARCH
     fi
     ;;
 
+  dashboard)
+    require_state
+    OUT_FILE="$PROJECT_ROOT/docs/dashboard.html"
+    shift
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        -o|--output)
+          [ -n "${2:-}" ] || die "--output requiere la ruta del archivo HTML."
+          OUT_FILE="$2"; shift 2 ;;
+        --output=*)
+          OUT_FILE="${1#--output=}"; shift ;;
+        *)
+          die "Opción desconocida para dashboard: '$1'. Uso: ./task.sh dashboard [--output ruta/a/dashboard.html]" ;;
+      esac
+    done
+    mkdir -p "$(dirname "$OUT_FILE")"
+    python3 "$PROJECT_ROOT/.agents/scripts/generate-dashboard.py" "$STATE_FILE" "$BRAIN_FILE" "$PROJECT_ROOT/.agents/brain/lessons_learned.md" "$DEBT_FILE" "$OUT_FILE" || die "Error generando el dashboard."
+    say "${GREEN}📊 Dashboard interactivo generado en:${NC} $OUT_FILE"
+    say "   Para abrir en navegador: file://$OUT_FILE"
+    ;;
+
   commit)
     [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh commit TASK-001 \"descripción\" [feat|fix|test|refactor|docs|perf|chore|style|build|ci] [--trailer \"Clave: valor\"]..."
     TASK_ID=$(normalize_id "$2")
@@ -1293,6 +1314,7 @@ EOF_ARCH
   metrics                                Progreso y salud de QA
   doctor                                 Diagnóstico integral (estado, cerebro, secretos y skills)
   diff [TASK-ID] [--stat]                Diff y estadísticas de la tarea frente a main
+  dashboard [--output ruta]              Genera un visor visual interactivo (HTML) del proyecto
   add "<desc>" "<agente>" "<criterios>"  Crear tarea (TODO)
   start TASK-ID                          TODO/rechazada -> IN_PROGRESS + rama Git
   handoff TASK-ID [revisor] [--verify "cmd"]...  IN_PROGRESS -> IN_REVIEW_QA + JSON + historial
