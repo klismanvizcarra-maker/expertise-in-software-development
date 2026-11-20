@@ -57,7 +57,7 @@
 | ID Tarea | Descripción | Asignado a | Estado | Iteración QA | Criterios de Aceptación |
 | :--- | :--- | :--- | :--- | :---: | :--- |
 | `TASK-065` | Release v1.3.0 | devops-cloud-agent | `DONE` | `0/3` | Bateria en verde; tag v1.3.0 publicado; prueba de humo en produccion OK |
-| `TASK-066` | Rol user-testing-agent y skill de flujo probar-usuario para UAT exploratorio en navegador | docs-architecture-agent | `IN_PROGRESS` | `0/3` | Skill .agents/skills/user-testing-agent/SKILL.md y .agents/skills/probar-usuario/SKILL.md con Protocolo, Checklist, Prohibido; personas de usuario; loop reject/handoff; plantilla uat_bug_report_template.md; casos en cases.json y test-skills.sh en verde |
+| `TASK-066` | Rol user-testing-agent y skill de flujo probar-usuario para UAT exploratorio en navegador | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/user-testing-agent/SKILL.md y .agents/skills/probar-usuario/SKILL.md con Protocolo, Checklist, Prohibido; personas de usuario; loop reject/handoff; plantilla uat_bug_report_template.md; casos en cases.json y test-skills.sh en verde |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -257,3 +257,5 @@
 | `2026-11-19` | `orchestrator-agent` | Equipo | `TASK-054..TASK-064` | Cierre FASE 3: 11/11 tareas DONE (64/64 acumuladas, 64 archivadas), 0 rechazos de QA en la fase (100% aprobadas en 1ª iteración), 0 deuda técnica pendiente, 18 lecciones activas, 41 skills auditadas y operativas, 6 stacks tecnológicos preconfigurados con recetas en references/, 18 evals deterministas, 98 triggers validados, herramientas CLI ampliadas (doctor, diff, brain lint, hotspots, prefer). Apertura FASE 4 (pendiente de confirmación) |
 | `2026-11-19` | devops-cloud-agent | --deliverable | `TASK-065` | Release v1.3.0. Comandos: `./.agents/scripts/task.sh doctor`, `./.agents/scripts/scan-secrets.sh --branch` |
 | `2026-11-19` | qa-security-agent | orchestrator-agent | `TASK-065` | Aprobada por QA -> DONE. Sin lección: Release v1.3.0 aprobado en primera iteracion sin rechazos ni defectos. |
+| `2026-11-20` | docs-architecture-agent | --deliverable | `TASK-066` | Rol user-testing-agent y skill de flujo probar-usuario para UAT exploratorio en navegador. Comandos: `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `./.agents/scripts/scan-secrets.sh --branch` |
+| `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-066` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
