@@ -65,6 +65,7 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | **Backend & Data** | [`backend-agent`](.agents/skills/backend-agent/SKILL.md) | APIs REST/GraphQL, arquitectura en capas, esquemas Zod/DTOs, auth JWT/RBAC. |
 | **Frontend & UI** | [`frontend-agent`](.agents/skills/frontend-agent/SKILL.md) | Vistas reactivas, componentes desacoplados, PWA offline, accesibilidad WCAG. |
 | **Mobile & Native** | [`mobile-agent`](.agents/skills/mobile-agent/SKILL.md) | Apps React Native, Flutter, Swift/Kotlin, hardware, offline y Store compliance. |
+| **User Testing** | [`user-testing-agent`](.agents/skills/user-testing-agent/SKILL.md) | Pruebas exploratorias en navegador con personas (Novato, Hostil, Móvil, Impaciente), capturas y loop UAT. |
 | **QA & Security** | [`qa-security-agent`](.agents/skills/qa-security-agent/SKILL.md) | Tests automatizados, OWASP Top 10, escaneo de secretos y **Poder de Veto**. |
 | **Database** | [`database-architect-agent`](.agents/skills/database-architect-agent/SKILL.md) | Modelado relacional/NoSQL, migraciones reversibles, índices y transacciones ACID. |
 | **DevOps & Cloud** | [`devops-cloud-agent`](.agents/skills/devops-cloud-agent/SKILL.md) | Presupuestos de bundle, Docker multi-etapa, CI/CD y despliegues en la nube. |
@@ -82,9 +83,15 @@ Luego ejecuta `install-hooks.sh` para activar la validación de commits y escane
 | [`/adoptar-proyecto`](.agents/skills/adoptar-proyecto/SKILL.md) | Inventaría un codebase heredado tras `--adopt`, ajusta rutas reales y registra deuda inicial | Orchestrator |
 | [`/estado`](.agents/skills/estado/SKILL.md) | Resumen: progreso, bloqueos, pendientes de QA y siguiente paso (solo lectura) | — |
 | [`/nueva-tarea`](.agents/skills/nueva-tarea/SKILL.md) | Descompone un requerimiento y registra las `TASK-XXX` tras tu confirmación | Orchestrator |
+| [`/probar-usuario`](.agents/skills/probar-usuario/SKILL.md) | Ejecuta pruebas exploratorias simulando personas de usuario y emite bug reports UAT | User Testing |
 | [`/bugfix`](.agents/skills/bugfix/SKILL.md) | Reproduce, escribe un test que falle, corrige la causa raíz y entrega a QA | Especialista |
+| [`/hotfix`](.agents/skills/hotfix/SKILL.md) | Parche quirúrgico urgente en producción derivado del tag activo, con test previo y lección obligatoria | Especialista |
+| [`/incidente`](.agents/skills/incidente/SKILL.md) | Protocolo SEV-1/SEV-2: contención inmediata (rollback), investigación sin culpas y post-mortem | DevOps + SRE |
 | [`/refactor`](.agents/skills/refactor/SKILL.md) | Reestructura sin cambiar el comportamiento: tests de caracterización y pasos pequeños con la suite en verde | Especialista |
 | [`/pr-review`](.agents/skills/pr-review/SKILL.md) | Prepara descripción del PR, revisa el diff antes de fusionar y resuelve conflictos/rebase | Especialista |
+| [`/onboarding`](.agents/skills/onboarding/SKILL.md) | Genera guía interactiva en 3 pasos para desarrolladores humanos en docs/onboarding/guide.md | Docs & Arch |
+| [`/explain-codebase`](.agents/skills/explain-codebase/SKILL.md) | Tour pedagógico del repositorio para humanos: arquitectura, flujos clave y glosario | Docs & Arch |
+| [`/aprobar`](.agents/skills/aprobar/SKILL.md) | Punto de control formal Human-in-the-loop: pausa con task.sh hold y reanuda con task.sh approve tras confirmación | Orchestrator |
 | [`/handoff`](.agents/skills/handoff/SKILL.md) | Verifica el checklist y los tests, y pasa la tarea a `IN_REVIEW_QA` | Especialista |
 | [`/qa-review`](.agents/skills/qa-review/SKILL.md) | Verificación independiente y veredicto: `close` o `reject` con bug report | QA & Security |
 | [`/aprender`](.agents/skills/aprender/SKILL.md) | Registra problema, causa, solución y ámbito de rutas en el cerebro (o deuda técnica) | — |
@@ -110,6 +117,8 @@ Flujo típico: `/iniciar-proyecto` *(o `/adoptar-proyecto` en repos existentes)*
 | [`seo-web`](.agents/skills/seo-web/SKILL.md) | SSR y prerender por ruta, metadatos, canonical/hreflang, JSON-LD, sitemap y hosts permitidos. |
 | [`web-performance`](.agents/skills/web-performance/SKILL.md) | Core Web Vitals, presupuestos, análisis del bundle, imágenes, caché y latencia de la API. |
 | [`i18n`](.agents/skills/i18n/SKILL.md) | Varios idiomas: plurales ICU, formato regional, builds/rutas por locale y traducciones (recetas Angular+Express, Next.js y FastAPI). |
+| [`accessibility-testing`](.agents/skills/accessibility-testing/SKILL.md) | Auditoría automatizada de accesibilidad con Axe-core y Playwright, cumplimiento WCAG 2.1 AA e integración en CI. |
+| [`resilience-engineering`](.agents/skills/resilience-engineering/SKILL.md) | Patrones de tolerancia a fallos: circuit breakers, timeouts estrictos, backoff exponencial con full jitter y degradación graciosa. |
 | [`security-hardening`](.agents/skills/security-hardening/SKILL.md) | Seguridad desde el diseño: STRIDE por funcionalidad, autenticación, autorización por objeto, cabeceras, archivos subidos, SSRF y dependencias. |
 | [`observability`](.agents/skills/observability/SKILL.md) | Logs JSON con `request_id`, métricas RED y de negocio, OpenTelemetry, reporte de errores, `/healthz` y `/readyz`, alertas con runbook. |
 
