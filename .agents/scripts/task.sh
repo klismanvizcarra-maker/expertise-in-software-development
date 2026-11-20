@@ -33,7 +33,7 @@ DEBT_FILE="$PROJECT_ROOT/.agents/brain/tech_debt.md"
 HANDOFF_DIR="$PROJECT_ROOT/.agents/handoffs"
 ARCHIVE_DIR="$PROJECT_ROOT/.agents/archive"
 
-VALID_STATUSES="BACKLOG|TODO|IN_PROGRESS|IN_REVIEW_QA|BLOCKED|DONE"
+VALID_STATUSES="BACKLOG|TODO|IN_PROGRESS|IN_REVIEW_QA|AWAITING_HUMAN_APPROVAL|BLOCKED|DONE"
 MAX_ITERATIONS=3
 
 # Encabezados que identifican cada tabla (las filas nuevas se añaden al final de la tabla)
@@ -359,6 +359,7 @@ case "$COMMAND" in
     STATUS=$(task_field "$TASK_ID" 5)
     case "$STATUS" in
       BACKLOG|TODO|IN_PROGRESS) ;;
+      AWAITING_HUMAN_APPROVAL) die "$TASK_ID está esperando aprobación humana (AWAITING_HUMAN_APPROVAL). Usa 'task.sh approve $TASK_ID' para aprobarla antes de iniciar." ;;
       IN_REVIEW_QA) die "$TASK_ID está en revisión de QA; espera el veredicto (/qa-review)." ;;
       BLOCKED) die "$TASK_ID está BLOCKED (3/3). Requiere decisión humana; el Orchestrator la reabre con 'task.sh move'." ;;
       DONE) die "$TASK_ID ya está DONE. Crea una tarea nueva si hay más trabajo." ;;
@@ -425,7 +426,7 @@ case "$COMMAND" in
 
   move)
     require_state
-    [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh move TASK-001 <TODO|BACKLOG> (o IN_PROGRESS al desbloquear una tarea BLOCKED)"
+    [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh move TASK-001 <TODO|BACKLOG|AWAITING_HUMAN_APPROVAL> (o IN_PROGRESS al desbloquear una tarea BLOCKED o aprobada)"
     TASK_ID=$(normalize_id "$2")
     NEW_STATUS="$3"
     [[ "$NEW_STATUS" =~ ^($VALID_STATUSES)$ ]] || die "Estado inválido '$NEW_STATUS'. Válidos: $VALID_STATUSES"
@@ -438,13 +439,19 @@ case "$COMMAND" in
       IN_REVIEW_QA) die "$TASK_ID no puede pasar a IN_REVIEW_QA con move: entrégala con 'task.sh handoff $TASK_ID'." ;;
       BLOCKED)      die "$TASK_ID no puede pasar a BLOCKED con move: solo el tercer rechazo de QA ('task.sh reject') la bloquea." ;;
       IN_PROGRESS)
-        [ "$CURRENT" = "BLOCKED" ] \
+        [ "$CURRENT" = "BLOCKED" ] || [ "$CURRENT" = "AWAITING_HUMAN_APPROVAL" ] \
           || die "$TASK_ID no puede pasar de $CURRENT a IN_PROGRESS con move: usa 'task.sh start $TASK_ID' (crea o cambia a su rama)." ;;
     esac
     if [ "$CURRENT" = "BLOCKED" ]; then
       # Salir de BLOCKED implica una decisión humana: se reinicia el contador de QA
       set_task "$TASK_ID" "$NEW_STATUS" "0/$MAX_ITERATIONS"
       log_history "orchestrator-agent" "Equipo" "$TASK_ID" "Desbloqueada tras decisión humana -> $NEW_STATUS"
+    elif [ "$NEW_STATUS" = "AWAITING_HUMAN_APPROVAL" ]; then
+      set_task "$TASK_ID" "$NEW_STATUS"
+      log_history "orchestrator-agent" "humano" "$TASK_ID" "Pausada para aprobación humana"
+    elif [ "$CURRENT" = "AWAITING_HUMAN_APPROVAL" ]; then
+      set_task "$TASK_ID" "$NEW_STATUS"
+      log_history "humano" "orchestrator-agent" "$TASK_ID" "Aprobada por el usuario -> $NEW_STATUS"
     else
       set_task "$TASK_ID" "$NEW_STATUS"
       # Replanificar (incluido reabrir una tarea DONE) también deja rastro en el historial
@@ -453,6 +460,58 @@ case "$COMMAND" in
       fi
     fi
     say "${GREEN}✅ Estado actualizado:${NC} $TASK_ID ahora está en $NEW_STATUS"
+    ;;
+
+  hold)
+    require_state
+    [ -n "$2" ] || die "Uso: ./task.sh hold TASK-001 [\"motivo o punto de control\"]"
+    TASK_ID=$(normalize_id "$2")
+    REASON="${3:-Punto de control pendiente de aprobación humana}"
+    require_task "$TASK_ID"
+    CURRENT=$(task_field "$TASK_ID" 5)
+    [ "$CURRENT" != "DONE" ] && [ "$CURRENT" != "BLOCKED" ] && [ "$CURRENT" != "IN_REVIEW_QA" ] \
+      || die "No se puede pausar $TASK_ID en estado $CURRENT para aprobación humana."
+    set_task "$TASK_ID" "AWAITING_HUMAN_APPROVAL"
+    log_history "orchestrator-agent" "humano" "$TASK_ID" "Pausada para aprobación humana: $REASON"
+    say "${YELLOW}⏸️  Tarea en espera de aprobación humana:${NC} $TASK_ID -> AWAITING_HUMAN_APPROVAL"
+    say "   Motivo: $REASON"
+    say "   Para reanudar tras visto bueno: ./.agents/scripts/task.sh approve $TASK_ID"
+    ;;
+
+  approve)
+    require_state
+    [ -n "$2" ] || die "Uso: ./task.sh approve TASK-001 [--status TODO|IN_PROGRESS] [--comment \"aprobación\"]"
+    TASK_ID=$(normalize_id "$2")
+    TARGET_STATUS="TODO"
+    COMMENT="Aprobado por el usuario"
+    shift 2
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --status)
+          [ -n "${2:-}" ] || die "--status requiere TODO o IN_PROGRESS."
+          TARGET_STATUS="$2"; shift 2 ;;
+        --status=*)
+          TARGET_STATUS="${1#--status=}"; shift ;;
+        --comment)
+          [ -n "${2:-}" ] || die "--comment requiere texto."
+          COMMENT="$2"; shift 2 ;;
+        --comment=*)
+          COMMENT="${1#--comment=}"; shift ;;
+        *)
+          die "Opción desconocida para approve: '$1'. Uso: ./task.sh approve TASK-001 [--status TODO|IN_PROGRESS] [--comment \"texto\"]" ;;
+      esac
+    done
+    [[ "$TARGET_STATUS" =~ ^(TODO|IN_PROGRESS)$ ]] || die "Estado destino inválido para approve: '$TARGET_STATUS'. Permitidos: TODO, IN_PROGRESS"
+    require_task "$TASK_ID"
+    CURRENT=$(task_field "$TASK_ID" 5)
+    [ "$CURRENT" = "AWAITING_HUMAN_APPROVAL" ] \
+      || die "$TASK_ID está en $CURRENT. Solo tareas en AWAITING_HUMAN_APPROVAL pueden aprobarse con 'task.sh approve'."
+    set_task "$TASK_ID" "$TARGET_STATUS"
+    log_history "humano" "orchestrator-agent" "$TASK_ID" "Aprobada por el usuario -> $TARGET_STATUS: $COMMENT"
+    say "${GREEN}✅ Tarea aprobada por el usuario:${NC} $TASK_ID reanudada en $TARGET_STATUS"
+    if [ "$TARGET_STATUS" = "IN_PROGRESS" ]; then
+      say "   Recuerda sincronizar la rama de trabajo con: ./.agents/scripts/task.sh start $TASK_ID"
+    fi
     ;;
 
   handoff)
@@ -1315,6 +1374,8 @@ EOF_ARCH
   doctor                                 Diagnóstico integral (estado, cerebro, secretos y skills)
   diff [TASK-ID] [--stat]                Diff y estadísticas de la tarea frente a main
   dashboard [--output ruta]              Genera un visor visual interactivo (HTML) del proyecto
+  hold TASK-ID ["motivo"]                Pausa una tarea para aprobación humana (AWAITING_HUMAN_APPROVAL)
+  approve TASK-ID [--status S] [--comment C]  Aprueba y reanuda una tarea (S: TODO o IN_PROGRESS)
   add "<desc>" "<agente>" "<criterios>"  Crear tarea (TODO)
   start TASK-ID                          TODO/rechazada -> IN_PROGRESS + rama Git
   handoff TASK-ID [revisor] [--verify "cmd"]...  IN_PROGRESS -> IN_REVIEW_QA + JSON + historial

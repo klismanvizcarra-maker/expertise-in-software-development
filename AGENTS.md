@@ -21,7 +21,7 @@ Al recibir cualquier requerimiento que vaya a **modificar archivos**, el primer 
 2. **Cambio de rol explícito**: si un mismo asistente encadena roles, debe anunciar el cambio (`→ Actuando como qa-security-agent`) y cargar la skill correspondiente antes de continuar.
 3. **Punto de Entrada**: todo requerimiento nuevo o cambio de alcance pasa por el `orchestrator-agent`. Si la idea aún es difusa (sin usuarios, flujos ni criterios), primero va al `product-manager-agent`. Si conviene estudiar antes productos de referencia o la competencia, el `research-agent` los investiga y su propuesta aprobada alimenta al `product-manager-agent`.
 4. **Cero Código sin Tarea**: ningún agente crea o modifica código sin una `TASK-XXX` registrada con Criterios de Aceptación verificables en `GLOBAL_STATE.md`. En Claude Code lo impone el hook `.agents/scripts/require-active-task.sh` (`.claude/settings.json`): sin una tarea `IN_PROGRESS` bloquea las ediciones de archivos que no sean Markdown, `docs/`, `specs/`, `.agents/` o `.claude/`. En Antigravity, que no tiene hooks, el agente ejecuta **antes de editar** `./.agents/scripts/task.sh check <rutas que va a tocar>` (las rutas relativas se toman del directorio actual): aplica el mismo control (sale con código 2 si alguna ruta está bloqueada) y muestra las lecciones de esas rutas. No edita si el comando sale con 2.
-5. **Skills de flujo**: los pasos recurrentes del ciclo tienen su propia skill invocable con `/`: `/iniciar-proyecto`, `/adoptar-proyecto`, `/crear-plan`, `/estado`, `/nueva-tarea`, `/probar-usuario`, `/bugfix`, `/hotfix`, `/incidente`, `/refactor`, `/pr-review`, `/onboarding`, `/explain-codebase`, `/handoff`, `/qa-review`, `/aprender`, `/cerrar-fase` y `/release`. Úsalas en lugar de improvisar el procedimiento.
+5. **Skills de flujo**: los pasos recurrentes del ciclo tienen su propia skill invocable con `/`: `/iniciar-proyecto`, `/adoptar-proyecto`, `/crear-plan`, `/estado`, `/nueva-tarea`, `/probar-usuario`, `/bugfix`, `/hotfix`, `/incidente`, `/refactor`, `/pr-review`, `/onboarding`, `/explain-codebase`, `/aprobar`, `/handoff`, `/qa-review`, `/aprender`, `/cerrar-fase` y `/release`. Úsalas en lugar de improvisar el procedimiento.
 6. **Skills de stack**: si el stack declarado en `GLOBAL_STATE.md` §2 tiene una skill `stack-*` (ej. `stack-angular-express-postgres`), todo agente que escriba código la carga **junto con** la skill de su rol. La skill de stack manda en convenciones concretas (estructura, librerías, comandos); la del rol, en el proceso.
 7. **Skills de técnica**: cuando una tarea toca pagos (`payments-stripe`), SEO y SSR (`seo-web`), rendimiento (`web-performance`), varios idiomas (`i18n`), accesibilidad automatizada (`accessibility-testing`), resiliencia y tolerancia a fallos (`resilience-engineering`), estrategia de pruebas unitarias/integración/contratos (`testing-strategy`), pruebas end-to-end (`e2e-testing`), colas/outbox/subidas/emails asíncronos (`async-jobs`), autenticación, permisos, datos de usuarios, subidas o llamadas a URLs externas (`security-hardening`) o logs, métricas, alertas y salida a producción (`observability`), el agente asignado carga también esa skill. El Orchestrator lo indica en los criterios de la tarea. `payments-stripe`, `seo-web`, `web-performance` e `i18n` separan su núcleo agnóstico de las recetas por stack en `references/` (`angular-express`, `nextjs`, `fastapi`); si el proyecto usa otro stack distinto de esos tres, sirven como guía de principios y sus comandos se adaptan (registrándolo como ADR).
 
@@ -35,6 +35,8 @@ Toda transición de estado se hace **exclusivamente** con `./.agents/scripts/tas
 | :--- | :--- | :--- |
 | Crear tarea (`TODO`) | `task.sh add "<desc>" "<agente>" "<criterios>"` | `orchestrator-agent` |
 | `TODO` → `IN_PROGRESS` (+ rama Git) | `task.sh start TASK-XXX` | Especialista asignado |
+| Pausar para aprobación humana (`AWAITING_HUMAN_APPROVAL`) | `task.sh hold TASK-XXX ["motivo"]` | `orchestrator-agent` / Especialista |
+| Aprobar punto de control (`→ TODO` o `IN_PROGRESS`) | `task.sh approve TASK-XXX [--status S] [--comment C]` | Humano / `orchestrator-agent` (en `/aprobar`) |
 | `IN_PROGRESS` → `IN_REVIEW_QA` | `task.sh handoff TASK-XXX` | Especialista asignado |
 | `IN_REVIEW_QA` → `IN_PROGRESS` (rechazo, +1 iteración) | `task.sh reject TASK-XXX "<motivo>"` | `qa-security-agent` |
 | Retomar tras rechazo (vuelve a su rama) | `task.sh start TASK-XXX` | Especialista asignado |
@@ -45,11 +47,13 @@ Toda transición de estado se hace **exclusivamente** con `./.agents/scripts/tas
 
 ```text
 TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──close──> DONE
-                     ▲                        │
-                     └────── reject (n/3) ────┘   reject a 3/3 ──> BLOCKED ──> ESCALAMIENTO AL HUMANO
+  │                  ▲                        │
+  │                  └────── reject (n/3) ────┘   reject a 3/3 ──> BLOCKED ──> ESCALAMIENTO AL HUMANO
+  │                  ▲
+  └── hold ──> AWAITING_HUMAN_APPROVAL ──approve──> TODO / IN_PROGRESS
 ```
 
-`move` nunca lleva a `DONE`, `IN_REVIEW_QA` ni `BLOCKED`, ni a `IN_PROGRESS` salvo desde `BLOCKED`: esas transiciones solo existen con `close`, `handoff`, `reject` y `start`, que aplican sus controles.
+`move` nunca lleva a `DONE`, `IN_REVIEW_QA` ni `BLOCKED`, ni a `IN_PROGRESS` salvo desde `BLOCKED` o `AWAITING_HUMAN_APPROVAL`: esas transiciones solo existen con `close`, `handoff`, `reject`, `hold`, `approve` y `start`, que aplican sus controles.
 
 **Diagnóstico e Inspección**:
 - `task.sh doctor`: diagnóstico integral del proyecto ejecutando validación de estado, salud del cerebro, linter activo de antipatrones aprendidos (`brain lint`), escaneo de secretos y auditoría de skills en un solo paso semafórico de 5 etapas (exit 0/1).

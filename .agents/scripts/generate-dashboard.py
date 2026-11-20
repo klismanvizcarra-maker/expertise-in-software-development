@@ -114,7 +114,7 @@ def main():
     pending_debt = [r for r in debt_rows if len(r) >= 8 and 'SALDADA' not in r[7].upper()]
 
     # HTML Generator
-    status_columns = ['TODO', 'IN_PROGRESS', 'IN_REVIEW_QA', 'BLOCKED', 'DONE']
+    status_columns = ['TODO', 'AWAITING_HUMAN_APPROVAL', 'IN_PROGRESS', 'IN_REVIEW_QA', 'BLOCKED', 'DONE']
     columns_data = {s: [] for s in status_columns}
     for t in all_tasks:
         st = t['status']
@@ -214,6 +214,7 @@ def main():
         elif col == "DONE": color_class = "var(--success)"
         elif col == "IN_PROGRESS": color_class = "#60a5fa"
         elif col == "IN_REVIEW_QA": color_class = "var(--warning)"
+        elif col == "AWAITING_HUMAN_APPROVAL": color_class = "#fbbf24"
 
         html_out += f"""    <div class="column">
       <div class="column-header">

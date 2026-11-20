@@ -55,7 +55,7 @@ ALL_ROWS=$(printf '%s\n%s\n' "$ROWS" "$ARCHIVE_ROWS" | grep -v '^$' || true)
 
 # 1. Filas mal formadas e IDs duplicados
 echo "-> Verificando formato del tablero..."
-BAD=$(printf '%s\n' "$ROWS" | awk -F'|' 'NF == 3 && ($2 !~ /^(BACKLOG|TODO|IN_PROGRESS|IN_REVIEW_QA|BLOCKED|DONE)$/ || $3 !~ /^[0-3]\/3$/) { print "   " $0 }')
+BAD=$(printf '%s\n' "$ROWS" | awk -F'|' 'NF == 3 && ($2 !~ /^(BACKLOG|TODO|IN_PROGRESS|IN_REVIEW_QA|AWAITING_HUMAN_APPROVAL|BLOCKED|DONE)$/ || $3 !~ /^[0-3]\/3$/) { print "   " $0 }')
 BAD_ARCH=$(printf '%s\n' "$ARCHIVE_ROWS" | awk -F'|' 'NF == 3 && ($2 != "DONE" || $3 !~ /^[0-3]\/3$/) { print "   [archivo] " $0 }')
 [ -n "$BAD_ARCH" ] && BAD=$(printf '%s\n%s\n' "$BAD" "$BAD_ARCH" | grep -v '^$' || true)
 DUP_TASKS=$(printf '%s\n' "$ALL_ROWS" | awk -F'|' 'NF == 3 { c[$1]++ } END { for (id in c) if (c[id] > 1) print "   " id " (" c[id] " veces)" }' | sort || true)

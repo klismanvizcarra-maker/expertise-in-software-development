@@ -1696,6 +1696,36 @@
     "frontend-agent"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "appr-01",
+   "prompt": "Pausa la tarea TASK-040 y pide aprobacion humana antes de ejecutar la migracion destructiva de base de datos",
+   "expect": [
+    "aprobar"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "frontend-agent",
+    "qa-review"
+   ],
+   "type": "flujo"
+  },
+  {
+   "id": "appr-02",
+   "prompt": "Necesito un punto de control con visto bueno humano para revisar la arquitectura propuesta antes de programar",
+   "expect": [
+    "aprobar"
+   ],
+   "accept": [
+    "orchestrator-agent"
+   ],
+   "forbid": [
+    "nueva-tarea",
+    "release"
+   ],
+   "type": "flujo"
   }
  ],
  "_seed_tasks": [
