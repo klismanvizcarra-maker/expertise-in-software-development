@@ -1847,6 +1847,38 @@
     "domain-logic-agent"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "sfm-01",
+   "prompt": "Crea un microservicio en FastAPI con MongoDB usando Beanie ODM y Motor para almacenar colecciones de catálogo con esquemas dinámicos",
+   "expect": [
+    "stack-fastapi-mongodb"
+   ],
+   "accept": [
+    "backend-agent",
+    "database-architect-agent"
+   ],
+   "forbid": [
+    "stack-fastapi-postgres",
+    "stack-angular-express-postgres"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "sfm-02",
+   "prompt": "Configura los índices compuestos en class Settings del modelo Beanie de MongoDB y maneja la serialización de ObjectId en FastAPI",
+   "expect": [
+    "stack-fastapi-mongodb"
+   ],
+   "accept": [
+    "database-architect-agent",
+    "backend-agent"
+   ],
+   "forbid": [
+    "stack-nextjs-tailwind-prisma",
+    "stack-nestjs-postgres"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
