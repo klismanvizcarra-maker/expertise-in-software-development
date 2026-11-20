@@ -60,6 +60,7 @@
 | `TASK-066` | Rol user-testing-agent y skill de flujo probar-usuario para UAT exploratorio en navegador | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/user-testing-agent/SKILL.md y .agents/skills/probar-usuario/SKILL.md con Protocolo, Checklist, Prohibido; personas de usuario; loop reject/handoff; plantilla uat_bug_report_template.md; casos en cases.json y test-skills.sh en verde |
 | `TASK-067` | Skills de flujo hotfix e incidente para respuesta y contencion de fallos en produccion | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/hotfix/SKILL.md y .agents/skills/incidente/SKILL.md; plantilla post_mortem_template.md; delimitadas de bugfix; casos en cases.json y test-skills.sh en verde |
 | `TASK-068` | Skills de flujo onboarding y explain-codebase para induccion humana y mapa del proyecto | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/onboarding/SKILL.md y .agents/skills/explain-codebase/SKILL.md; plantilla onboarding_guide_template.md; casos en cases.json y test-skills.sh en verde |
+| `TASK-069` | Skill tecnica accessibility-testing con auditoria automatizada Axe-core y WCAG 2.1 AA | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/accessibility-testing/SKILL.md con references/ (wcag-checklist, playwright-axe); integracion CI; casos en cases.json y test-skills.sh en verde |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -265,3 +266,5 @@
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-067` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
 | `2026-11-20` | docs-architecture-agent | --deliverable | `TASK-068` | Skills de flujo onboarding y explain-codebase para induccion humana y mapa del proyecto. Comandos: `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `./.agents/scripts/scan-secrets.sh --branch` |
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-068` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
+| `2026-11-20` | docs-architecture-agent | --deliverable | `TASK-069` | Skill tecnica accessibility-testing con auditoria automatizada Axe-core y WCAG 2.1 AA. Comandos: `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `./.agents/scripts/scan-secrets.sh --branch` |
+| `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-069` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
