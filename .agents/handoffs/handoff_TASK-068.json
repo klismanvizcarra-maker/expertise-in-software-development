@@ -1,0 +1,21 @@
+{
+  "task_id": "TASK-068",
+  "summary": "Skills de flujo onboarding y explain-codebase para induccion humana y mapa del proyecto",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "--deliverable",
+  "timestamp": "2026-11-20T17:00:07Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/explain-codebase/SKILL.md" },
+    { "type": "file", "path": ".agents/skills/onboarding/SKILL.md" },
+    { "type": "file", "path": ".agents/templates/onboarding_guide_template.md" },
+    { "type": "file", "path": "AGENTS.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
