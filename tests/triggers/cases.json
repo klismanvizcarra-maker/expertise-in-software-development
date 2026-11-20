@@ -1726,6 +1726,36 @@
     "release"
    ],
    "type": "flujo"
+  },
+  {
+   "id": "de-01",
+   "prompt": "Construye un pipeline ETL con dbt para transformar eventos brutos en un modelo dimensional estrella con tablas de hechos y dimensiones",
+   "expect": [
+    "data-engineer-agent"
+   ],
+   "accept": [
+    "database-architect-agent"
+   ],
+   "forbid": [
+    "frontend-agent",
+    "devops-cloud-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "de-02",
+   "prompt": "Configura una capa Silver en DuckDB para limpiar deduplicar y validar la calidad de datos de logs de telemetría",
+   "expect": [
+    "data-engineer-agent"
+   ],
+   "accept": [
+    "backend-agent"
+   ],
+   "forbid": [
+    "ui-ux-agent",
+    "mobile-agent"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
