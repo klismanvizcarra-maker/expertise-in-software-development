@@ -65,6 +65,7 @@
 | `TASK-076` | Skill tecnica finops-cost-optimization para auditoria de costes cloud y dimensionamiento | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/finops-cost-optimization/SKILL.md con Protocolo, Checklist y Prohibido; optimizacion de consultas SQL, serverless execution y transferencia; references/finops-checklist.md; casos en cases.json y test-skills.sh en verde |
 | `TASK-077` | Skill de stack stack-fastapi-mongodb para aplicaciones backend basadas en documentos NoSQL | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/stack-fastapi-mongodb/SKILL.md con estructura, comandos, Beanie/Motor ODM, indices compuestos y trampas conocidas; casos en cases.json y test-skills.sh en verde |
 | `TASK-078` | Skill de stack stack-react-native-expo para aplicaciones moviles nativas multiplataforma | docs-architecture-agent | `DONE` | `0/3` | Skill .agents/skills/stack-react-native-expo/SKILL.md con Expo Router v3, TypeScript, persistencia local (MMKV/SQLite), safe areas y trampas conocidas; casos en cases.json y test-skills.sh en verde |
+| `TASK-079` | Protocolo formal de contratos de integracion contracts.json y validador de endpoints | docs-architecture-agent | `DONE` | `0/3` | Plantilla .agents/templates/contracts_template.json; protocolo de sincronizacion entre backend-agent y frontend-agent en AGENTS.md §4; comando task.sh contracts validate; documentado en docs/ y tests en test-scripts.sh |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -292,3 +293,5 @@
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-077` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
 | `2026-11-20` | docs-architecture-agent | qa-security-agent | `TASK-078` | Skill stack-react-native-expo creada con New Architecture, Expo Router v3, MMKV/SQLite, casos en cases.json y test-skills en verde. Comandos: `bash tests/test-skills.sh`, `python3 tests/triggers/lint_descriptions.py`, `./.agents/scripts/scan-secrets.sh --branch` |
 | `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-078` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |
+| `2026-11-20` | docs-architecture-agent | qa-security-agent | `TASK-079` | Plantilla contracts_template.json, validador contracts en task.sh y protocolo en AGENTS.md §4. Comandos: `bash tests/test-scripts.sh`, `./.agents/scripts/scan-secrets.sh --branch` |
+| `2026-11-20` | qa-security-agent | orchestrator-agent | `TASK-079` | Aprobada por QA -> DONE. Sin lección: Aprobada en primera iteracion sin defectos. |

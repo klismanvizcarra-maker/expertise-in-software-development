@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "title": "API Contracts Specification",
+  "description": "Contrato formal de integración API y DTOs entre backend-agent y frontend-agent/mobile-agent",
+  "baseUrl": "/api/v1",
+  "endpoints": [
+    {
+      "id": "auth-login",
+      "method": "POST",
+      "path": "/auth/login",
+      "summary": "Iniciar sesión de usuario",
+      "auth": false,
+      "request": {
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "string (email)",
+          "password": "string (min 8 chars)"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Autenticación exitosa",
+          "body": {
+            "token": "string (jwt)",
+            "refreshToken": "string",
+            "user": {
+              "id": "string (uuid)",
+              "email": "string",
+              "role": "string"
+            }
+          }
+        },
+        "401": {
+          "description": "Credenciales inválidas",
+          "body": {
+            "error": "UNAUTHORIZED",
+            "message": "Credenciales incorrectas"
+          }
+        }
+      }
+    },
+    {
+      "id": "users-me",
+      "method": "GET",
+      "path": "/users/me",
+      "summary": "Obtener perfil del usuario autenticado",
+      "auth": true,
+      "request": {
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Perfil recuperado",
+          "body": {
+            "id": "string (uuid)",
+            "email": "string",
+            "name": "string",
+            "role": "string",
+            "createdAt": "string (iso8601)"
+          }
+        },
+        "401": {
+          "description": "Token no provisto o inválido",
+          "body": {
+            "error": "UNAUTHORIZED",
+            "message": "Token de autenticación expirado o inválido"
+          }
+        }
+      }
+    }
+  ],
+  "commonSchemas": {
+    "errorResponse": {
+      "error": "string (código de error semántico)",
+      "message": "string (mensaje amigable)",
+      "details": "array | null (opcional)"
+    }
+  }
+}

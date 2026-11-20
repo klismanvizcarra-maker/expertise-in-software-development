@@ -69,9 +69,19 @@ TODO ──start──> IN_PROGRESS ──handoff──> IN_REVIEW_QA ──clos
 
 ---
 
-## 4. Poder de Veto de QA y Regla Anti-Deadlocks (Límite de 3 Iteraciones)
+## 4. Protocolo de Contratos de Integración y Poder de Veto de QA
 
-1. **Poder de Veto**: el `qa-security-agent` rechaza todo entregable que falle al menos 1 Criterio de Aceptación, tenga pruebas rotas o contenga vulnerabilidades OWASP o secretos expuestos.
+### 4.1 Protocolo de Contratos de Integración Inter-Agente (`contracts.json`)
+Para garantizar la coordinación desacoplada entre `backend-agent` y `frontend-agent` (o `mobile-agent`) sin bloqueos ni llamadas desincronizadas:
+1. **Contrato Previo Obligatorio**: Cuando una funcionalidad requiera endpoints nuevos o modificados, el `backend-agent` define o actualiza el archivo de especificación `contracts.json` en la raíz (a partir de `.agents/templates/contracts_template.json`) antes o en paralelo a la implementación.
+2. **Estructura Estándar**: Cada endpoint debe especificar su `id`, `method` (GET, POST, PUT, PATCH, DELETE...), `path`, `summary`, indicador `auth` booleano, y los esquemas esperados de `request` (headers, query, body) y `responses` (códigos HTTP 200, 201, 400, 401, 404, 500 con sus DTOs).
+3. **Validación Determinista**: Todo contrato debe validarse ejecutando `./.agents/scripts/task.sh contracts validate [ruta/contracts.json]`.
+4. **Desarrollo Paralelo con Mocks**: El `frontend-agent` y el `mobile-agent` pueden avanzar inmediatamente consumiendo el contrato validado mediante mocks tipados o fixtures, sin esperar a que el servidor esté desplegado.
+5. **Registro en Estado Global**: Los contratos activos se resumen y referencian en `GLOBAL_STATE.md` §4.
+
+### 4.2 Poder de Veto de QA y Regla Anti-Deadlocks (Límite de 3 Iteraciones)
+
+1. **Poder de Veto**: el `qa-security-agent` rechaza todo entregable que falle al menos 1 Criterio de Aceptación, tenga pruebas rotas, desincronización de contratos de integración (`task.sh contracts validate`) o contenga vulnerabilidades OWASP o secretos expuestos.
 2. **Verificación independiente**: QA ejecuta por sí mismo los tests y comandos de verificación; nunca aprueba basándose solo en el reporte del especialista. Revisa con contexto limpio: un subagente en Claude Code o una conversación nueva en Antigravity, nunca con la memoria de quien implementó (ver `/qa-review`).
 3. **Límite de 3 Iteraciones**: cada rechazo suma +1 al contador (`n/3`). Al llegar a **3/3** la tarea pasa a `BLOCKED`, se prohíbe seguir iterando y el `orchestrator-agent` emite el informe de **ESCALAMIENTO AL USUARIO (HUMANO)** con opciones de solución.
 
