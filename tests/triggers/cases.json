@@ -1756,6 +1756,36 @@
     "mobile-agent"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "dso-01",
+   "prompt": "Integra en GitHub Actions un paso bloqueante con Trivy para escanear vulnerabilidades en dependencias y fallar ante CVEs críticos",
+   "expect": [
+    "devsecops-agent"
+   ],
+   "accept": [
+    "devops-cloud-agent"
+   ],
+   "forbid": [
+    "frontend-agent",
+    "database-architect-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "dso-02",
+   "prompt": "Genera el SBOM en formato CycloneDX para la imagen Docker y firma el artefacto resultante con Cosign",
+   "expect": [
+    "devsecops-agent"
+   ],
+   "accept": [
+    "devops-cloud-agent"
+   ],
+   "forbid": [
+    "ui-ux-agent",
+    "domain-logic-agent"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
