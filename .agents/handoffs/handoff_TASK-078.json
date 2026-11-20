@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-078",
+  "summary": "Skill de stack stack-react-native-expo para aplicaciones moviles nativas multiplataforma",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-20T20:59:29Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/skills/stack-react-native-expo/SKILL.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/triggers/cases.json" }
+  ],
+  "verification_commands": [
+    "bash tests/test-skills.sh",
+    "python3 tests/triggers/lint_descriptions.py",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
