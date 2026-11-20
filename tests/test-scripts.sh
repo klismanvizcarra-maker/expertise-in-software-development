@@ -1144,6 +1144,20 @@ $T hold "$TASK_CTRL" "segundo hold" >/dev/null
 check "task.sh approve --status IN_PROGRESS reanuda a IN_PROGRESS" '$T approve "$TASK_CTRL" --status IN_PROGRESS >/dev/null && grep "$TASK_CTRL" GLOBAL_STATE.md | grep -q "| \`IN_PROGRESS\` |"'
 check "task.sh approve sobre tarea que no está en AWAITING_HUMAN_APPROVAL falla" '! $T approve "$TASK_CTRL" >/dev/null 2>&1'
 
+# 9. task.sh contracts validate
+check "task.sh contracts validate valida contracts_template.json con éxito (exit 0)" '$T contracts validate "$ROOT/.agents/templates/contracts_template.json" >/dev/null'
+check "task.sh contracts validate falla si el archivo no existe (exit 1)" '! $T contracts validate "nonexistent.json" >/dev/null 2>&1'
+printf '{"version": "1.0", "endpoints": [{"method": "INVALID", "path": "/foo"}]}' > bad_contract.json
+check "task.sh contracts validate detecta método HTTP inválido (exit 1)" '! $T contracts validate bad_contract.json >/dev/null 2>&1'
+printf '{"version": "1.0", "endpoints": [{"method": "GET", "path": "no_slash"}]}' > bad_path.json
+check "task.sh contracts validate detecta path sin barra inicial (exit 1)" '! $T contracts validate bad_path.json >/dev/null 2>&1'
+printf '{"endpoints": []}' > no_version.json
+check "task.sh contracts validate detecta falta de versión (exit 1)" '! $T contracts validate no_version.json >/dev/null 2>&1'
+printf '{"version": "1.0", "endpoints": [{"method": "GET", "path": "/test"}]}' > valid_contract.json
+check "task.sh contracts validate valida contrato mínimo válido (exit 0)" '$T contracts validate valid_contract.json >/dev/null'
+rm -f bad_contract.json bad_path.json no_version.json valid_contract.json
+check "task.sh contracts con subcomando inválido falla (exit 1)" '! $T contracts invalid_sub >/dev/null 2>&1'
+
 cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"

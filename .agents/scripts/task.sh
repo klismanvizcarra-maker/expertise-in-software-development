@@ -1353,6 +1353,52 @@ EOF_ARCH
     esac
     ;;
 
+  contracts)
+    sub="${2:-validate}"
+    case "$sub" in
+      validate)
+        C_FILE="${3:-$PROJECT_ROOT/contracts.json}"
+        [ -f "$C_FILE" ] || die "Archivo de contratos no encontrado: $C_FILE"$'\n'"   Uso: ./task.sh contracts validate [ruta/contracts.json]"
+        python3 -c '
+import json, sys
+
+path = sys.argv[1]
+try:
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+except Exception as e:
+    sys.exit(f"❌ Error al leer o parsear JSON en {path}: {e}")
+
+if not isinstance(data, dict):
+    sys.exit(f"❌ El archivo de contratos debe ser un objeto JSON (dict), no {type(data).__name__}")
+
+if "version" not in data:
+    sys.exit("❌ Falta la clave obligatoria \"version\" en el contrato")
+
+if "endpoints" not in data or not isinstance(data["endpoints"], list):
+    sys.exit("❌ Falta la clave obligatoria \"endpoints\" o no es una lista")
+
+valid_methods = {"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"}
+for idx, ep in enumerate(data["endpoints"]):
+    if not isinstance(ep, dict):
+        sys.exit(f"❌ El endpoint en indice {idx} no es un objeto")
+    method = ep.get("method")
+    ep_path = ep.get("path")
+    if not method or not isinstance(method, str) or method.upper() not in valid_methods:
+        sys.exit(f"❌ Endpoint #{idx + 1} tiene metodo HTTP invalido: {method}")
+    if not ep_path or not isinstance(ep_path, str) or not ep_path.startswith("/"):
+        sys.exit(f"❌ Endpoint #{idx + 1} ({method}) tiene ruta invalida (debe empezar con /): {ep_path}")
+
+count = len(data["endpoints"])
+print(f"✅ Contratos válidos: {count} endpoints definidos en {path}")
+' "$C_FILE" || exit 1
+        ;;
+      *)
+        die "Comando contracts desconocido: '$sub'"$'\n'"   Uso: ./task.sh contracts validate [ruta/contracts.json]"
+        ;;
+    esac
+    ;;
+
   help|-h|--help|*)
     # Un comando desconocido (errata como 'clsoe') no puede parecer un éxito: ayuda por stderr y exit 1
     HELP_RC=0
@@ -1393,6 +1439,7 @@ EOF_ARCH
                                          Lección en lessons_learned.md (fuente única; rechaza
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
+  contracts [validate] [ruta]            Valida contratos API y DTOs (contracts.json por defecto)
   check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones
                                          de esas rutas; exit 2 si alguna está bloqueada (Antigravity)
   brain search <términos...>             Busca en lecciones, gotchas y deuda
