@@ -1786,6 +1786,36 @@
     "domain-logic-agent"
    ],
    "type": "especialista"
+  },
+  {
+   "id": "leg-01",
+   "prompt": "Audita las licencias de dependencias npm del proyecto para verificar que no haya paquetes con licencia AGPL o copyleft viral",
+   "expect": [
+    "compliance-legal-agent"
+   ],
+   "accept": [
+    "devsecops-agent"
+   ],
+   "forbid": [
+    "frontend-agent",
+    "domain-logic-agent"
+   ],
+   "type": "especialista"
+  },
+  {
+   "id": "leg-02",
+   "prompt": "Diseña el flujo de derecho al olvido según GDPR para anonimizar irreversiblemente los datos PII de usuarios dados de baja",
+   "expect": [
+    "compliance-legal-agent"
+   ],
+   "accept": [
+    "backend-agent"
+   ],
+   "forbid": [
+    "ui-ux-agent",
+    "devops-cloud-agent"
+   ],
+   "type": "especialista"
   }
  ],
  "_seed_tasks": [
