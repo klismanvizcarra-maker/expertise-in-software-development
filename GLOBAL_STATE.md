@@ -8,8 +8,8 @@
 
 - **Proyecto**: `SKILL MAESTRO`
 - **Descripción**: `Framework y catálogo multi-agente para Claude Code y Antigravity: directrices de gobernanza, roles especializados, scripts de ciclo de vida de tareas y batería de evals.`
-- **Estado Actual**: `IN_PROGRESS`
-- **Fase Actual**: `FASE 6: Consolidación y Activación Fiable del Catálogo (v1.6.0)`
+- **Estado Actual**: `PRODUCTION_READY`
+- **Fase Actual**: `FASE 7: Lanzamiento Enterprise v2.0.0 (MCP, Live Dashboard, CLI Global, Swarm)`
 - **Última Actualización**: `2026-11-21`
 - **Iteraciones Críticas Acumuladas**: `0 / 3`
 
@@ -19,8 +19,11 @@
 
 - **Core**: `Markdown (Skills & Prompts) con Frontmatter YAML`
 - **Automatización**: `Bash (scripts de task.sh, init-project.sh, require-active-task.sh, validate-state.sh)`
+- **Servidor MCP**: `Node.js ESM nativo (Model Context Protocol stdio, 15 tools)`
+- **Live Dashboard**: `Python 3 http.server + Kanban interactivo en tiempo real (/api/status, /api/action)`
+- **Distribución Global**: `Paquete universal npm/npx ejecutable con bin/skill-maestro.js`
 - **Hooks & CI**: `Git hooks (pre-commit, commit-msg) + GitHub Actions`
-- **Evals & Testing**: `Python 3 (triggers y evals) + Bash test suite`
+- **Evals & Testing**: `Python 3 (triggers y evals) + Bash test suite (429 tests) + Node test runner`
 - **Entornos soportados**: `Claude Code CLI + Antigravity IDE / CLI`
 
 ---
@@ -75,6 +78,7 @@
 | `TASK-093` | Servidor web local y Live Dashboard interactivo (task.sh serve) | frontend-agent | `DONE` | `0/3` | Implementar task.sh serve con servidor HTTP local liviano; API REST para estado y acciones de aprobacion (approve/hold); recarga automatica de estado; integrado en task.sh y test-scripts.sh |
 | `TASK-094` | CLI ejecutable global npx/npm y soporte bilingüe i18n (--lang en/es) | devops-cloud-agent | `DONE` | `0/3` | Crear package.json y bin/skill-maestro.js para ejecucion global via npx/npm; soporte de bandera --lang en/es en init-project.sh con plantillas en ingles; tests unitarios y de integracion pasando |
 | `TASK-095` | Protocolo de enjambres concurrentes y workspaces aislados (task.sh swarm) | orchestrator-agent | `DONE` | `0/3` | Implementar subcomando task.sh swarm (status, list, spawn, merge) para coordinacion de multiples agentes concurrentes en ramas aisladas; integracion con contracts.json y suite de tests pasando |
+| `TASK-096` | Lanzamiento oficial v2.0.0 Enterprise: empaquetado, CHANGELOG, versionado y documentación | docs-architecture-agent | `IN_PROGRESS` | `0/3` | Actualizar .agents/VERSION y package.json a 2.0.0; documentar release en CHANGELOG.md; actualizar README.md; tag de Git v2.0.0; suite de pruebas al 100% y doctor 5/5 |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 

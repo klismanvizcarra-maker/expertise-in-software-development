@@ -2,18 +2,44 @@
 
 Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado, [SemVer](https://semver.org/lang/es/). La versión instalada en un proyecto está en `.agents/VERSION`; `init-project.sh --update` la sincroniza.
 
-## [Unreleased]
+## [2.0.0] - 2026-11-21
 
-### Añadido
-- `lint_descriptions.py` controla el presupuesto del listado de skills de Claude Code: 300 caracteres como máximo por `description` y 15 000 en total. Lee el frontmatter con las claves en cualquier orden, bloques multilínea y comillas, y falla con la `SKILL.md` que no puede medir. Opciones `--skills-dir` y `--cases` y 6 checks nuevos en `tests/test-scripts.sh` (TASK-081).
-- 3 evals deterministas nuevas en `tests/evals/evals.json` (de 18 a 21): `resilience-pagos-breaker`, `accessibility-wcag-formulario` y `finops-rightsizing-logs`, con sus fixtures y comprobadores (`resilience_checks.mjs`, `a11y_check.py`, `finops_check.py`), soluciones de referencia en `tests/evals/solutions/` y una matriz de soluciones correctas y trampas en `tests/test-scripts.sh` (TASK-083). Los comprobadores borran sus temporales aunque fallen y acotan cada regla a su cláusula o elemento real (WHERE principal, label por elemento, todas las reglas de color de `.hint`) (lección LL-021).
+### Añadido (Hito Mayor: Enterprise Multi-Agent Operating System)
+- **Servidor MCP Nativo de Gobernanza (`.agents/mcp/server.mjs`)**:
+  - Implementación oficial de servidor Model Context Protocol (MCP spec 2024-11-05) en Node.js ESM nativo con transporte `stdio` y cero dependencias de terceros (TASK-092).
+  - Expone 15 herramientas de ciclo de vida (`task_list`, `task_metrics`, `task_add`, `task_start`, `task_hold`, `task_approve`, `task_handoff`, `task_reject`, `task_close`, `brain_search`, `brain_hotspots`, `brain_lint`, `doctor_check`, `contracts_validate`, `swarm_status`) (TASK-092, TASK-095).
+  - Integrado de fábrica en `.mcp.json` para Claude Code y `maestro-mcp` para Antigravity IDE (TASK-092).
+  - Suite de pruebas unitarias automatizada en `tests/test-mcp.mjs` (TASK-092, TASK-095).
+- **Servidor Web Local y Live Dashboard Interactivo (`task.sh serve` / `dashboard-server.py`)**:
+  - Servidor HTTP embebido en Python estándar ejecutándose por defecto en `http://127.0.0.1:4200` (TASK-093).
+  - Interfaz visual Kanban moderna en modo oscuro con actualización reactiva en tiempo real y sondeo cada 3s (TASK-093).
+  - API REST integrada: `GET /api/status`, `GET /api/doctor` y `POST /api/action` para aprobar (`approve`) o pausar (`hold`) tareas directamente desde la web (TASK-093).
+  - Subcomando nativo `./task.sh serve [--port N]` integrado en CLI y suites de tests (TASK-093).
+- **CLI Universal Ejecutable Global (`npx skill-maestro` / `maestro`)**:
+  - Paquete `package.json` publicado para ejecución global directa vía `npx skill-maestro` o `npm install -g skill-maestro` (TASK-094).
+  - Despachador de comandos de alta velocidad `bin/skill-maestro.js` con soporte para `init`, `adopt`, `update`, `serve`/`ui`, `doctor`, `mcp`, `swarm` y `task` (TASK-094, TASK-095).
+- **Soporte Bilingüe Internacional (`--lang en|es`)**:
+  - Bandera `--lang <en|es>` en `init-project.sh` y en el CLI global (TASK-094).
+  - Plantillas de gobernanza en inglés: `GLOBAL_STATE_TEMPLATE.en.md` y `AGENTS_TEMPLATE.en.md` (TASK-094).
+  - Banners adaptativos en inglés y español con validación determinista de idiomas soportados (TASK-094).
+- **Protocolo de Enjambres Concurrentes y Workspaces Aislados (`task.sh swarm`)**:
+  - Subcomando `task.sh swarm status` para inspeccionar agentes concurrentes, ramas activas y workspaces aislados (TASK-095).
+  - Subcomando `task.sh swarm list` con salida estructurada en columnas tabuladas (TASK-095).
+  - Subcomando `task.sh swarm spawn TASK-XXX` para inicializar git worktrees desacoplados bajo `.agents/workspaces/TASK-XXX` permitiendo a múltiples subagentes compilar y editar en paralelo sin colisionar (TASK-095).
+  - Subcomando `task.sh swarm clean [TASK-XXX]` para liberación segura de worktrees (TASK-095).
+- **Monitoreo de Presupuesto y Evals de Calidad**:
+  - `lint_descriptions.py` controla el presupuesto del listado de skills de Claude Code: 300 caracteres como máximo por `description` y 15 000 en total (TASK-081).
+  - 3 evals deterministas nuevas en `tests/evals/evals.json` (de 18 a 21): `resilience-pagos-breaker`, `accessibility-wcag-formulario` y `finops-rightsizing-logs` (TASK-083, TASK-088).
+  - Aumento de timeout de locks concurrentes a 30s (`acquire_lock`, LL-023) (TASK-090).
+  - Suite de pruebas de scripts ampliada a 429 checks en verde en `tests/test-scripts.sh` (TASK-091..TASK-095).
 
 ### Cambiado
-- Las 56 `description` se reescriben en formato compacto (qué hace, cuándo usarla y límite con la skill vecina): de 31 495 a menos de 15 000 caracteres. Las de los stacks dejan la plantilla común para que el modelo no los confunda (TASK-081).
+- Las 56 descripciones del catálogo se optimizaron en formato compacto con límites estrictos de activación (TASK-081).
+- Rediseño enterprise de `README.md` con estética de código, badges dinámicos y sección prominente de Quickstart (TASK-089, TASK-091).
 
 ### Corregido
-- Claude Code dejaba 18 skills sin descripción en su listado (presupuesto agotado), así que no se activaban solas; ahora las 56 aparecen con descripción (TASK-081, lección LL-020).
-- Sección `[1.4.0]` de este CHANGELOG: `user-testing-agent` atribuido a TASK-066 y `/incidente` a TASK-067, y añadidas las skills omitidas `/onboarding`, `/explain-codebase` (TASK-068) y `/aprobar` (TASK-072), contrastadas con `git log v1.3.0..v1.4.0` (TASK-084).
+- Claude Code dejaba 18 skills sin descripción por agotamiento de presupuesto; las 56 ahora se listan completas (TASK-081, LL-020).
+- Ajustes de atribución histórica de tareas en CHANGELOG [1.4.0] (TASK-084, LL-019).
 
 ## [1.5.0] - 2026-11-20
 
