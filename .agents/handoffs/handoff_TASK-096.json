@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-096",
+  "summary": "Lanzamiento oficial v2.0.0 Enterprise: empaquetado, CHANGELOG, versionado y documentación",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T18:31:20Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/VERSION" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "README.md" },
+    { "type": "file", "path": "package.json" }
+  ],
+  "verification_commands": [
+    "node tests/test-mcp.mjs && LC_ALL=C bash tests/test-scripts.sh && ./.agents/scripts/task.sh doctor"
+  ]
+}

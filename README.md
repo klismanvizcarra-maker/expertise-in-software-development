@@ -3,9 +3,10 @@
 <div align="center">
 
 [![CI Audit](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions/workflows/audit.yml/badge.svg)](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions)
-![Version](https://img.shields.io/badge/version-v1.5.0-blue.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-v2.0.0-blue.svg?style=flat-square)
 ![Skills](https://img.shields.io/badge/skills-56%20expertos-success.svg?style=flat-square)
 ![Architecture](https://img.shields.io/badge/governance-multi--agent-purple.svg?style=flat-square)
+![Protocol](https://img.shields.io/badge/protocol-MCP%20Native-yellow.svg?style=flat-square)
 ![AI Compatibility](https://img.shields.io/badge/AI-Claude%20Code%20%7C%20Antigravity-orange.svg?style=flat-square)
 ![Creator](https://img.shields.io/badge/creator-Klisman%20Vizcarra-cyan.svg?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
@@ -22,24 +23,39 @@
  * ║   ███████║██║  ██╗██║███████╗███████╗██║ ╚═╝ ██║██║  ██║███████╗███████║     ║
  * ║   ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝     ║
  * ╠══════════════════════════════════════════════════════════════════════════════╣
- * ║  SYSTEM   : SKILL MAESTRO — Enterprise Multi-Agent Governance Framework     ║
+ * ║  SYSTEM   : SKILL MAESTRO — Enterprise Multi-Agent Operating System         ║
  * ║  CREATOR  : Klisman Vizcarra                                                ║
- * ║  VERSION  : v1.5.0 Enterprise Edition                                       ║
+ * ║  VERSION  : v2.0.0 Enterprise Edition                                       ║
  * ║  TARGETS  : Claude Code & Google Antigravity IDE                            ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  */
 ```
 
-> **Sistema multi-agente determinista para Claude Code y Antigravity**. Convierte a los asistentes de IA en un equipo de ingeniería coordinado: 17 roles especializados, 56 skills, ciclo de vida estricto, veto de QA independiente y memoria persistente que recuerda errores pasados.
+> **Sistema operativo multi-agente determinista para Claude Code y Antigravity**. Convierte a los asistentes de IA en un equipo de ingeniería coordinado: 17 roles especializados, 56 skills, servidor MCP nativo, Live Dashboard interactivo, orquestador de enjambres concurrentes (`task.sh swarm`), ciclo de vida estricto, veto de QA independiente y memoria persistente que recuerda errores pasados.
 
 ---
 
 ## 🚀 Cómo Cargar en tu Proyecto (Quickstart)
 
 > [!TIP]
-> Solo necesitas `bash`, `git` y `python3` (>= 3.10) en Linux, macOS o Windows (WSL 2). Puedes iniciar un **proyecto nuevo** o **adoptar un repositorio existente** sin tocar tu código anterior.
+> Puedes usar **`npx skill-maestro`** directamente (sin clonar el repositorio) o usar el instalador de `bash`. Compatible con macOS, Linux y Windows (WSL 2).
 
-### 1. En un Proyecto Nuevo (Desde Cero)
+### ⚡ Opción 1: Ejecución Directa con NPX (Recomendada)
+```bash
+# Inicializar en un proyecto nuevo con stack preconfigurado y CI:
+npx skill-maestro init "Mi Proyecto" ./mi-nuevo-proyecto --stack nextjs --ci
+
+# Adoptar un repositorio existente (Brownfield):
+npx skill-maestro adopt ./mi-repositorio-existente
+
+# Iniciar Live Dashboard Kanban interactivo en tiempo real:
+npx skill-maestro serve --port 4200
+
+# Arrancar el servidor MCP nativo (Model Context Protocol):
+npx skill-maestro mcp
+```
+
+### 📦 Opción 2: Clonando el Repositorio
 ```bash
 # 1. Clona el repositorio de la librería
 git clone https://github.com/klismanvizcarra-maker/expertise-in-software-development.git skill-maestro
