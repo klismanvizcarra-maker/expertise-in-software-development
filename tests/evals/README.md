@@ -22,10 +22,13 @@ La batería de `tests/triggers/` mide **qué skill se carga**. Estas evals miden
 | `research-benchmark-report` | `research-agent` | Genera benchmark comparativo con fuentes fechadas, pros/contras y propuesta con MVP MoSCoW en `docs/research/` sin inventar métricas ni copiar texto de referencia |
 | `plan-maestro-fases` | `crear-plan` | Elabora `docs/plan/plan-maestro.md` con arquitectura Mermaid, fases con criterios de salida, cronograma Gantt y registra solo las tareas de la Fase 1 tras aprobación |
 | `adoptar-proyecto-brownfield` | `adoptar-proyecto` | Incorpora gobierno en proyecto existente: detecta stack, mapea componentes en `GLOBAL_STATE.md` sin sobreescribir código y planifica la primera tarea incremental |
+| `resilience-pagos-breaker` | `resilience-engineering` | Timeout con `ETIMEDOUT`, reintentos solo de fallos transitorios (5xx, 429, `ECONNRESET`) con backoff exponencial, jitter y tope, y circuit breaker con fallos seguidos, `CIRCUIT_OPEN` sin invocar la llamada y prueba tras el enfriamiento; los tests del proyecto fallan con una implementación sin reintentos o sin breaker |
+| `accessibility-wcag-formulario` | `accessibility-testing` | Formulario sin violaciones WCAG 2.1 AA (idioma, label visible por campo, alt del logo y decorativa vacía, encabezados, botón nativo, contraste ≥ 4.5:1) y un test que falla si se reintroduce cada violación; el placeholder, un `div role=button` o un alt con el nombre del archivo no cuentan |
+| `finops-rightsizing-logs` | `finops-cost-optimization` | Función redimensionada con margen sobre el p95 (ni 128 MB ni 3008 MB), logs a una clase barata desde el día 30 y borrados no antes de la retención, consulta sin `SELECT *` filtrada por partición e informe con el ahorro calculado con los precios dados (±10 %) |
 
 ## Ejecutar
 ```bash
-python3 tests/evals/run_evals.py                          # todas (~15 sesiones)
+python3 tests/evals/run_evals.py                          # todas (~21 sesiones)
 python3 tests/evals/run_evals.py --only qa-reject-idor    # una
 python3 tests/evals/run_evals.py --keep                   # conserva los proyectos temporales para inspeccionarlos
 python3 tests/evals/run_evals.py --verify-baselines       # sin LLM ni coste: cada eval debe fallar tras el setup (FAIL_INIT)
@@ -33,6 +36,7 @@ python3 tests/evals/run_evals.py --verify-baselines       # sin LLM ni coste: ca
 - Requisitos: los mismos que `run_claude.py` (CLI con sesión iniciada) y Node.js para los fixtures.
 - Cada eval corre en un proyecto temporal con `Edit`, `Write` y `Bash` permitidos; este repositorio no se modifica.
 - Gasta uso de tu cuenta: límite por eval con `--budget` (1,5 USD por defecto). Resultados en `tests/evals/results/` (ignorado por git).
+- Las soluciones de referencia de `tests/evals/solutions/` las usa `tests/test-scripts.sh` para comprobar sin LLM que cada check acepta una solución correcta y rechaza las trampas típicas (LL-017). El modelo nunca las ve.
 - Son de un solo intento: una eval que falla de forma aislada puede ser variabilidad del modelo. Repite antes de cambiar una skill.
 
 ## Añadir una eval

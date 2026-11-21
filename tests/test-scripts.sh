@@ -810,18 +810,19 @@ import json, pathlib, re, sys
 root = pathlib.Path(sys.argv[1])
 data = json.loads((root / "tests/evals/evals.json").read_text(encoding="utf-8"))
 evals = data.get("evals", [])
-assert len(evals) >= 18, f"se esperaban >=18 evals, hay {len(evals)}"
+assert len(evals) >= 21, f"se esperaban >=21 evals, hay {len(evals)}"
 ids = [ev["id"] for ev in evals]
 assert len(ids) == len(set(ids)), "ids de eval duplicados"
 for ev in evals:
     assert (root / ".agents/skills" / ev["skill"] / "SKILL.md").is_file(), ev["skill"]
     assert ev.get("checks"), ev["id"]
-    for fx in re.findall(r"\$FIXTURES/([A-Za-z0-9_.-]+)", ev.get("setup", "")):
+    scripts = ev.get("setup", "") + " ".join(c for _, c in ev["checks"])
+    for fx in re.findall(r"\$FIXTURES/([A-Za-z0-9_.-]+)", scripts):
         f = root / "tests/evals/fixtures" / fx
         assert f.is_file(), fx
         assert f.stat().st_mode & 0o777 == 0o755, f"{fx} debe tener permisos 755"
 covered = {ev["skill"] for ev in evals}
-for s in ["backend-agent", "frontend-agent", "database-architect-agent", "domain-logic-agent", "devops-cloud-agent", "testing-strategy", "async-jobs", "research-agent", "crear-plan", "adoptar-proyecto"]:
+for s in ["backend-agent", "frontend-agent", "database-architect-agent", "domain-logic-agent", "devops-cloud-agent", "testing-strategy", "async-jobs", "research-agent", "crear-plan", "adoptar-proyecto", "resilience-engineering", "accessibility-testing", "finops-cost-optimization"]:
     assert s in covered, f"falta una eval de {s}"
 PY'
 
@@ -897,6 +898,50 @@ if command -v node >/dev/null 2>&1; then
   check "async: un error sin code que marca el email como enviado sigue fallando" '! eval_check async-worker-idempotente "deduplica" "$W"'
 else
   printf "  ⚠️  sin node: se omiten las comprobaciones de TD-005 que ejecutan JavaScript\n"
+fi
+
+# TASK-083: matriz de soluciones de las evals de resiliencia, accesibilidad y FinOps (LL-017)
+# La referencia de tests/evals/solutions/ debe pasar cada check; cada trampa debe hacer fallar el suyo.
+export FIXTURES="$ROOT/tests/evals/fixtures"
+SOL="$ROOT/tests/evals/solutions"
+sol_trap() {  # sol_trap <eval> <prefijo del check> <archivo> <sustitución perl>: 0 si la trampa se detecta
+  local d; d="$(mktemp -d "$WORK/sol.XXXXXX")"
+  cp -R "$SOL/$1/." "$d/"
+  perl -0pi -e "$4" "$d/$3"
+  cmp -s "$SOL/$1/$3" "$d/$3" && return 1   # la sustitución no cambió nada: la trampa no se aplicó
+  ! eval_check "$1" "$2" "$d"
+}
+sol_ok() {  # sol_ok <eval> <prefijo del check> [archivo] [sustitución perl]: 0 si la solución (o su variante) pasa
+  local d; d="$(mktemp -d "$WORK/sol.XXXXXX")"
+  cp -R "$SOL/$1/." "$d/"
+  if [ -n "${3:-}" ]; then
+    perl -0pi -e "$4" "$d/$3"
+    cmp -s "$SOL/$1/$3" "$d/$3" && return 1   # la variante no se aplicó: no prueba nada
+  fi
+  eval_check "$1" "$2" "$d"
+}
+F=finops-rightsizing-logs
+check "finops: la referencia pasa los 4 checks de contenido" 'sol_ok $F "thumbnail" && sol_ok $F "app-logs" && sol_ok $F "consulta" && sol_ok $F "el informe"'
+check "finops: alternativas correctas (256 MB, BETWEEN, ahorro en formato inglés)" 'sol_ok $F thumbnail infra/functions.json "s/\"memoryMb\": 512/\"memoryMb\": 256/" && sol_ok $F consulta analytics/daily_revenue.sql "s/event_date = DATE_SUB\(CURRENT_DATE\(\), INTERVAL 1 DAY\)/event_date BETWEEN DATE \"2026-11-19\" AND DATE \"2026-11-19\"/" && sol_ok $F "el informe" docs/finops/report.md "s/32,50 USD/USD 32.50/"'
+check "finops: trampas de memoria y timeout (128 MB, sin tocar, timeout 900 s)" 'sol_trap $F thumbnail infra/functions.json "s/\"memoryMb\": 512/\"memoryMb\": 128/" && sol_trap $F thumbnail infra/functions.json "s/\"memoryMb\": 512/\"memoryMb\": 3008/" && sol_trap $F thumbnail infra/functions.json "s/\"timeoutS\": 10/\"timeoutS\": 900/"'
+check "finops: trampas de ciclo de vida (borrar a 30 días, mover el día 0, sin expiración)" 'sol_trap $F app-logs infra/storage.json "s/\"expirationDays\": 365/\"expirationDays\": 30/" && sol_trap $F app-logs infra/storage.json "s/\"days\": 30,/\"days\": 0,/" && sol_trap $F app-logs infra/storage.json "s/, \"expirationDays\": 365//"'
+check "finops: trampas de consulta (SELECT *, partición solo en un comentario)" 'sol_trap $F consulta analytics/daily_revenue.sql "s/SELECT SUM\(amount_cents\) \/ 100 AS revenue/SELECT */" && sol_trap $F consulta analytics/daily_revenue.sql "s/WHERE event_date = DATE_SUB\(CURRENT_DATE\(\), INTERVAL 1 DAY\)\n  AND /-- event_date\nWHERE /"'
+check "finops: trampas del informe (MB sin pasar a GB, cifra inventada)" 'sol_trap $F "el informe" docs/finops/report.md "s/32,50/33280,00/" && sol_trap $F "el informe" docs/finops/report.md "s/32,50/120,00/"'
+A=accessibility-wcag-formulario
+check "a11y: la referencia cumple WCAG y sus tests detectan cada violación reintroducida" 'sol_ok $A "signup.html cumple" && sol_ok $A "los tests fallan si se reintroduce"'
+check "a11y: alternativas correctas (label envolvente, role=presentation, input submit, hex corto)" 'sol_ok $A "signup.html cumple" public/signup.html "s/<label for=\"email\">Email<\/label>\n\s*<input type=\"email\" id=\"email\" name=\"email\" autocomplete=\"email\">/<label>Email <input type=\"email\" id=\"email\" name=\"email\"><\/label>/" && sol_ok $A "signup.html cumple" public/signup.html "s/src=\"divider.png\" alt=\"\"/src=\"divider.png\" role=\"presentation\"/" && sol_ok $A "signup.html cumple" public/signup.html "s/<button type=\"submit\" class=\"btn\">Crear cuenta<\/button>/<input type=\"submit\" value=\"Crear cuenta\" class=\"btn\">/" && sol_ok $A "signup.html cumple" public/signup.html "s/#595959/#555/"'
+check "a11y: trampas (solo placeholder, alt con nombre de archivo, div role=button, contraste #888, salto h1-h3)" 'sol_trap $A "signup.html cumple" public/signup.html "s/<label for=\"email\">Email<\/label>\n\s*<input type=\"email\" id=\"email\"/<input type=\"email\" id=\"email\" placeholder=\"Email\"/" && sol_trap $A "signup.html cumple" public/signup.html "s/alt=\"Acme\"/alt=\"logo.png\"/" && sol_trap $A "signup.html cumple" public/signup.html "s/<button type=\"submit\" class=\"btn\">Crear cuenta<\/button>/<div class=\"btn\" role=\"button\" tabindex=\"0\" onclick=\"x()\">Crear cuenta<\/div>/" && sol_trap $A "signup.html cumple" public/signup.html "s/#595959/#888888/" && sol_trap $A "signup.html cumple" public/signup.html "s/<h2>Datos de acceso<\/h2>/<h3>Datos de acceso<\/h3>/"'
+check "a11y: tests que no comprueban el contraste no pasan el check de mutantes" 'sol_trap $A "los tests fallan si se reintroduce" test/a11y.test.js "s/^test\(.contraste hint.*\n//m"'
+if command -v node >/dev/null 2>&1; then
+  R=resilience-pagos-breaker
+  check "resiliencia: la referencia pasa timeout, reintentos, backoff, breaker y mutantes" 'sol_ok $R "timeout" && sol_ok $R "reintenta solo" && sol_ok $R "backoff" && sol_ok $R "circuit breaker" && sol_ok $R "los tests del proyecto"'
+  check "resiliencia: alternativa correcta (equal jitter) pasa el backoff" 'sol_ok $R backoff src/resilient.js "s/Math.floor\(random\(\) \* Math.min\(maxDelayMs, baseDelayMs \* 2 \*\* \(n - 1\)\)\)/(c => Math.floor(c \/ 2 + random() * c \/ 2))(Math.min(maxDelayMs, baseDelayMs * 2 ** (n - 1)))/"'
+  check "resiliencia: trampas de reintento (reintentar un 400) y timeout (sin timeout)" 'sol_trap $R "reintenta solo" src/resilient.js "s/if \(!isTransient\(e\)\) \{ if \(trial\) state = .CLOSED.; throw e; \}//" && sol_trap $R timeout src/resilient.js "s/const t = setTimeout\(\(\) => reject\(Object.assign\(new Error\(.timeout.\), \{ code: .ETIMEDOUT. \}\)\), timeoutMs\);/const t = 0;/"'
+  check "resiliencia: trampas de backoff (fijo, sin jitter, sin tope)" 'sol_trap $R backoff src/resilient.js "s/Math.min\(maxDelayMs, baseDelayMs \* 2 \*\* \(n - 1\)\)/baseDelayMs/" && sol_trap $R backoff src/resilient.js "s/Math.floor\(random\(\) \* /Math.floor(1 * /" && sol_trap $R backoff src/resilient.js "s/Math.min\(maxDelayMs, baseDelayMs \* 2 \*\* \(n - 1\)\)/(baseDelayMs * 2 ** (n - 1))/"'
+  check "resiliencia: trampas de breaker (fallos totales, nunca medio abre, 4xx abre)" 'sol_trap $R "circuit breaker" src/resilient.js "s/failures = 0; state = .CLOSED.;/state = \"CLOSED\";/" && sol_trap $R "circuit breaker" src/resilient.js "s/state = .HALF_OPEN.;/throw Object.assign(new Error(\"open\"), { code: \"CIRCUIT_OPEN\" });/" && sol_trap $R "circuit breaker" src/resilient.js "s/if \(!isTransient\(e\)\) \{ if \(trial\) state = .CLOSED.; throw e; \}/if (!isTransient(e)) { failures++; if (failures >= failureThreshold) { state = \"OPEN\"; openedAt = now(); } throw e; }/"'
+  check "resiliencia: tests sin caso de breaker no pasan el check de mutantes" 'sol_trap $R "los tests del proyecto" test/resilient.test.js "s/^test\(.breaker.*//ms"'
+else
+  printf "  ⚠️  sin node: se omiten las comprobaciones de TASK-083 que ejecutan JavaScript\n"
 fi
 
 # ------------------------------------------------------------------------------

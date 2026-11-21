@@ -468,6 +468,94 @@
           "awk -F'|' '/^\\| *`?TASK-/ { s=$5; gsub(/[ `]/,\"\",s); if (s==\"TODO\" || s==\"IN_PROGRESS\" || s==\"BACKLOG\") f=1 } END { exit !f }' GLOBAL_STATE.md"
         ]
       ]
+    },
+    {
+      "id": "resilience-pagos-breaker",
+      "skill": "resilience-engineering",
+      "setup": "bash \"$FIXTURES/payment_client.sh\"",
+      "prompt": "/resilience-engineering Implementa la tarea en curso TASK-003 en src/resilient.js con sus tests y entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "timeout: un intento que no responde falla con ETIMEDOUT a tiempo",
+          "node \"$FIXTURES/resilience_checks.mjs\" timeout"
+        ],
+        [
+          "reintenta solo fallos transitorios (5xx, 429, ECONNRESET, ETIMEDOUT) y relanza un 400 sin reintentar",
+          "node \"$FIXTURES/resilience_checks.mjs\" retries"
+        ],
+        [
+          "backoff exponencial con jitter y tope maxDelayMs",
+          "node \"$FIXTURES/resilience_checks.mjs\" backoff"
+        ],
+        [
+          "circuit breaker: fallos seguidos lo abren, CIRCUIT_OPEN sin invocar fn, prueba tras cooldown y 4xx no cuentan",
+          "node \"$FIXTURES/resilience_checks.mjs\" breaker"
+        ],
+        [
+          "los tests del proyecto fallan con una implementación sin reintentos o sin breaker",
+          "node \"$FIXTURES/resilience_checks.mjs\" mutants"
+        ],
+        [
+          "la suite pasa",
+          "node --test --test-timeout=20000 >/dev/null 2>&1"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "accessibility-wcag-formulario",
+      "skill": "accessibility-testing",
+      "setup": "bash \"$FIXTURES/signup_a11y.sh\"",
+      "prompt": "/accessibility-testing Implementa la tarea en curso TASK-003 y entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "signup.html cumple WCAG 2.1 AA: lang, label visible por campo, alt del logo y decorativa vacía, encabezados, botón nativo y contraste >= 4.5",
+          "python3 \"$FIXTURES/a11y_check.py\" public/signup.html"
+        ],
+        [
+          "existe test/a11y.test.js y la suite pasa",
+          "[ -f test/a11y.test.js ] && node --test >/dev/null 2>&1"
+        ],
+        [
+          "los tests fallan si se reintroduce cada violación (alt, label, contraste, lang)",
+          "for m in alt label contrast lang; do d=$(mktemp -d); cp -R . \"$d/p\"; python3 \"$FIXTURES/a11y_check.py\" --mutate \"$m\" \"$d/p/public/signup.html\" || { rm -rf \"$d\"; exit 1; }; if (cd \"$d/p\" && node --test >/dev/null 2>&1); then echo \"los tests no detectan: $m\"; rm -rf \"$d\"; exit 1; fi; rm -rf \"$d\"; done"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
+    },
+    {
+      "id": "finops-rightsizing-logs",
+      "skill": "finops-cost-optimization",
+      "setup": "bash \"$FIXTURES/cloud_costs.sh\"",
+      "prompt": "/finops-cost-optimization Implementa la tarea en curso TASK-003 y entrégala a QA con /handoff sin pedirme confirmación.",
+      "checks": [
+        [
+          "thumbnail redimensionada: memoria con >= 40 % de margen sobre el p95 y <= 1024 MB, timeout entre 2 y 60 s",
+          "python3 \"$FIXTURES/finops_check.py\" functions"
+        ],
+        [
+          "app-logs con transición a clase barata desde el día 30 y borrado no antes de 365 días",
+          "python3 \"$FIXTURES/finops_check.py\" storage"
+        ],
+        [
+          "consulta sin SELECT * y filtrada por la partición event_date",
+          "python3 \"$FIXTURES/finops_check.py\" sql"
+        ],
+        [
+          "el informe recoge el ahorro mensual calculado con docs/pricing.md (±10 %)",
+          "python3 \"$FIXTURES/finops_check.py\" report"
+        ],
+        [
+          "la tarea queda en IN_REVIEW_QA",
+          "[ \"$(col TASK-003 5)\" = IN_REVIEW_QA ]"
+        ]
+      ]
     }
   ]
 }

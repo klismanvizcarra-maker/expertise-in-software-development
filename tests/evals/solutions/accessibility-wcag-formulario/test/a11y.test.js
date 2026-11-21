@@ -1,0 +1,10 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const html = readFileSync(new URL('../public/signup.html', import.meta.url), 'utf8');
+const lum = (h) => { const c = h.replace('#', '').match(/../g).map((x) => parseInt(x, 16) / 255).map((v) => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+test('idioma', () => assert.match(html, /<html[^>]*\slang="es"/));
+test('labels', () => { for (const id of ['email', 'password']) assert.match(html, new RegExp(`<label[^>]*for="${id}"[^>]*>[^<]+</label>`)); });
+test('alt del logo', () => assert.match(html, /<img[^>]*src="logo.png"[^>]*alt="[^"]+"/));
+test('contraste hint', () => { const c = html.match(/\.hint\s*\{[^}]*color:\s*(#[0-9a-fA-F]{6})/)[1]; assert.ok((1.05) / (lum(c) + 0.05) >= 4.5); });
+test('boton nativo', () => assert.match(html, /<button[^>]*type="submit"/));

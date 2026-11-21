@@ -1,0 +1,2 @@
+{ "buckets": [ { "name": "app-logs", "sizeGb": 5000, "storageClass": "STANDARD", "retentionDays": 365,
+  "lifecycleRules": [ { "transitions": [ { "days": 30, "storageClass": "STANDARD_IA" }, { "days": 90, "storageClass": "GLACIER_IR" } ], "expirationDays": 365 } ] } ] }
