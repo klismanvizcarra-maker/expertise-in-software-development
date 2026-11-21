@@ -46,7 +46,8 @@ section "init-project.sh"
 new_project init
 check "enlace .claude/skills -> .agents/skills" '[ -L .claude/skills ] && [ -f .claude/skills/qa-security-agent/SKILL.md ]'
 check "CLAUDE.md importa AGENTS.md" 'grep -q "^@AGENTS.md" CLAUDE.md'
-check ".mcp.json y plugin MCP de Antigravity instalados" '[ -f .mcp.json ] && [ -f .agents/plugins/maestro-mcp/mcp_config.json ]'
+check ".mcp.json y plugin MCP de Antigravity instalados" '[ -f .mcp.json ] && grep -q "skill-maestro" .mcp.json && [ -f .agents/mcp/server.mjs ] && [ -x .agents/mcp/server.mjs ] && [ -f .agents/plugins/maestro-mcp/mcp_config.json ]'
+check "servidor MCP nativo pasa suite de pruebas (test-mcp.mjs)" 'node --test "$ROOT/tests/test-mcp.mjs" >/dev/null'
 check "existe .agents/VERSION" '[ -f .agents/VERSION ] && [ -n "$(cat .agents/VERSION)" ]'
 check "cerebro sin lecciones de ejemplo" '! grep -qE "^\| *\`?LL-" BRAIN.md .agents/brain/lessons_learned.md'
 check "deuda técnica sin filas de ejemplo" '! grep -qE "^\| *\`?TD-" .agents/brain/tech_debt.md'

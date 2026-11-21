@@ -1,0 +1,21 @@
+{
+  "task_id": "TASK-092",
+  "summary": "Servidor MCP nativo de gobernanza y ciclo de vida (packages/mcp-server)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T17:50:09Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/mcp/server.mjs" },
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/templates/mcp_config_template.json" },
+    { "type": "file", "path": ".mcp.json" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-mcp.mjs" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "node --test tests/test-mcp.mjs",
+    "LC_ALL=C bash tests/test-scripts.sh"
+  ]
+}
