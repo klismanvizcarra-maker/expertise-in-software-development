@@ -32,12 +32,14 @@ class Doc(HTMLParser):
             self.html_lang = a.get("lang", "").strip()
         if tag == "style":
             self.in_style = True
+        if tag == "input":
+            a["__key"] = a.get("id", "") or f"__input{len(self.elements)}"
         if tag == "label":
-            self.current_label = {"for": a.get("for", ""), "text": "", "inputs": []}
+            self.current_label = {"for": a.get("for", ""), "text": "", "inputs": [], "attrs": a}
         if re.fullmatch(r"h[1-6]", tag):
             self.headings.append(int(tag[1]))
         if tag == "input" and self.current_label is not None:
-            self.current_label["inputs"].append(a.get("id", "") or f"__anon{len(self.elements)}")
+            self.current_label["inputs"].append(a["__key"])
         self.elements.append((tag, a))
         if tag not in VOID:
             self.stack.append(tag)
@@ -47,6 +49,8 @@ class Doc(HTMLParser):
             self.in_style = False
         if tag == "label" and self.current_label is not None:
             lab = self.current_label
+            if self.hidden(lab["attrs"]):
+                lab["text"] = ""          # un label oculto no es un label visible
             if lab["for"]:
                 self.label_texts[lab["for"]] = self.label_texts.get(lab["for"], "") + lab["text"]
             for i in lab["inputs"]:
@@ -57,6 +61,17 @@ class Doc(HTMLParser):
             while self.stack and self.stack.pop() != tag:
                 pass
 
+    def hidden(self, attrs):
+        style = attrs.get("style", "").replace(" ", "").lower()
+        if "hidden" in attrs or "display:none" in style or "visibility:hidden" in style:
+            return True
+        for cls in attrs.get("class", "").split():
+            for decls in css_rules(self.style, "." + cls):
+                d = decls.replace(" ", "").lower()
+                if "display:none" in d or "visibility:hidden" in d:
+                    return True
+        return False
+
     def handle_data(self, data):
         if self.in_style:
             self.style += data
@@ -64,11 +79,20 @@ class Doc(HTMLParser):
             self.current_label["text"] += data
 
 
-def luminance(hex_color):
-    h = hex_color.lstrip("#")
+COLOR = r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)"
+
+
+def to_rgb(color):
+    if color.startswith("rgb"):
+        return [int(x) for x in re.findall(r"\d+", color)[:3]]
+    h = color.lstrip("#")
     if len(h) == 3:
         h = "".join(c * 2 for c in h)
-    rgb = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+
+
+def luminance(color):
+    rgb = [c / 255 for c in to_rgb(color)]
     lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in rgb]
     return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
 
@@ -78,12 +102,28 @@ def contrast(c1, c2):
     return (l1 + 0.05) / (l2 + 0.05)
 
 
+def css_rules(style, token):
+    """Declaraciones de cada regla cuyo selector (en una lista separada por comas) contiene
+    `token`: una clase (.hint, también en 'form p.hint') o un elemento (body)."""
+    style = re.sub(r"/\*.*?\*/", "", style, flags=re.S)
+    if token.startswith("."):
+        rx = re.compile(re.escape(token) + r"(?![\w-])")
+    else:
+        rx = re.compile(r"(?:^|[\s>+~,])" + re.escape(token) + r"(?![\w-])")
+    out = []
+    for sel, decls in re.findall(r"([^{}]+)\{([^}]*)\}", style):
+        if any(rx.search(" " + part.strip()) for part in sel.split(",")):
+            out.append(decls)
+    return out
+
+
+def decl_colors(decls, prop):
+    return [m.group(1) for m in re.finditer(r"(?:^|;|\s)" + prop + r"\s*:\s*(" + COLOR + r")", decls)]
+
+
 def css_color(style, selector, prop):
-    m = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", style)
-    if not m:
-        return None
-    d = re.search(r"(?:^|;|\s)" + prop + r"\s*:\s*(#[0-9a-fA-F]{6}|#[0-9a-fA-F]{3})\b", m.group(1))
-    return d.group(1) if d else None
+    colors = [c for d in css_rules(style, selector) for c in decl_colors(d, prop)]
+    return colors[-1] if colors else None
 
 
 def check(html):
@@ -95,10 +135,9 @@ def check(html):
 
     for tag, a in doc.elements:
         if tag == "input" and a.get("type", "text").lower() not in ("hidden", "submit", "button", "reset", "image"):
-            iid = a.get("id", "")
-            text = doc.label_texts.get(iid, "").strip() if iid else ""
+            text = doc.label_texts.get(a["__key"], "").strip()
             if not text:
-                errors.append(f"campo {iid or '(sin id)'} sin <label> visible asociado")
+                errors.append(f"campo {a.get('id') or a.get('name') or '(sin id)'} sin <label> visible asociado")
 
     imgs = [(a.get("src", ""), a) for t, a in doc.elements if t == "img"]
     for src, a in imgs:
@@ -107,7 +146,7 @@ def check(html):
             errors.append(f"<img src={src}> sin alt")
         elif "logo" in src:
             alt = a.get("alt", "").strip()
-            if not alt or re.search(r"\.(png|jpe?g|svg|gif)\b|^(logo|imagen|image)$", alt, re.I):
+            if not alt or re.search(r"\.(png|jpe?g|svg|gif)\b|^((imagen|image|foto|icono)( del?)? ?)?(logo|imagen|image)?$", alt, re.I):
                 errors.append(f"el logo necesita un alt que describa la marca (tiene '{alt}')")
         elif "divider" in src and not decorative and a.get("alt", None) != "":
             errors.append("la imagen decorativa debe llevar alt=\"\" (o role=presentation)")
@@ -130,12 +169,15 @@ def check(html):
         if "onclick" in a and t not in ("button", "a", "input"):
             errors.append(f"<{t}> con onclick: no es operable con teclado")
 
-    hint = css_color(doc.style, ".hint", "color")
     bg = css_color(doc.style, "body", "background(?:-color)?") or "#ffffff"
-    if not hint:
+    # Todas las reglas que pintan .hint (también 'form p.hint' o '.hint, .note') y los style en línea
+    hints = [c for d in css_rules(doc.style, ".hint") for c in decl_colors(d, "color")]
+    hints += [c for t, a in doc.elements if "hint" in a.get("class", "").split() for c in decl_colors(a.get("style", ""), "color")]
+    if not hints:
         errors.append("no se encuentra el color de .hint en <style>")
-    elif contrast(hint, bg) < 4.5:
-        errors.append(f".hint {hint} sobre {bg}: contraste {contrast(hint, bg):.2f} < 4.5")
+    for hint in hints:
+        if contrast(hint, bg) < 4.5:
+            errors.append(f".hint {hint} sobre {bg}: contraste {contrast(hint, bg):.2f} < 4.5")
     return errors
 
 
@@ -148,7 +190,8 @@ def mutate(kind, html):
     elif kind == "label":   # los label pasan a texto suelto: los campos quedan sin nombre accesible
         out = re.sub(r"</?label\b[^>]*>", "", html)
     elif kind == "contrast":  # el texto de ayuda vuelve a #aaaaaa
-        out = re.sub(r"(\.hint\s*\{[^}]*?(?:^|;|\s)color\s*:\s*)#[0-9a-fA-F]{3,6}", r"\1#aaaaaa", html, count=1, flags=re.M)
+        out = re.sub(r"([^{}<>]*\.hint(?![\w-])[^{}<>]*\{[^}]*?(?:^|;|\s)color\s*:\s*)(?:" + COLOR + ")", r"\1#aaaaaa", html, flags=re.M)
+        out = re.sub(r"""(<[^>]*class=["'][^"']*\bhint\b[^"']*["'][^>]*style=["'][^"']*color\s*:\s*)(?:""" + COLOR + ")", r"\1#aaaaaa", out)
     elif kind == "lang":    # se pierde el idioma
         out = re.sub(r"""(<html\b[^>]*?)\s+lang=(?:"[^"]*"|'[^']*')""", r"\1", html, count=1)
     else:

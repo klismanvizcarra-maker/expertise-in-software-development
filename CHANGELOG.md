@@ -6,7 +6,7 @@ Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Ke
 
 ### Añadido
 - `lint_descriptions.py` controla el presupuesto del listado de skills de Claude Code: 300 caracteres como máximo por `description` y 15 000 en total. Lee el frontmatter con las claves en cualquier orden, bloques multilínea y comillas, y falla con la `SKILL.md` que no puede medir. Opciones `--skills-dir` y `--cases` y 6 checks nuevos en `tests/test-scripts.sh` (TASK-081).
-- 3 evals deterministas nuevas en `tests/evals/evals.json` (de 18 a 21): `resilience-pagos-breaker`, `accessibility-wcag-formulario` y `finops-rightsizing-logs`, con sus fixtures y comprobadores (`resilience_checks.mjs`, `a11y_check.py`, `finops_check.py`), soluciones de referencia en `tests/evals/solutions/` y una matriz de soluciones correctas y trampas en `tests/test-scripts.sh` (TASK-083).
+- 3 evals deterministas nuevas en `tests/evals/evals.json` (de 18 a 21): `resilience-pagos-breaker`, `accessibility-wcag-formulario` y `finops-rightsizing-logs`, con sus fixtures y comprobadores (`resilience_checks.mjs`, `a11y_check.py`, `finops_check.py`), soluciones de referencia en `tests/evals/solutions/` y una matriz de soluciones correctas y trampas en `tests/test-scripts.sh` (TASK-083). Los comprobadores borran sus temporales aunque fallen y acotan cada regla a su cláusula o elemento real (WHERE principal, label por elemento, todas las reglas de color de `.hint`) (lección LL-021).
 
 ### Cambiado
 - Las 56 `description` se reescriben en formato compacto (qué hace, cuándo usarla y límite con la skill vecina): de 31 495 a menos de 15 000 caracteres. Las de los stacks dejan la plantilla común para que el modelo no los confunda (TASK-081).

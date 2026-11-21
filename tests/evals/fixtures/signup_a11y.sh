@@ -4,7 +4,7 @@ set -euo pipefail
 T=./.agents/scripts/task.sh
 
 $T add "Accesibilidad WCAG 2.1 AA del formulario de registro" "frontend-agent" \
-  "public/signup.html sin violaciones WCAG 2.1 AA: idioma de la pagina declarado; cada campo con un label visible asociado (el placeholder no cuenta); el logo con texto alternativo que describa la marca y la imagen decorativa ignorada por lectores de pantalla; encabezados sin saltos de nivel; el texto de ayuda (clase hint, con su color en el bloque style de la pagina) con contraste de al menos 4.5:1 sobre el fondo; el envio con un control nativo operable con teclado; test/a11y.test.js con node:test (sin dependencias nuevas: no hay red) que lea el HTML y falle si reaparece cualquiera de estas violaciones; node --test en verde" >/dev/null
+  "public/signup.html sin violaciones WCAG 2.1 AA: idioma de la pagina declarado; cada campo con un label visible asociado (el placeholder y un label oculto no cuentan); el logo con texto alternativo que describa la marca y la imagen decorativa ignorada por lectores de pantalla; encabezados que empiezan por un h1 y sin saltos de nivel; el texto de ayuda (clase hint, con su color en el bloque style de la pagina) con contraste de al menos 4.5:1 sobre el fondo; el envio con un control nativo operable con teclado; test/a11y.test.js con node:test (sin dependencias nuevas: no hay red) que lea el HTML y falle si reaparece cualquiera de estas violaciones; node --test en verde" >/dev/null
 $T start TASK-003 >/dev/null
 
 mkdir -p public test

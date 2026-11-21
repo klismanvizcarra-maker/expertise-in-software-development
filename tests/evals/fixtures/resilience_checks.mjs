@@ -9,6 +9,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 process.exitCode = 1;
+// process.exit se salta los finally: los temporales se borran en el evento 'exit', que sí se ejecuta.
+const temps = new Set();
+process.on('exit', () => { for (const d of temps) rmSync(d, { recursive: true, force: true }); });
 const fail = (msg) => { console.error(msg); process.exit(1); };
 const err = (props, msg = 'fallo') => Object.assign(new Error(msg), props);
 const base = { timeoutMs: 1000, maxRetries: 0, baseDelayMs: 100, maxDelayMs: 1000, failureThreshold: 1000, cooldownMs: 1000 };
@@ -32,6 +35,11 @@ const checks = {
     if (Date.now() - t0 > 1000) fail('el timeout tarda mucho más que timeoutMs');
     const fast = await settle(c.call(async () => 'ok'));
     if (fast.value !== 'ok') fail('una llamada rápida debe devolver su resultado');
+    // el timeout es por intento: un primer intento colgado y un reintento rápido terminan bien
+    let n = 0;
+    const per = createResilientCaller({ ...base, ...noSleep, timeoutMs: 60, maxRetries: 1 });
+    const r2 = await settle(per.call(() => (++n === 1 ? new Promise(() => {}) : new Promise((ok) => setTimeout(() => ok('ok'), 40)))));
+    if (r2.value !== 'ok' || n !== 2) fail('el timeout debe aplicarse a cada intento y el intento colgado reintentarse');
   },
 
   async retries() {
@@ -42,7 +50,7 @@ const checks = {
     const r1 = await settle(mk().call(async () => { n++; if (n < 3) throw err({ status: 503 }); return 'pagado'; }));
     if (r1.value !== 'pagado' || n !== 3) fail(`un 503 transitorio debe reintentarse hasta tener éxito (intentos: ${n})`);
     if (sleeps.length !== 2) fail(`debe esperar con opts.sleep antes de cada reintento (esperas: ${sleeps.length})`);
-    for (const code of ['ECONNRESET', 'ETIMEDOUT']) {
+    for (const code of ['ECONNRESET', 'ETIMEDOUT', 'ECONNREFUSED']) {
       let k = 0;
       await settle(mk().call(async () => { k++; if (k < 2) throw err({ code }); return 1; }));
       if (k !== 2) fail(`${code} debe reintentarse`);
@@ -107,6 +115,24 @@ const checks = {
     t += 1001;
     const ok1 = await settle(c.call(async () => 'ok'));
     if (ok1.value !== 'ok' || c.state() !== 'CLOSED') fail('si la llamada de prueba va bien, el circuito se cierra');
+    // cuenta llamadas, no intentos: con 2 reintentos, 2 llamadas fallidas (6 intentos) no lo abren
+    const d = createResilientCaller({ ...base, ...noSleep, maxRetries: 2, failureThreshold: 3, cooldownMs: 1000, now: () => t });
+    let attempts = 0;
+    const boomCount = async () => { attempts++; throw err({ status: 503 }); };
+    await settle(d.call(boomCount)); await settle(d.call(boomCount));
+    if (attempts !== 6 || d.state() !== 'CLOSED') fail(`failureThreshold cuenta llamadas que acaban en fallo, no intentos (intentos ${attempts}, estado ${d.state()})`);
+    await settle(d.call(boomCount));
+    if (d.state() !== 'OPEN') fail('la tercera llamada fallida seguida debe abrir el circuito');
+    // HALF_OPEN deja pasar una sola llamada de prueba: mientras está en curso, las demás rechazan
+    t += 1001;
+    let release; let trialCalls = 0, otherCalls = 0;
+    const trial = d.call(() => { trialCalls++; return new Promise((ok) => { release = ok; }); });
+    await new Promise((r) => setImmediate(r));
+    const other = await settle(d.call(async () => { otherCalls++; return 1; }));
+    release('ok');
+    const tr = await settle(trial);
+    if (trialCalls !== 1 || otherCalls !== 0 || !other.error || other.error.code !== 'CIRCUIT_OPEN') fail('en HALF_OPEN solo pasa una llamada de prueba; las demás rechazan con CIRCUIT_OPEN');
+    if (tr.value !== 'ok' || d.state() !== 'CLOSED') fail('la llamada de prueba correcta debe cerrar el circuito');
   },
 
   // Los tests del proyecto deben detectar implementaciones que pierden reintentos o el breaker.
@@ -117,6 +143,7 @@ const checks = {
     };
     for (const [name, override] of Object.entries(mutants)) {
       const dir = mkdtempSync(join(tmpdir(), 'resilience-mutant-'));
+      temps.add(dir);
       try {
         cpSync(process.cwd(), dir, { recursive: true, filter: (src) => !src.includes('/.git') && !src.includes('/node_modules') });
         renameSync(join(dir, 'src/resilient.js'), join(dir, 'src/resilient.orig.js'));
@@ -127,6 +154,7 @@ const checks = {
         if (r.status === 0) fail(`los tests siguen en verde con una implementación ${name}`);
       } finally {
         rmSync(dir, { recursive: true, force: true });
+        temps.delete(dir);
       }
     }
   },

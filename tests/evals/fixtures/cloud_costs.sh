@@ -4,7 +4,7 @@ set -euo pipefail
 T=./.agents/scripts/task.sh
 
 $T add "Auditoria de costes cloud antes de produccion" "devops-cloud-agent" \
-  "infra/functions.json: thumbnail redimensionada segun su consumo medido: memoryMb con al menos un 40 por ciento de margen sobre p95MemoryUsedMb y sin pasar de 1024, y timeoutS entre 2 y 60 acorde a su duracion p95; infra/storage.json: app-logs con regla de ciclo de vida (formato del _doc) que mueve los objetos a una clase mas barata no antes del dia 30 y los borra (expirationDays) no antes de retentionDays; analytics/daily_revenue.sql sin SELECT * y filtrando en el WHERE por la columna de particion event_date; docs/finops/report.md con el ahorro mensual de computo de la funcion en USD calculado con docs/pricing.md y la duracion media (avgDurationMs), sin inventar precios; entrega a QA" >/dev/null
+  "infra/functions.json: thumbnail redimensionada segun su consumo medido: memoryMb con al menos un 40 por ciento de margen sobre p95MemoryUsedMb y sin pasar de 1024, y timeoutS entre 2 y 60 acorde a su duracion p95; infra/storage.json: app-logs con regla de ciclo de vida (formato del _doc) que mueve los objetos a una clase mas barata no antes del dia 30 y los borra (expirationDays) no antes de retentionDays; analytics/daily_revenue.sql sin SELECT * (tampoco DISTINCT *), filtrando en el WHERE de la consulta principal por la columna de particion event_date (no basta en GROUP BY, subconsultas ni comentarios) y manteniendo event_type = 'purchase'; docs/finops/report.md con el ahorro mensual de computo de la funcion como importe en USD calculado con docs/pricing.md y la duracion media (avgDurationMs), sin inventar precios; entrega a QA" >/dev/null
 $T start TASK-003 >/dev/null
 
 mkdir -p infra analytics docs

@@ -1,5 +1,6 @@
 const TRANSIENT_CODES = new Set(['ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED']);
 export const isTransient = (e) => TRANSIENT_CODES.has(e?.code) || e?.status === 429 || e?.status >= 500;
+const circuitOpen = () => Object.assign(new Error('circuit open'), { code: 'CIRCUIT_OPEN' });
 
 export function createResilientCaller({
   timeoutMs = 2000, maxRetries = 3, baseDelayMs = 100, maxDelayMs = 5000,
@@ -15,8 +16,9 @@ export function createResilientCaller({
   return {
     state: () => state,
     async call(fn) {
+      if (state === 'HALF_OPEN') throw circuitOpen();   // ya hay una llamada de prueba en curso
       if (state === 'OPEN') {
-        if (now() - openedAt < cooldownMs) throw Object.assign(new Error('circuit open'), { code: 'CIRCUIT_OPEN' });
+        if (now() - openedAt < cooldownMs) throw circuitOpen();
         state = 'HALF_OPEN';
       }
       const trial = state === 'HALF_OPEN';
