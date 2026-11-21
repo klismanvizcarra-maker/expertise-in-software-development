@@ -1,0 +1,19 @@
+{
+  "task_id": "TASK-080",
+  "summary": "Release v1.4.0 y v1.5.0 con tags sobre sus commits de cierre",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T01:24:05Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "git tag -l 'v1.*'",
+    "git rev-list -n1 v1.4.0",
+    "git rev-list -n1 v1.5.0",
+    "git show v1.5.0:.agents/VERSION",
+    "./.agents/scripts/task.sh doctor",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}
