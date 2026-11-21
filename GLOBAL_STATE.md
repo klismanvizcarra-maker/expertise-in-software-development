@@ -73,6 +73,7 @@
 | `TASK-091` | Incluir sección prominente de cómo cargar en un proyecto al inicio del README.md | docs-architecture-agent | `DONE` | `0/3` | Sección visible casi al inicio del README.md con comandos exactos para clonar, instalar en proyecto nuevo o existente e instalar hooks; verificado y sincronizado en GitHub |
 | `TASK-092` | Servidor MCP nativo de gobernanza y ciclo de vida (packages/mcp-server) | devops-cloud-agent | `DONE` | `0/3` | Implementar servidor MCP oficial de SKILL MAESTRO con SDK de Model Context Protocol; exponer herramientas de ciclo de vida (task, brain, doctor, contracts); integrado en .mcp.json e init-project.sh; suite de pruebas unitarias pasando |
 | `TASK-093` | Servidor web local y Live Dashboard interactivo (task.sh serve) | frontend-agent | `DONE` | `0/3` | Implementar task.sh serve con servidor HTTP local liviano; API REST para estado y acciones de aprobacion (approve/hold); recarga automatica de estado; integrado en task.sh y test-scripts.sh |
+| `TASK-094` | CLI ejecutable global npx/npm y soporte bilingüe i18n (--lang en/es) | devops-cloud-agent | `IN_PROGRESS` | `0/3` | Crear package.json y bin/skill-maestro.js para ejecucion global via npx/npm; soporte de bandera --lang en/es en init-project.sh con plantillas en ingles; tests unitarios y de integracion pasando |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 

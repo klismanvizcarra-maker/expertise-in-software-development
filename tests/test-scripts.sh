@@ -114,6 +114,11 @@ check "init-project --ci no sobrescribe workflow existente" 'grep -q "# personal
 check "tareas de ejemplo de la plantilla usan nombres de skill" 'grep -q "orchestrator-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" && grep -q "backend-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md"'
 check "init-project.sh muestra el banner con nombre y creador" 'OUT=$(bash "$ROOT/.agents/scripts/init-project.sh" "Banner Test" "$WORK/banner-app"); printf "%s" "$OUT" | grep -q "SKILL MAESTRO" && printf "%s" "$OUT" | grep -q "Klisman Vizcarra"'
 check "welcome_cover_template.html existe e init-project lo instala" '[ -f "$ROOT/.agents/templates/welcome_cover_template.html" ] && [ -f "$WORK/banner-app/.agents/templates/welcome_cover_template.html" ]'
+check "init-project.sh --lang en genera GLOBAL_STATE y AGENTS en ingles" 'bash "$ROOT/.agents/scripts/init-project.sh" "English App" "$WORK/en-app" --lang en >/dev/null && grep -q "Single Source of Truth" "$WORK/en-app/GLOBAL_STATE.md" && grep -q "Golden Rule" "$WORK/en-app/AGENTS.md"'
+check "init-project.sh --lang con idioma invalido falla con exit 1" '! bash "$ROOT/.agents/scripts/init-project.sh" "Bad Lang" "$WORK/bad-lang-app" --lang it >/dev/null 2>&1'
+check "package.json es valido y define el binario skill-maestro" 'node -e "const pkg = JSON.parse(require(\"fs\").readFileSync(\"$ROOT/package.json\")); if (pkg.name !== \"skill-maestro\" || !pkg.bin[\"skill-maestro\"]) process.exit(1);"'
+check "bin/skill-maestro.js --help muestra el banner y comandos disponibles" 'OUT=$(node "$ROOT/bin/skill-maestro.js" --help); printf "%s" "$OUT" | grep -q "SKILL MAESTRO" && printf "%s" "$OUT" | grep -q "Klisman Vizcarra" && printf "%s" "$OUT" | grep -q "serve"'
+check "bin/skill-maestro.js --version muestra la version de skill-maestro" 'OUT=$(node "$ROOT/bin/skill-maestro.js" --version); printf "%s" "$OUT" | grep -q "skill-maestro v"'
 
 # ------------------------------------------------------------------------------
 section "task.sh add / move / list / metrics"
