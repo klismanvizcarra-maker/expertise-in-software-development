@@ -2,6 +2,11 @@
 
 Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado, [SemVer](https://semver.org/lang/es/). La versión instalada en un proyecto está en `.agents/VERSION`; `init-project.sh --update` la sincroniza.
 
+## [Unreleased]
+
+### Corregido
+- Sección `[1.4.0]` de este CHANGELOG: `user-testing-agent` atribuido a TASK-066 y `/incidente` a TASK-067, y añadidas las skills omitidas `/onboarding`, `/explain-codebase` (TASK-068) y `/aprobar` (TASK-072), contrastadas con `git log v1.3.0..v1.4.0` (TASK-084).
+
 ## [1.5.0] - 2026-11-20
 
 ### Añadido
@@ -25,18 +30,23 @@ Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Ke
 ## [1.4.0] - 2026-11-20
 
 ### Añadido
+- **9 skills nuevas** (de 41 a 50 skills en el catálogo).
 - **Rol y flujo de pruebas exploratorias de usuario (UAT)**:
-  - `user-testing-agent`: simulación interactiva de personas de usuario reales en navegador con reporte de evidencias (TASK-065).
+  - `user-testing-agent`: simulación interactiva de personas de usuario reales en navegador con reporte de evidencias (TASK-066).
   - `/probar-usuario`: flujo de pruebas de usuario con loop de verificación y rechazos UAT (TASK-066).
 - **Gestión operativa de incidentes y parches en caliente**:
   - `/hotfix`: flujo quirúrgico urgente derivado del tag activo de producción con test de regresión y lección obligatoria (TASK-067).
-  - `/incidente`: protocolo de contención, degradación graciosa y post-mortem para caídas de servicio (TASK-068).
+  - `/incidente`: protocolo de contención, degradación graciosa y post-mortem para caídas de servicio (TASK-067).
+- **Inducción y comprensión del repositorio**:
+  - `/onboarding`: genera y mantiene la guía de inducción técnica para desarrolladores humanos en `docs/onboarding/guide.md` (TASK-068).
+  - `/explain-codebase`: explica en lenguaje claro la estructura, el flujo de datos y las responsabilidades de cada carpeta del repositorio (TASK-068).
 - **Técnicas transversales de accesibilidad y resiliencia**:
   - `accessibility-testing`: auditoría automatizada con Axe-core y Playwright bajo WCAG 2.1 AA (TASK-069).
   - `resilience-engineering`: patrones circuit breaker, timeouts estrictos, backoff exponencial con jitter y bulkheads (TASK-070).
 - **Visor interactivo y control humano (Human-in-the-loop)**:
   - `task.sh dashboard`: visor HTML autónomo para visualización gráfica del estado, métricas, tablero Kanban y salud del cerebro (TASK-071).
   - Estado `AWAITING_HUMAN_APPROVAL` y subcomandos `task.sh hold` y `task.sh approve` para puntos de control formales (TASK-072).
+  - `/aprobar`: flujo de punto de control humano que pausa la tarea con `task.sh hold` y la reanuda con `task.sh approve` (TASK-072).
 
 ## [1.3.0] - 2026-11-19
 
