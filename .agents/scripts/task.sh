@@ -92,7 +92,7 @@ release_lock() {
 }
 
 acquire_lock() {
-  local timeout=200 # 200 * 0.05s = 10s
+  local timeout=600 # 600 * 0.05s = 30s (margen seguro para entornos CI bajo carga)
   local waited=0
   local my_pid="${BASHPID:-$$}"
   mkdir -p "$PROJECT_ROOT/.agents" 2>/dev/null || true
