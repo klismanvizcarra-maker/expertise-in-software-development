@@ -1,0 +1,42 @@
+{
+  "task_id": "TASK-083",
+  "summary": "Evals deterministas para resilience-engineering, accessibility-testing y finops-cost-optimization",
+  "source_agent": "qa-security-agent",
+  "target_agent": "devops-cloud-agent",
+  "timestamp": "2026-11-21T02:33:46Z",
+  "iteration": 2,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/brain/recurrences.md" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "docs/qa/BUG-TASK-083-1.md" },
+    { "type": "file", "path": "tests/evals/README.md" },
+    { "type": "file", "path": "tests/evals/evals.json" },
+    { "type": "file", "path": "tests/evals/fixtures/a11y_check.py" },
+    { "type": "file", "path": "tests/evals/fixtures/cloud_costs.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/finops_check.py" },
+    { "type": "file", "path": "tests/evals/fixtures/payment_client.sh" },
+    { "type": "file", "path": "tests/evals/fixtures/resilience_checks.mjs" },
+    { "type": "file", "path": "tests/evals/fixtures/signup_a11y.sh" },
+    { "type": "file", "path": "tests/evals/solutions/README.md" },
+    { "type": "file", "path": "tests/evals/solutions/accessibility-wcag-formulario/package.json" },
+    { "type": "file", "path": "tests/evals/solutions/accessibility-wcag-formulario/public/signup.html" },
+    { "type": "file", "path": "tests/evals/solutions/accessibility-wcag-formulario/test/a11y.test.js" },
+    { "type": "file", "path": "tests/evals/solutions/finops-rightsizing-logs/analytics/daily_revenue.sql" },
+    { "type": "file", "path": "tests/evals/solutions/finops-rightsizing-logs/docs/finops/report.md" },
+    { "type": "file", "path": "tests/evals/solutions/finops-rightsizing-logs/infra/functions.json" },
+    { "type": "file", "path": "tests/evals/solutions/finops-rightsizing-logs/infra/storage.json" },
+    { "type": "file", "path": "tests/evals/solutions/resilience-pagos-breaker/package.json" },
+    { "type": "file", "path": "tests/evals/solutions/resilience-pagos-breaker/src/resilient.js" },
+    { "type": "file", "path": "tests/evals/solutions/resilience-pagos-breaker/test/resilient.test.js" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "python3 tests/evals/run_evals.py --verify-baselines --only resilience-pagos-breaker,accessibility-wcag-formulario,finops-rightsizing-logs",
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-skills.sh",
+    "./.agents/scripts/scan-secrets.sh --branch"
+  ]
+}

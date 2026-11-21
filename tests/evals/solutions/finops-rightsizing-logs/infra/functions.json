@@ -1,0 +1,2 @@
+{ "functions": [ { "name": "thumbnail", "runtime": "nodejs22.x", "memoryMb": 512, "timeoutS": 10,
+  "metrics30d": { "invocationsPerMonth": 2000000, "avgDurationMs": 400, "p95DurationMs": 700, "p95MemoryUsedMb": 180 } } ] }

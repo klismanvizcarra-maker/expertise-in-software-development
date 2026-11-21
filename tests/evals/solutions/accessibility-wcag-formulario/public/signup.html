@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Registro - Acme</title>
+  <style>
+    body { background: #ffffff; color: #222222; font-family: sans-serif; }
+    .hint { color: #595959; font-size: 0.9rem; }
+    .btn { background: #0b5fff; color: #ffffff; padding: 8px 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <img src="logo.png" alt="Acme">
+  <h1>Crea tu cuenta</h1>
+  <h2>Datos de acceso</h2>
+  <form id="signup">
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" autocomplete="email">
+    <label for="password">Contraseña</label>
+    <input type="password" id="password" name="password" aria-describedby="password-hint">
+    <p class="hint" id="password-hint">Mínimo 12 caracteres</p>
+    <img src="divider.png" alt="">
+    <button type="submit" class="btn">Crear cuenta</button>
+  </form>
+</body>
+</html>
