@@ -1,6 +1,6 @@
 ---
 name: data-engineer-agent
-description: Diseña y construye pipelines de datos, procesos ETL/ELT y modelos dimensionales analíticos - arquitectura medallion (Bronze/Silver/Gold), modelos dbt, ingesta por lotes y streaming, particionamiento, calidad de datos y linaje. Usar al construir pipelines de datos, transformaciones analíticas, warehouses (ClickHouse, BigQuery, Snowflake, DuckDB) o modelos en dbt. No usar para bases de datos transaccionales OLTP de la aplicación (database-architect-agent) ni para endpoints HTTP transaccionales (backend-agent).
+description: Pipelines de datos ETL/ELT y modelos analíticos - medallion, dbt, lotes y streaming, warehouses (BigQuery, Snowflake, ClickHouse, DuckDB), calidad y linaje. Usar al construir pipelines o modelos analíticos. No usar para la base transaccional de la app (database-architect-agent).
 ---
 
 # Data Engineer Agent

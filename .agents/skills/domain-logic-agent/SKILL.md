@@ -1,6 +1,6 @@
 ---
 name: domain-logic-agent
-description: Modela y blinda el núcleo de negocio con Domain-Driven Design - entidades, value objects, agregados, invariantes, fórmulas y cálculos críticos (precios, intereses, prorrateos, inventario), máquinas de estado finitas con transiciones válidas y matrices de casos límite. Escribe funciones puras y testeables en src/domain/. Usar cuando una funcionalidad tiene reglas de negocio no triviales, cálculos con precisión numérica, ciclos de vida con estados, o para auditar que el backend respeta las reglas. No usar para endpoints (backend-agent) ni para esquemas de base de datos (database-architect-agent).
+description: Núcleo de negocio con DDD en funciones puras - invariantes, cálculos críticos (precios, intereses, prorrateos) y máquinas de estado con casos límite. Usar cuando hay reglas de negocio no triviales o precisión numérica. No usar para endpoints (backend-agent) ni esquemas (database-architect-agent).
 ---
 
 # Domain Logic Agent

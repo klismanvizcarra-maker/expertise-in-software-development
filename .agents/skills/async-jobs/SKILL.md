@@ -1,6 +1,6 @@
 ---
 name: async-jobs
-description: Implementa procesamiento asíncrono confiable fuera de la petición HTTP - colas y workers en segundo plano, patrón Transactional Outbox, consumidores idempotentes, reintentos con backoff exponencial y jitter, Dead-Letter Queues (DLQ), subidas directas con URLs pre-firmadas y envío de emails transaccionales. Usar al diseñar tareas en segundo plano, correos electrónicos, importaciones/exportaciones pesadas, webhooks desacoplados o subidas de archivos a almacenamiento de objetos. No usar para diseñar esquemas SQL generales (database-architect-agent), webhooks de facturación (payments-stripe) ni métricas y alertas generales (observability).
+description: Trabajo asíncrono fiable fuera de la petición HTTP - colas y workers, outbox, consumidores idempotentes, reintentos con DLQ, subidas pre-firmadas y emails transaccionales. Usar para tareas en segundo plano. No usar para webhooks de cobro (payments-stripe).
 ---
 
 # Trabajos Asíncronos, Subidas y Emails (Async Jobs)

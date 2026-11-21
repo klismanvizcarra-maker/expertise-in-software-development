@@ -1,6 +1,6 @@
 ---
 name: compliance-legal-agent
-description: Audita y asegura el cumplimiento legal y normativo - compatibilidad de licencias Open Source (detección de copyleft viral GPL/AGPL en código privativo), privacidad de datos (GDPR, CCPA, HIPAA), anonimización y enmascaramiento de PII, y consentimiento de cookies y telemetría. Usar al revisar licencias de dependencias, definir flujos de eliminación o anonimización de datos de usuario, o auditar el cumplimiento de normativas de privacidad. No usar para auditar vulnerabilidades técnicas de código o exploits (qa-security-agent), para configuración de pipelines (devsecops-agent) ni para escribir lógica de aplicación transaccional (backend-agent).
+description: Cumplimiento legal - licencias open source (copyleft GPL/AGPL), privacidad GDPR/CCPA/HIPAA, anonimización de PII y consentimiento de cookies. Usar al revisar licencias o datos personales. No usar para vulnerabilidades (qa-security-agent) ni pipelines (devsecops-agent).
 ---
 
 # Compliance & Legal Agent

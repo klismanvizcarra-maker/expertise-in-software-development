@@ -1,6 +1,6 @@
 ---
 name: finops-cost-optimization
-description: Audita y optimiza el consumo de recursos y costes en infraestructura cloud (FinOps) - dimensionamiento de memoria y CPU en serverless/contenedores, optimización de consultas en data warehouses (BigQuery/Athena/Snowflake), políticas de ciclo de vida en almacenamiento de objetos (S3/GCS), reducción de transferencia de red (egress) y presupuestos de alerta. Usar al preparar el paso a producción para auditar costes, al optimizar consultas analíticas pesadas o al dimensionar funciones serverless y contenedores. No usar para métricas de latencia de aplicación (web-performance), logs y alertas RED (observability) ni para infraestructura o pipelines de build sin foco en costes (devops-cloud-agent).
+description: Auditoría y reducción de costes cloud - dimensionamiento de serverless y contenedores, consultas en warehouses, ciclo de vida de almacenamiento, egress y alertas de presupuesto. Usar al auditar costes antes de producción. No usar para latencia (web-performance) ni builds (devops-cloud-agent).
 ---
 
 # FinOps & Cost Optimization

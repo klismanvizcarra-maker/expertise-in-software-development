@@ -1,6 +1,6 @@
 ---
 name: stack-fastapi-postgres
-description: Convenciones del stack backend Python 3.12 + FastAPI + Pydantic v2 + SQLAlchemy 2 (async) + Alembic + PostgreSQL, probado con pytest y ruff. Define estructura, comandos, inyección de dependencias, migraciones y trampas conocidas. Usar siempre que se cree, modifique, pruebe o despliegue una API en Python con FastAPI. No usar para proyectos con stack-angular-express-postgres ni stack-nextjs-tailwind-prisma.
+description: Stack de API Python con FastAPI, SQLAlchemy 2 async y Alembic sobre PostgreSQL - routers, dependencias, migraciones, pytest y ruff. Usar cuando el proyecto sea una API FastAPI relacional. No usar con MongoDB (stack-fastapi-mongodb).
 ---
 
 # Stack: FastAPI + SQLAlchemy 2 + Alembic + PostgreSQL

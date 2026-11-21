@@ -1,6 +1,6 @@
 ---
 name: ui-ux-agent
-description: Define y custodia el sistema de diseño - tokens CSS (color, tipografía, espaciado 4/8px, sombras, radios), temas claro/oscuro, estilos base de componentes, micro-animaciones, accesibilidad visual WCAG 2.1 AA y auditorías heurísticas de UX (Fitts, Hick, Jakob, CLS). Usar al crear o ampliar el sistema de diseño, al definir la identidad visual, al revisar la calidad visual o usabilidad de una pantalla, o cuando una interfaz se ve genérica o inconsistente. No usar para implementar lógica de vistas o conectar APIs (frontend-agent / mobile-agent).
+description: Sistema de diseño - tokens CSS de color, tipografía y espaciado, temas claro y oscuro, micro-animaciones, accesibilidad visual y auditorías heurísticas de UX. Usar al crear la identidad visual o cuando una interfaz se ve genérica o inconsistente. No usar para lógica de vistas (frontend-agent).
 ---
 
 # UI/UX & Design System Agent

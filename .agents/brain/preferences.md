@@ -9,7 +9,7 @@
 ## 1. Idioma y Redacción
 - **Español** en skills, documentación, mensajes de los scripts y descripciones de tareas.
 - **Mensajes de commit sin tildes ni eñes** (`anadir`, `correccion`), en imperativo y con el formato `tipo(TASK-XXX): descripción`.
-- Las `description` de las skills dicen qué hace, cuándo usarla y **cuándo no** (con la skill vecina correcta entre paréntesis).
+- Las `description` de las skills dicen qué hace, cuándo usarla y **cuándo no** (con la skill vecina correcta entre paréntesis), en **300 caracteres como máximo** y sin pasar de **15 000 entre todas**: si el listado de Claude Code supera su presupuesto, deja skills sin descripción y no se activan solas (`lint_descriptions.py` lo comprueba).
 
 ## 2. Scripts (`.agents/scripts/`, `tests/`)
 - **Portabilidad obligatoria**: bash 3.2 de macOS y bash de Ubuntu; awk y sed BSD y GNU. Sin `mapfile`, sin arrays asociativos, sin extensiones GNU (`\s`, `sed -i` sin sufijo, `grep -P`).

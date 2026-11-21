@@ -1,6 +1,6 @@
 ---
 name: aprobar
-description: Punto de control formal Human-in-the-loop - presenta al usuario el plan, arquitectura o cambios criticos para su revision y confirmacion explicita, pausando la tarea con task.sh hold y reanudandola con task.sh approve tras el visto bueno humano. Usar cuando se requiere aprobacion humana previa antes de crear codigo masivo, al alcanzar un hito de arquitectura, o cuando el usuario dice "aprueba", "punto de control", "visto bueno" o "revisar antes de seguir". No usar para la revision de QA (qa-review) ni para crear tareas (nueva-tarea).
+description: Punto de control humano - presenta plan, arquitectura o cambios críticos y pausa la tarea (task.sh hold) hasta el visto bueno (task.sh approve). Usar al pedir aprobación antes de código masivo o hitos de arquitectura. No usar para QA (qa-review).
 ---
 
 # /aprobar — Punto de Control Human-in-the-Loop

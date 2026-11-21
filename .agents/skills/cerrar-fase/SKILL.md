@@ -1,6 +1,6 @@
 ---
 name: cerrar-fase
-description: Cierra una fase del proyecto - comprueba que todas sus tareas están DONE y fusionadas, revisa la deuda técnica y la salud del cerebro, consolida las lecciones de la fase, redacta el resumen de lo entregado en GLOBAL_STATE.md y propone, con confirmación del usuario, la fase siguiente y sus primeras tareas. Usar cuando todas las tareas de la fase están terminadas, cuando el usuario dice "cerramos la fase", "fin del sprint", "retrospectiva" o "qué sigue después de esta fase". No usar para publicar una versión (release) ni para crear tareas sueltas (nueva-tarea).
+description: Cierra una fase - verifica tareas DONE y ramas fusionadas, revisa cerebro y deuda, registra el hito, archiva y propone la fase siguiente. Usar cuando la fase terminó o dicen "cerramos la fase" o "retrospectiva". No usar para publicar versión (release).
 ---
 
 # /cerrar-fase — Cierre de Fase y Retrospectiva

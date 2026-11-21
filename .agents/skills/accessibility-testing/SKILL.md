@@ -1,6 +1,6 @@
 ---
 name: accessibility-testing
-description: Automatiza auditorías de accesibilidad web bajo el estándar WCAG 2.1 Nivel AA mediante Axe-core y Playwright - valida contraste de color, estructura de encabezados, navegación por teclado, roles ARIA, etiquetas de formularios y áreas de toque táctil, bloqueando regresiones de accesibilidad en CI/CD. Usar al auditar vistas públicas o formularios, al añadir suites de accesibilidad automatizada o para verificar cumplimiento legal de accesibilidad web. No usar para definir la paleta de colores o tokens visuales del sistema de diseño (usar ui-ux-agent) ni para flujos funcionales generales sin foco en accesibilidad (usar e2e-testing).
+description: Auditoría automatizada de accesibilidad WCAG 2.1 AA con Axe-core y Playwright (contraste, teclado, ARIA, formularios). Usar al auditar vistas o añadir suites de accesibilidad. No usar para tokens visuales (ui-ux-agent) ni E2E generales (e2e-testing).
 ---
 
 # accessibility-testing — Auditoría Automatizada de Accesibilidad (WCAG 2.1 AA)

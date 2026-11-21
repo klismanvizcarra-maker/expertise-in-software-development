@@ -1,6 +1,6 @@
 ---
 name: qa-review
-description: Revisa una tarea en IN_REVIEW_QA y emite el veredicto - ejecuta de forma independiente tests y build, comprueba cada criterio de aceptación, audita seguridad, y aprueba (task.sh close) o rechaza con bug report (task.sh reject), aplicando el límite de 3 iteraciones. Usar cuando el usuario pide revisar, auditar, aprobar o validar una TASK-XXX, o dice "QA" o "revisa la entrega". Para auditorías de seguridad o pruebas sin una tarea en revisión, usar qa-security-agent.
+description: Veredicto de QA de una tarea en IN_REVIEW_QA - tests y build propios, cada criterio de aceptación, seguridad, y aprobación (close) o rechazo (reject) con límite de 3. Usar cuando piden revisar o aprobar una TASK-XXX. Sin tarea en revisión, usar qa-security-agent.
 ---
 
 # /qa-review — Veredicto Independiente de QA

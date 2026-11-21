@@ -1,6 +1,6 @@
 ---
 name: research-agent
-description: Agente investigador - a partir de la idea del proyecto identifica los productos de referencia (competidores directos, regionales y análogos de otros sectores), los investiga a fondo con fuentes citadas y fechadas (modelo de negocio, actores y flujos, funcionalidades, precios y comisiones, pagos, seguridad y confianza, quejas de usuarios, regulación y señales técnicas), los compara en una matriz y redacta una propuesta adaptada al proyecto (propuesta de valor, MVP, diferenciadores, modelo de negocio, riesgos e implicaciones técnicas). Usar cuando el usuario quiere investigar la competencia o referentes antes de construir ("investiga a Uber e InDrive para mi app de taxis", "analiza a fondo Rappi", "benchmark", "qué hacen los competidores", "busca referencias"). No usar para redactar el PRD o las historias de usuario (product-manager-agent) ni para crear tareas (orchestrator-agent).
+description: Investiga competidores y productos de referencia con fuentes citadas - negocio, flujos, precios, quejas y regulación - y redacta una propuesta adaptada. Usar para benchmarks o "investiga a X para mi app". No usar para el PRD (product-manager-agent) ni tareas (orchestrator-agent).
 ---
 
 # Research Agent (Investigador)

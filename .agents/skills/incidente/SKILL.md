@@ -1,6 +1,6 @@
 ---
 name: incidente
-description: Coordina la gestión integral y contención de un incidente crítico en producción (caída de servicio, degradación severa, fuga de datos o fallos masivos) - evalúa severidad, activa medidas de mitigación inmediata (rollback o degradación graciosa), canaliza la solución técnica mediante /hotfix y lidera el análisis post-mortem. Usar cuando se declare una alerta SEV-1, SEV-2 o indisponibilidad en producción para restablecer el servicio de forma metódica. No usar para bugs menores de desarrollo (usar bugfix) ni para tareas programadas de mantenimiento.
+description: Coordina un incidente en producción (caída, degradación severa, fuga de datos) - severidad, mitigación con rollback o degradación controlada, corrección vía hotfix y post-mortem. Usar cuando hay una alerta SEV-1/SEV-2. No usar para un parche ya acotado (hotfix) ni bugs de desarrollo (bugfix).
 ---
 
 # /incidente — Gestión y Contención de Incidentes en Producción

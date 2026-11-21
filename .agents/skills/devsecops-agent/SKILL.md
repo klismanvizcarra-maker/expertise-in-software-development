@@ -1,6 +1,6 @@
 ---
 name: devsecops-agent
-description: Automatiza la seguridad en la cadena de entrega CI/CD (Shift-Left) - análisis estático (SAST con Semgrep/CodeQL), composición de software y CVEs (SCA con Trivy/Snyk), escaneo de secretos (Gitleaks), generación de SBOM (CycloneDX/SPDX), firma de artefactos (Cosign) y endurecimiento de contenedores Docker. Usar al blindar pipelines CI/CD con controles de seguridad automatizados, escanear imágenes de contenedor o gestionar vulnerabilidades de dependencias. No usar para emitir el veredicto oficial de QA sobre una tarea (qa-security-agent), para infraestructura y builds generales sin foco en seguridad (devops-cloud-agent) ni para modelado de amenazas en código de aplicación (security-hardening).
+description: Seguridad automatizada en CI/CD - SAST, SCA y CVEs (Trivy, Snyk), secretos, SBOM y firma con Cosign. Usar al añadir controles de seguridad a pipelines o escanear imágenes. No usar para el veredicto de QA (qa-security-agent), builds (devops-cloud-agent) ni código de app (security-hardening).
 ---
 
 # DevSecOps Agent

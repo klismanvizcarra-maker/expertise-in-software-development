@@ -1,6 +1,6 @@
 ---
 name: stack-vue-nuxt-postgres
-description: Convenciones del stack Vue 3 + Nuxt 3 (SSR, Nitro engine y Composition API) + Pinia + Tailwind CSS + PostgreSQL con Drizzle ORM y validación con Zod. Define estructura canónica, comandos, manejo de hidratación y trampas conocidas. Usar siempre que se cree, modifique, pruebe o despliegue código en proyectos con este stack. No usar para proyectos basados en stack-angular-express-postgres, stack-nextjs-tailwind-prisma ni stack-fastapi-postgres.
+description: Stack Nuxt 3 + Vue 3 con Pinia, Nitro, Drizzle y Zod - pages, composables, server/api e hidratación SSR. Usar cuando el proyecto use Nuxt o Vue.
 ---
 
 # Stack: Vue 3 + Nuxt 3 + Pinia + Drizzle ORM + PostgreSQL

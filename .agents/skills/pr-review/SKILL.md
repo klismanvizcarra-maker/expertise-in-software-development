@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Prepara y realiza revisiones técnicas de Pull Requests antes de fusionar - redacción estructurada con pull_request_template.md, lectura crítica del diff (contratos, concurrencia, migraciones retrocompatibles, legibilidad y pruebas), verificación de convenciones de commits y resolución limpia de conflictos/rebase. Usar cuando el usuario pide revisar un PR o diff, preparar la descripción de un Pull Request o resolver conflictos de integración antes de fusionar. No usar para entregar una tarea a QA (handoff), emitir el veredicto oficial close/reject sobre IN_REVIEW_QA (qa-review, qa-security-agent) ni reestructurar código por fases (refactor).
+description: Prepara y revisa Pull Requests - descripción con plantilla, lectura crítica del diff (contratos, migraciones, pruebas), commits y conflictos. Usar cuando piden revisar un PR o diff. No usar para entregar a QA (handoff), el veredicto (qa-review) ni reestructurar código (refactor).
 ---
 
 # Revisión Técnica de Pull Requests (`/pr-review`)

@@ -1,6 +1,6 @@
 ---
 name: frontend-agent
-description: Implementa interfaces web - pantallas, páginas, listados, formularios, componentes y estado reactivo en React, Next.js, Vue, Angular o Svelte; consumo de APIs según el contrato de GLOBAL_STATE.md (con mocks tipados si el backend no está listo); estados de carga, vacío y error; formularios con validación; accesibilidad WCAG 2.1 AA; rendimiento y PWA. Usar al crear, construir, conectar o depurar pantallas, vistas y componentes web (Angular, React, Vue...). No usar para definir tokens o el sistema visual (ui-ux-agent) ni para apps nativas iOS/Android (mobile-agent).
+description: Interfaces web en React, Next.js, Vue, Angular o Svelte - pantallas, formularios, componentes, estado, APIs por contrato y estados de carga, vacío y error. Usar al crear o depurar pantallas web. No usar para tokens visuales (ui-ux-agent) ni apps nativas (mobile-agent).
 ---
 
 # Frontend Agent

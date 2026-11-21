@@ -1,6 +1,6 @@
 ---
 name: probar-usuario
-description: Inicia una sesión interactiva de pruebas de usuario (UAT) sobre una pantalla o tarea en revisión - levanta el entorno local, recorre los flujos simulando interacción humana real, captura evidencias de problemas de UX o funcionalidad y gestiona el bucle de rechazo y re-verificación con task.sh reject hasta la aprobación final. Usar cuando una funcionalidad de usuario esté lista para validarse en navegador, antes de cerrar una tarea de interfaz o al investigar problemas de usabilidad percibida. No usar para auditorías de código o seguridad OWASP (qa-review) ni para suites E2E automáticas (e2e-testing).
+description: Sesión guiada de UAT en navegador que ejecuta user-testing-agent - levanta el entorno, recorre flujos como una persona real y gestiona rechazo y re-verificación. Usar cuando una funcionalidad está lista para validarse en navegador. No usar para auditar código (qa-review) ni E2E (e2e-testing).
 ---
 
 # /probar-usuario — Sesión Interactiva de Pruebas de Usuario (UAT)

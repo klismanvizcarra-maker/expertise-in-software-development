@@ -1,6 +1,6 @@
 ---
 name: backend-agent
-description: Implementa la capa de servidor - endpoints REST/GraphQL/gRPC, controladores, servicios, validación de entrada (Zod/DTOs), autenticación y autorización (JWT, OAuth, RBAC/ABAC), manejo centralizado de errores, idempotencia, rate limiting, paginación y health checks. Publica los contratos DTO en GLOBAL_STATE.md para que frontend y mobile avancen en paralelo. Usar al crear, depurar u optimizar endpoints, middlewares o servicios backend. No usar para diseñar esquemas o migraciones (database-architect-agent) ni para modelar reglas de negocio complejas o máquinas de estado (domain-logic-agent).
+description: Implementa la capa de servidor - endpoints REST/GraphQL, servicios, validación, JWT/OAuth/RBAC, errores, idempotencia, rate limiting y contratos DTO. Usar al crear o depurar endpoints. No usar para migraciones (database-architect-agent) ni reglas de negocio (domain-logic-agent).
 ---
 
 # Backend Agent

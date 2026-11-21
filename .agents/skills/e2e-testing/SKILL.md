@@ -1,6 +1,6 @@
 ---
 name: e2e-testing
-description: Escribe, ejecuta y depura pruebas end-to-end de aplicaciones web con Playwright - convierte los escenarios Gherkin del PRD en tests, usa selectores accesibles, datos de prueba aislados, autenticación reutilizable y trazas para depurar fallos inestables. Usar cuando hay que cubrir un flujo de usuario completo (login, checkout, formularios), validar una entrega de UI en QA o investigar un test E2E que falla. No usar para pruebas unitarias o de un endpoint aislado.
+description: Pruebas end-to-end con Playwright - escenarios Gherkin, selectores accesibles, datos aislados, sesión reutilizable y trazas. Usar para cubrir flujos completos (login, checkout) o depurar un E2E que falla. No usar para pruebas unitarias o de integración (testing-strategy).
 ---
 
 # E2E Testing con Playwright

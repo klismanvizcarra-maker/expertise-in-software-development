@@ -1,6 +1,6 @@
 ---
 name: aprender
-description: Registra una lección aprendida en la memoria permanente del proyecto (BRAIN.md y .agents/brain/lessons_learned.md) con problema, causa raíz y solución, para que ningún agente repita el error. También registra deuda técnica aceptada. Usar tras resolver un bug no trivial, descubrir una incompatibilidad de librerías o un comportamiento inesperado del stack, o cuando el usuario dice "recuerda esto", "aprende" o "anota esta lección".
+description: Registra una lección aprendida (causa raíz, solución y rutas) o deuda técnica aceptada en el cerebro del proyecto. Usar tras resolver un bug no trivial o una sorpresa del stack, o cuando dicen "recuerda esto" o "anota esta lección".
 ---
 
 # /aprender — Memoria Permanente

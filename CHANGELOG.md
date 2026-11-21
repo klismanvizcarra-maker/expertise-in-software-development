@@ -4,7 +4,14 @@ Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Ke
 
 ## [Unreleased]
 
+### Añadido
+- `lint_descriptions.py` controla el presupuesto del listado de skills de Claude Code: 300 caracteres como máximo por `description` y 15 000 en total. Lee el frontmatter con las claves en cualquier orden, bloques multilínea y comillas, y falla con la `SKILL.md` que no puede medir. Opciones `--skills-dir` y `--cases` y 6 checks nuevos en `tests/test-scripts.sh` (TASK-081).
+
+### Cambiado
+- Las 56 `description` se reescriben en formato compacto (qué hace, cuándo usarla y límite con la skill vecina): de 31 495 a menos de 15 000 caracteres. Las de los stacks dejan la plantilla común para que el modelo no los confunda (TASK-081).
+
 ### Corregido
+- Claude Code dejaba 18 skills sin descripción en su listado (presupuesto agotado), así que no se activaban solas; ahora las 56 aparecen con descripción (TASK-081, lección LL-020).
 - Sección `[1.4.0]` de este CHANGELOG: `user-testing-agent` atribuido a TASK-066 y `/incidente` a TASK-067, y añadidas las skills omitidas `/onboarding`, `/explain-codebase` (TASK-068) y `/aprobar` (TASK-072), contrastadas con `git log v1.3.0..v1.4.0` (TASK-084).
 
 ## [1.5.0] - 2026-11-20

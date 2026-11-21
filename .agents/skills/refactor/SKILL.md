@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: Reestructura código existente sin cambiar su comportamiento - registra la tarea con prefijo Refactor:, fija el comportamiento actual con tests de caracterización, aplica cambios pequeños y reversibles con la suite en verde tras cada paso y entrega a QA con la prueba de que nada cambió. Usar cuando el usuario pide refactorizar, limpiar, reorganizar, extraer, renombrar, desacoplar o simplificar código que ya funciona, o saldar deuda técnica. No usar para corregir un comportamiento incorrecto (bugfix) ni para añadir funcionalidad (nueva-tarea).
+description: Reestructura código sin cambiar su comportamiento - tests de caracterización y pasos pequeños con la suite en verde. Usar cuando piden refactorizar, limpiar, extraer, renombrar o desacoplar código que funciona, o saldar deuda. No usar para errores (bugfix) ni funcionalidades (nueva-tarea).
 ---
 
 # /refactor — Reestructurar sin Cambiar el Comportamiento

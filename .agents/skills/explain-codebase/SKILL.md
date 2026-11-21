@@ -1,6 +1,6 @@
 ---
 name: explain-codebase
-description: Explora y explica interactivamente en lenguaje humano claro la estructura, flujo de datos, dominios y responsabilidades del repositorio - responde qué hace cada carpeta, dónde se definen los modelos, cómo se comunican cliente y servidor y cuáles son las dependencias críticas sin modificar archivos. Usar cuando una persona nueva pida entender el código, al explorar un área desconocida del repositorio o al explicar el impacto de un cambio transversal. No usar para redactar documentación formal OpenAPI o ADRs (usar docs-architecture-agent) ni para redactar la guía de onboarding permanente (usar onboarding).
+description: Explica en lenguaje claro, sin modificar archivos, cómo está organizado el repositorio - carpetas, modelos, flujo cliente-servidor y dependencias críticas. Usar cuando alguien quiere entender el código. No usar para documentación formal (docs-architecture-agent) ni guía de bienvenida (onboarding).
 ---
 
 # /explain-codebase — Explicación Guiada del Repositorio para Humanos

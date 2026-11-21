@@ -1,6 +1,6 @@
 ---
 name: onboarding
-description: Genera y actualiza la guía completa de inducción técnica para desarrolladores humanos (docs/onboarding/guide.md) - inspecciona el stack, comandos de setup local, variables de entorno, arquitectura C4 y dinámica de trabajo con agentes para facilitar la integración rápida de nuevas personas al equipo. Usar cuando un nuevo desarrollador se sume al proyecto, al preparar la documentación de bienvenida de un equipo o para auditar que el setup local siga funcionando. No usar para adoptar un proyecto brownfield en el sistema multi-agente (usar adoptar-proyecto) ni para iniciar un repositorio desde cero (usar iniciar-proyecto).
+description: Guía de inducción para desarrolladores humanos (docs/onboarding/guide.md) - stack, setup local, variables de entorno, arquitectura y trabajo con agentes. Usar cuando se suma alguien al equipo. No usar para incorporar un repo al sistema (adoptar-proyecto) ni arrancar uno nuevo (iniciar-proyecto).
 ---
 
 # /onboarding — Guía de Inducción para Desarrolladores Humanos

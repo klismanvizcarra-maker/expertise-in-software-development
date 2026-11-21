@@ -1,6 +1,6 @@
 ---
 name: payments-stripe
-description: Integra cobros con Stripe en aplicaciones web y APIs - suscripciones y pagos únicos con Stripe Checkout alojado, portal de cliente, webhooks con firma verificada e idempotencia, sincronización de suscripciones en PostgreSQL, control de acceso por plan y pruebas en modo test con Stripe CLI. Usar al añadir planes, paywalls, checkout, facturación o suscripciones, o al depurar webhooks de Stripe. No usar para definir precios o el modelo de negocio (product-manager-agent).
+description: Cobros con Stripe - suscripciones y pagos con Checkout, portal de cliente, webhooks firmados e idempotentes, sincronización en PostgreSQL y acceso por plan. Usar al añadir planes, paywalls o facturación, o depurar webhooks. No usar para definir precios (product-manager-agent).
 ---
 
 # Pagos con Stripe

@@ -1,6 +1,6 @@
 ---
 name: web-performance
-description: Mide y mejora el rendimiento de aplicaciones web y APIs - Core Web Vitals (LCP, INP, CLS), presupuestos de bundle, carga diferida, optimización de imágenes y fuentes, caché HTTP, compresión, latencia p95 y consultas SQL. Usar cuando una página o endpoint es lento, se exceden presupuestos de build, antes de un lanzamiento o al auditar rendimiento. No usar para optimizar sin una medición previa. No usar para logs, métricas o alertas de producción (observability).
+description: Rendimiento de webs y APIs medido antes de optimizar - Core Web Vitals, bundle, carga diferida, imágenes, caché, latencia p95 y SQL. Usar cuando una página o endpoint es lento o antes de un lanzamiento. No usar para logs y alertas (observability).
 ---
 
 # Rendimiento Web y de APIs

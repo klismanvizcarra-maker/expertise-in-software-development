@@ -1,6 +1,6 @@
 ---
 name: stack-nextjs-tailwind-prisma
-description: Convenciones del stack React 19 + Next.js 15 (App Router, Server Components y Server Actions) + Tailwind CSS + PostgreSQL con Prisma ORM, validación con Zod y autenticación segura. Define estructura, comandos, reglas de cliente/servidor y trampas conocidas. Usar siempre que se desarrolle, pruebe o despliegue código en proyectos con este stack. No usar para proyectos basados en stack-angular-express-postgres.
+description: Stack Next.js 15 App Router con React 19, Tailwind, Prisma y Zod - Server Components, Server Actions y frontera cliente/servidor. Usar cuando el proyecto use Next.js. No usar para SPA con Vite (stack-react-vite-node).
 ---
 
 # Stack: Next.js + Tailwind CSS + Prisma + PostgreSQL

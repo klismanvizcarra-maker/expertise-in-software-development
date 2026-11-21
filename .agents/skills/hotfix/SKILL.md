@@ -1,6 +1,6 @@
 ---
 name: hotfix
-description: Aplica un parche de emergencia urgente directamente sobre el código de producción - crea una rama hotfix/ a partir del último tag de producción o main, aplica el cambio mínimo para contener la falla sin alterar contratos, ejecuta verificaciones estrictas y fusiona con --no-ff registrando la lección y redactando el post-mortem. Usar cuando ocurre un fallo crítico o bloqueo en producción que no puede esperar al ciclo normal de sprint. No usar para bugs normales detectados en desarrollo o QA (usar bugfix) ni para refactorizaciones o nuevas funcionalidades (usar refactor o nueva-tarea).
+description: Parche de emergencia sobre producción - rama hotfix/ desde el último tag, cambio mínimo, verificación estricta, fusión --no-ff, lección y post-mortem. Usar cuando un fallo crítico en producción no puede esperar. No usar para bugs de desarrollo (bugfix) ni coordinar una caída (incidente).
 ---
 
 # /hotfix — Parche de Emergencia en Producción

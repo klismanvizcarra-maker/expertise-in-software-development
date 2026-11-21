@@ -1,6 +1,6 @@
 ---
 name: crear-plan
-description: Redacta el plan maestro completo de lo que se va a desarrollar antes de programar - visión y alcance por versiones (MVP, v1, v2), arquitectura general con diagrama y decisiones clave, módulos con el agente y las skills responsables, fases con objetivo, criterio de salida, tareas candidatas y dependencias, cronograma Gantt con camino crítico y estimaciones por rangos, riesgos, estrategia de calidad y plan de lanzamiento, en docs/plan/plan-maestro.md. Tras la aprobación del usuario registra solo las tareas de la fase 1. Usar cuando el usuario pide un plan completo, un roadmap, "planifica todo el proyecto", "qué vamos a desarrollar y en qué orden" o "cuánto nos va a llevar". No usar para descomponer un único requerimiento en tareas (nueva-tarea), para redactar el PRD de una funcionalidad (product-manager-agent) ni para cerrar la fase en curso (cerrar-fase).
+description: Plan maestro antes de programar (docs/plan/plan-maestro.md) - visión, alcance por versiones, arquitectura, fases con criterio de salida, Gantt y riesgos; registra solo la fase 1. Usar cuando piden un roadmap o planificar todo el proyecto. No usar para un requerimiento (nueva-tarea).
 ---
 
 # /crear-plan — Plan Maestro del Proyecto

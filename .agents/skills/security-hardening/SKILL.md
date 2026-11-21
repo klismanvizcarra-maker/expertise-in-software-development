@@ -1,6 +1,6 @@
 ---
 name: security-hardening
-description: Guía a quien construye para que la aplicación nazca segura - modelado de amenazas ligero (STRIDE) por funcionalidad, autenticación y sesiones (hash de contraseñas, JWT, cookies), autorización por objeto contra IDOR, validación de entrada, cabeceras HTTP (CSP, HSTS), CORS, rate limiting, subida de archivos, SSRF, secretos y dependencias vulnerables. Usar al diseñar o implementar login, permisos, endpoints con datos de usuarios, subidas de archivos, llamadas a URLs externas o al endurecer una app antes de exponerla. No usar para auditar o aprobar una entrega (qa-security-agent) ni para configurar infraestructura o pipelines (devops-cloud-agent).
+description: Seguridad desde el diseño - STRIDE, contraseñas, JWT y cookies, autorización contra IDOR, validación, cabeceras, CORS, rate limiting, subidas y SSRF. Usar al implementar login, permisos o datos de usuarios. No usar para auditar entregas (qa-security-agent) ni pipelines (devsecops-agent).
 ---
 
 # Endurecimiento de Seguridad (Security Hardening)

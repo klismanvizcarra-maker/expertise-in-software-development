@@ -1,6 +1,6 @@
 ---
 name: observability
-description: Hace que la aplicación se pueda observar en producción - logs estructurados en JSON con identificador de correlación y sin datos sensibles, métricas RED (peticiones, errores, duración) y de negocio, trazas distribuidas con OpenTelemetry, reporte de errores (Sentry o similar), health y readiness checks, y alertas accionables con su runbook. Usar al preparar una app o un servicio para producción, al añadir logs o métricas a una funcionalidad, al investigar por qué no se ve qué pasa en producción, o al definir alertas y SLO. No usar para mejorar la velocidad de la app (web-performance) ni para montar despliegues o pipelines (devops-cloud-agent).
+description: Observabilidad en producción - logs JSON con correlación y sin datos sensibles, métricas RED, trazas OpenTelemetry, reporte de errores, health checks y alertas con runbook. Usar al preparar un servicio para producción o definir SLO. No usar para velocidad (web-performance).
 ---
 
 # Observabilidad
