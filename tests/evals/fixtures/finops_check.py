@@ -11,6 +11,9 @@ from pathlib import Path
 
 PRICE_GB_S = 0.0000166667
 ORIGINAL_MB = 3008
+P95_MEMORY_MB = 180
+AVG_DURATION_MS = 400
+INVOCATIONS_PER_MONTH = 2_000_000
 
 
 def fail(msg):
@@ -26,7 +29,7 @@ def thumbnail():
 def functions():
     f = thumbnail()
     mem, tmo = f.get("memoryMb"), f.get("timeoutS")
-    p95 = f["metrics30d"]["p95MemoryUsedMb"]
+    p95 = P95_MEMORY_MB
     if not isinstance(mem, (int, float)) or mem >= ORIGINAL_MB:
         fail(f"memoryMb sigue sobredimensionada ({mem})")
     if mem < p95 * 1.4:
@@ -112,8 +115,7 @@ def report():
     if not p.is_file():
         fail("falta docs/finops/report.md")
     f = thumbnail()
-    m = f["metrics30d"]
-    expected = m["invocationsPerMonth"] * m["avgDurationMs"] / 1000 * (ORIGINAL_MB - f["memoryMb"]) / 1024 * PRICE_GB_S
+    expected = INVOCATIONS_PER_MONTH * AVG_DURATION_MS / 1000 * (ORIGINAL_MB - f["memoryMb"]) / 1024 * PRICE_GB_S
     # Solo cuentan importes en USD (no un "día 35" casual); el ahorro puede ir en una fila de tabla
     text = p.read_text(encoding="utf-8")
     nums = []
@@ -131,6 +133,27 @@ def report():
             nums.append(float(s))
         except ValueError:
             pass
+    # También importes en celdas de tablas donde la cabecera indica USD / $:
+    table_lines = [line.strip() for line in text.splitlines() if line.strip().startswith("|")]
+    if table_lines:
+        header_usd = any(re.search(r"US\$|\$|USD|d[oó]lares", line, re.I) for line in table_lines[:2])
+        if header_usd:
+            for line in table_lines[2:]:
+                for cell in line.split("|"):
+                    val = cell.strip()
+                    m_num = re.search(r"^(\d[\d.,]*)$", val)
+                    if m_num:
+                        s = m_num.group(1).rstrip(".,")
+                        if re.fullmatch(r"\d{1,3}(\.\d{3})+,\d+", s):
+                            s = s.replace(".", "").replace(",", ".")
+                        elif re.fullmatch(r"\d+,\d{1,2}", s):
+                            s = s.replace(",", ".")
+                        else:
+                            s = s.replace(",", "")
+                        try:
+                            nums.append(float(s))
+                        except ValueError:
+                            pass
     if not any(abs(n - expected) <= expected * 0.10 for n in nums):
         fail(f"el informe no recoge el ahorro mensual de la función (~{expected:.2f} USD con {f['memoryMb']} MB)")
 

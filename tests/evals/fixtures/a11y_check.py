@@ -79,15 +79,46 @@ class Doc(HTMLParser):
             self.current_label["text"] += data
 
 
-COLOR = r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)"
+NAMED_COLORS = {
+    "black": [0, 0, 0],
+    "white": [255, 255, 255],
+    "gray": [128, 128, 128],
+    "grey": [128, 128, 128],
+    "dimgray": [105, 105, 105],
+    "dimgrey": [105, 105, 105],
+    "darkgray": [169, 169, 169],
+    "darkgrey": [169, 169, 169],
+    "lightgray": [211, 211, 211],
+    "lightgrey": [211, 211, 211],
+}
+
+COLOR = (
+    r"#[0-9a-fA-F]{3,8}\b|"
+    r"rgba?\(\s*\d+\s*(?:,\s*|\s+)\d+\s*(?:,\s*|\s+)\d+(?:[,\s/]+[\d.]+%?)?\s*\)|"
+    r"var\(\s*--[\w-]+\s*(?:,\s*[^)]+)?\)|"
+    r"\b(?:black|white|gray|grey|dimgray|dimgrey|darkgray|darkgrey|lightgray|lightgrey)\b"
+)
 
 
 def to_rgb(color):
+    color = color.strip()
+    if color.lower() in NAMED_COLORS:
+        return NAMED_COLORS[color.lower()]
+    if color.startswith("var("):
+        m = re.search(r",\s*([^)]+)", color)
+        if m:
+            return to_rgb(m.group(1).strip())
+        return [0, 0, 0]
     if color.startswith("rgb"):
-        return [int(x) for x in re.findall(r"\d+", color)[:3]]
+        nums = re.findall(r"\d+", color)
+        return [int(x) for x in nums[:3]] if len(nums) >= 3 else [0, 0, 0]
     h = color.lstrip("#")
-    if len(h) == 3:
-        h = "".join(c * 2 for c in h)
+    if len(h) in (3, 4):
+        h = "".join(c * 2 for c in h[:3])
+    elif len(h) >= 6:
+        h = h[:6]
+    else:
+        return [0, 0, 0]
     return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
 
 

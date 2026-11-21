@@ -11,7 +11,10 @@ import { join } from 'node:path';
 process.exitCode = 1;
 // process.exit se salta los finally: los temporales se borran en el evento 'exit', que sí se ejecuta.
 const temps = new Set();
-process.on('exit', () => { for (const d of temps) rmSync(d, { recursive: true, force: true }); });
+const cleanup = () => { for (const d of temps) rmSync(d, { recursive: true, force: true }); };
+process.on('exit', cleanup);
+process.on('SIGINT', () => { cleanup(); process.exit(130); });
+process.on('SIGTERM', () => { cleanup(); process.exit(143); });
 const fail = (msg) => { console.error(msg); process.exit(1); };
 const err = (props, msg = 'fallo') => Object.assign(new Error(msg), props);
 const base = { timeoutMs: 1000, maxRetries: 0, baseDelayMs: 100, maxDelayMs: 1000, failureThreshold: 1000, cooldownMs: 1000 };
@@ -162,6 +165,6 @@ const checks = {
 
 const name = process.argv[2];
 if (!checks[name]) fail(`check desconocido: ${name}`);
-// Una implementación sin timeout deja promesas colgadas: se corta a los 5 s (150 s para los mutantes).
-const hard = setTimeout(() => { console.error('tiempo agotado: alguna llamada no termina'); process.exit(1); }, name === 'mutants' ? 150000 : 5000);
+// Una implementación sin timeout deja promesas colgadas: se corta a los 5 s (90 s para los mutantes).
+const hard = setTimeout(() => { console.error('tiempo agotado: alguna llamada no termina'); process.exit(1); }, name === 'mutants' ? 90000 : 5000);
 checks[name]().then(() => { clearTimeout(hard); process.exitCode = 0; }, (e) => fail(`error: ${e && e.message}`));
