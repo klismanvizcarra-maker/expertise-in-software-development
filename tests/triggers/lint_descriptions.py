@@ -84,9 +84,17 @@ def load_skills() -> tuple[dict[str, str], list[str]]:
     problema, porque Claude Code sí las lista y gastan presupuesto sin que nadie las mida."""
     skills, unreadable = {}, []
     for f in sorted(SKILLS_DIR.glob("*/SKILL.md")):
-        fm = frontmatter(f.read_text(encoding="utf-8"))
+        try:
+            raw = f.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            unreadable.append(f"{f.parent.name}/SKILL.md (UTF-8 inválido)")
+            continue
+        fm = frontmatter(raw)
         if fm.get("name") and fm.get("description"):
-            skills[fm["name"]] = fm["description"]
+            desc = fm["description"]
+            if fm.get("when_to_use"):
+                desc = (desc + " " + fm["when_to_use"]).strip()
+            skills[fm["name"]] = desc
         else:
             unreadable.append(f"{f.parent.name}/SKILL.md")
     return skills, unreadable
