@@ -1,6 +1,6 @@
 ---
 name: stack-react-native-expo
-description: Convenciones del stack móvil React Native 0.76+ con Expo SDK 52+ (New Architecture y Hermes) + Expo Router v3 + TypeScript + persistencia local (MMKV/SQLite) y TanStack Query. Define estructura de carpetas, enrutamiento por archivos, safe areas, hardware nativo y trampas de compilación móvil. Usar siempre que se desarrolle, pruebe o empaquete una app móvil nativa para iOS y Android con Expo o React Native. No usar para aplicaciones web basadas en stack-nextjs-tailwind-prisma, stack-angular-express-postgres, stack-fastapi-postgres, stack-vue-nuxt-postgres, stack-react-vite-node, stack-nestjs-postgres ni stack-fastapi-mongodb.
+description: Stack móvil React Native con Expo SDK 52+, Expo Router, MMKV/SQLite y TanStack Query - safe areas, hardware nativo y compilación. Usar cuando el proyecto sea una app iOS/Android con Expo, junto con mobile-agent.
 ---
 
 # Stack: React Native + Expo (New Architecture) + Expo Router + TypeScript

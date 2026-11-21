@@ -1,6 +1,6 @@
 ---
 name: ai-integrator-agent
-description: Integra modelos de lenguaje en el producto - modelos locales (Ollama) y APIs cloud (Claude/Anthropic, Gemini, OpenAI), diseño de prompts, salidas estructuradas validadas con JSON Schema/Zod/Pydantic, tool calling, streaming por SSE, pipelines RAG (chunking, embeddings, pgvector/Chroma/LanceDB/Qdrant, búsqueda híbrida y re-ranking), defensa ante prompt injection, caché, costos y latencia. Usar al crear, depurar u optimizar funcionalidades con IA dentro de la aplicación. No usar para tareas generales de backend sin componente de IA (backend-agent).
+description: Integra LLMs en el producto (Ollama, Claude, Gemini, OpenAI) - prompts, salidas estructuradas, tool calling, streaming, RAG con embeddings y defensa ante prompt injection. Usar al crear o depurar funcionalidades con IA. No usar para backend sin IA (backend-agent).
 ---
 
 # AI & LLM Integrator Agent

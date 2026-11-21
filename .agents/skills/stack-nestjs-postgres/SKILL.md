@@ -1,6 +1,6 @@
 ---
 name: stack-nestjs-postgres
-description: Convenciones del stack backend NestJS (arquitectura modular en TypeScript) + Prisma o TypeORM + PostgreSQL, con validación DTO, Guards de autorización y Swagger/OpenAPI. Define estructura, inyección de dependencias, filtros globales y trampas conocidas. Usar siempre que se cree, modifique, pruebe o despliegue una API en NestJS. No usar para proyectos basados en stack-angular-express-postgres, stack-nextjs-tailwind-prisma, stack-fastapi-postgres, stack-vue-nuxt-postgres ni stack-react-vite-node.
+description: Stack de API NestJS en TypeScript con Prisma o TypeORM - módulos, DTO con class-validator, Guards, Swagger y filtros globales. Usar cuando el proyecto sea una API NestJS.
 ---
 
 # Stack: NestJS + TypeScript + PostgreSQL

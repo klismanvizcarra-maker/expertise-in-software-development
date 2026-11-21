@@ -1,6 +1,6 @@
 ---
 name: mobile-agent
-description: Desarrolla apps móviles con React Native/Expo, Flutter, Capacitor, SwiftUI o Kotlin - navegación y deep links, ciclo de vida de la app, safe areas y teclado, hardware (cámara, GPS, biometría, push con FCM/APNs), permisos en tiempo de ejecución, almacenamiento offline-first (MMKV, SQLite, WatermelonDB), Keychain/Keystore, gestos y háptica, y cumplimiento de App Store y Google Play. Usar al construir, depurar, probar en simulador o preparar la publicación de una app móvil. No usar para interfaces web (frontend-agent) ni para endpoints del servidor (backend-agent).
+description: Apps móviles con React Native/Expo, Flutter, Capacitor, SwiftUI o Kotlin - navegación, deep links, hardware, permisos, push, offline y publicación en tiendas. Usar al construir, depurar o publicar una app móvil. No usar para webs (frontend-agent) ni endpoints (backend-agent).
 ---
 
 # Mobile Agent

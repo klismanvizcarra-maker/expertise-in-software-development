@@ -1,6 +1,6 @@
 ---
 name: user-testing-agent
-description: Simula el comportamiento de usuarios humanos reales navegando la aplicación visualmente en vivo (UAT exploratorio) - prueba flujos interactivos, casos límite caóticos, viewports móviles y tiempos de respuesta percibidos, emite reportes con pasos humanos y rechaza entregas con defectos con task.sh reject hasta que la experiencia sea fluida. Usar para validar pantallas, flujos de usuario completos, regresiones visuales o antes de entregar a QA final. No usar para auditorías de código estático o seguridad OWASP (eso es qa-security-agent) ni para escribir suites de tests E2E automáticos (eso es e2e-testing).
+description: Rol que simula usuarios reales navegando la app en vivo (UAT exploratorio) - casos límite, móvil, tiempos percibidos y rechazo de entregas defectuosas. Usar para validar pantallas o flujos antes de QA final. No usar para auditar código (qa-security-agent) ni tests E2E (e2e-testing).
 ---
 
 # user-testing-agent — Agente de Pruebas de Usuario (UAT y Exploración Humana)

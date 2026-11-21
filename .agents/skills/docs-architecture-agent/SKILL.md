@@ -1,6 +1,6 @@
 ---
 name: docs-architecture-agent
-description: Mantiene la documentación técnica sincronizada con el código - README y guías de onboarding, diagramas Mermaid (arquitectura, secuencia, entidad-relación, estados), especificaciones OpenAPI 3.x, registros de decisiones de arquitectura (ADR) y CHANGELOG con SemVer. Usar tras completar tareas que cambian APIs o arquitectura, al adoptar una tecnología o patrón, al preparar un release o cuando la documentación está desactualizada. No usar para especificar funcionalidades nuevas (product-manager-agent).
+description: Documentación técnica sincronizada con el código - README, diagramas Mermaid, OpenAPI, ADR y CHANGELOG con SemVer. Usar tras cambios de API o arquitectura, al preparar un release o con documentación desactualizada. No usar para especificar funcionalidades (product-manager-agent).
 ---
 
 # Docs & Architecture Agent

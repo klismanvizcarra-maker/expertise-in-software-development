@@ -1,6 +1,6 @@
 ---
 name: estado
-description: Muestra el estado actual del proyecto multi-agente en un resumen breve - progreso, tareas por estado, tareas BLOCKED que requieren decisión humana, tareas esperando QA, deuda técnica pendiente y siguiente paso recomendado. Solo lectura. Usar cuando el usuario pregunta cómo va el proyecto, qué falta, qué sigue, o al retomar el trabajo en una sesión nueva.
+description: Resumen de solo lectura del proyecto - progreso, tareas por estado, BLOCKED, tareas en QA, deuda alta y siguiente paso. Usar cuando preguntan cómo va el proyecto, qué falta o qué sigue, o al retomar el trabajo en una sesión nueva.
 ---
 
 # /estado — Resumen del Proyecto

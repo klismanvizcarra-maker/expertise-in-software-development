@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Entrega formal de una tarea terminada a QA - verifica el checklist de la skill del especialista, ejecuta tests y build, registra entregables y comandos de verificación en GLOBAL_STATE.md y pasa la tarea a IN_REVIEW_QA con task.sh handoff. Usar cuando un especialista termina su trabajo en una TASK-XXX o el usuario dice "entrega", "listo para QA" o "handoff". No usar para emitir el veredicto (qa-review) ni para crear tareas (nueva-tarea).
+description: Entrega formal de una tarea terminada a QA - checklist del rol, tests, build, secretos, commit, comandos de verificación y paso a IN_REVIEW_QA. Usar cuando un especialista termina una TASK-XXX o dicen "listo para QA". No usar para emitir el veredicto (qa-review).
 ---
 
 # /handoff — Entrega Formal a QA

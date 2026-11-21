@@ -1,6 +1,6 @@
 ---
 name: stack-react-vite-node
-description: Convenciones del stack SPA React 19 + Vite + Tailwind CSS + Node.js (Express o Hono) con PostgreSQL y TanStack Query. Define arquitectura cliente/servidor, proxying, manejo de estado asíncrono y trampas conocidas. Usar siempre que se cree, modifique, pruebe o despliegue código en proyectos con este stack. No usar para proyectos basados en stack-nextjs-tailwind-prisma, stack-angular-express-postgres, stack-fastapi-postgres, stack-vue-nuxt-postgres ni stack-nestjs-postgres.
+description: Stack SPA React 19 con Vite y Tailwind más servidor Node (Express o Hono) y TanStack Query - proxy de desarrollo y estado asíncrono. Usar cuando el proyecto sea una SPA con Vite. No usar para Next.js (stack-nextjs-tailwind-prisma).
 ---
 
 # Stack: React 19 + Vite + Tailwind CSS + Node.js + PostgreSQL

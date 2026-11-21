@@ -718,6 +718,28 @@ run_skills_lint() {
 
 check "auditoría estructural de skills sin errores" 'bash "$ROOT/tests/test-skills.sh" >/dev/null'
 check "linter de descripciones (lint_descriptions.py) sin problemas" 'python3 "$ROOT/tests/triggers/lint_descriptions.py" >/dev/null'
+
+# Presupuesto del listado de skills de Claude Code (TASK-081): tope por skill y total
+run_desc_budget() {
+  local per="$1" count="$2"
+  local fake; fake="$(mktemp -d "$WORK/budget.XXXXXX")"
+  local cases="$fake/cases.json" i n filler
+  filler="$(printf 'x%.0s' $(seq 1 "$per"))"
+  printf '{"cases": [' > "$cases"
+  for i in $(seq 1 "$count"); do
+    n="skill-presupuesto-$i"
+    mkdir -p "$fake/skills/$n"
+    printf -- '---\nname: %s\ndescription: Usar cuando %s\n---\n# %s\n' "$n" "${filler:0:$((per - 12))}" "$n" > "$fake/skills/$n/SKILL.md"
+    [ "$i" -gt 1 ] && printf ',' >> "$cases"
+    printf '{"id":"b-%s-1","prompt":"p","expect":["%s"]},{"id":"b-%s-2","prompt":"p","expect":["%s"]}' "$i" "$n" "$i" "$n" >> "$cases"
+  done
+  printf ']}\n' >> "$cases"
+  python3 "$ROOT/tests/triggers/lint_descriptions.py" --skills-dir "$fake/skills" --cases "$cases" --threshold 1.1 >/dev/null 2>&1
+}
+check "lint_descriptions.py acepta descripciones dentro del presupuesto (300 c/u, total <= 15000)" 'run_desc_budget 300 2'
+check "lint_descriptions.py rechaza una descripción de más de 300 caracteres" '! run_desc_budget 301 1'
+check "lint_descriptions.py rechaza descripciones que suman más de 15000 caracteres" '! run_desc_budget 300 51'
+check "las skills reales caben en el presupuesto del listado de Claude Code" 'python3 "$ROOT/tests/triggers/lint_descriptions.py" | grep -qE "Presupuesto de descripciones: [0-9]+/15000" && ! python3 "$ROOT/tests/triggers/lint_descriptions.py" | grep -q "caracteres (máximo"'
 check "test-skills.sh sale con exit 1 ante errores" '! run_skills_lint broken-agent "---
 name: broken-agent
 description: corta

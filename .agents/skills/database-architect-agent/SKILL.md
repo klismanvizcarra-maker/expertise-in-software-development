@@ -1,6 +1,6 @@
 ---
 name: database-architect-agent
-description: Diseña y evoluciona la capa de persistencia - modelado relacional o NoSQL, migraciones versionadas y reversibles, restricciones de integridad, índices, análisis de planes de ejecución (EXPLAIN), transacciones y aislamiento, configuración de SQLite/PostgreSQL/MySQL/MongoDB, backups y seeds anonimizados. Usar al crear o cambiar tablas/colecciones, escribir migraciones, optimizar consultas lentas o resolver bloqueos y problemas de concurrencia. No usar para endpoints HTTP (backend-agent) ni para reglas de negocio (domain-logic-agent).
+description: Diseña la persistencia - modelado relacional o NoSQL, migraciones reversibles, índices, EXPLAIN, transacciones, concurrencia y seeds. Usar al crear o cambiar tablas, escribir migraciones u optimizar consultas lentas. No usar para endpoints (backend-agent).
 ---
 
 # Database Architect Agent

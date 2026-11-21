@@ -1,6 +1,6 @@
 ---
 name: stack-fastapi-mongodb
-description: Convenciones del stack backend Python 3.12 + FastAPI + Pydantic v2 + MongoDB 7 con Motor y Beanie ODM, probado con pytest-asyncio y ruff. Define estructura, ciclo de vida de conexión (lifespan), modelado de documentos, índices y trampas conocidas de NoSQL. Usar siempre que se desarrolle, pruebe o despliegue una API en Python con MongoDB. No usar para proyectos basados en stack-fastapi-postgres, stack-angular-express-postgres, stack-nextjs-tailwind-prisma, stack-nestjs-postgres, stack-vue-nuxt-postgres ni stack-react-vite-node.
+description: Stack de API Python con FastAPI sobre MongoDB usando Motor y Beanie - lifespan, documentos, índices y pytest-asyncio. Usar cuando el proyecto sea una API Python con MongoDB. No usar con SQL (stack-fastapi-postgres).
 ---
 
 # Stack: FastAPI + MongoDB (Motor / Beanie) + Pydantic v2

@@ -1,6 +1,6 @@
 ---
 name: release
-description: Publica una versión de forma controlada - verifica que todas las tareas incluidas estén DONE, ejecuta la batería completa (lint, tests, build, migraciones, escaneo de secretos), actualiza CHANGELOG y versión SemVer, crea el tag, despliega, comprueba producción con una prueba de humo y deja documentado el rollback. Usar cuando el usuario quiere sacar una versión, desplegar a producción o preparar un release. Requiere confirmación explícita del usuario antes de desplegar. No usar para cerrar una fase sin publicar (cerrar-fase).
+description: Publica una versión - tareas DONE, batería completa, CHANGELOG y SemVer, tag, despliegue con confirmación, prueba de humo y rollback documentado. Usar para sacar una versión o desplegar a producción. No usar para cerrar una fase sin publicar (cerrar-fase).
 ---
 
 # /release — Publicación de una Versión

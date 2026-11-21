@@ -4,14 +4,22 @@ Comprueba que, ante una petición típica, se carga la skill correcta (y no otra
 
 | Archivo | Para qué |
 | :--- | :--- |
-| `cases.json` | 98 peticiones con la skill esperada (`expect`), alternativas válidas (`accept`) y prohibidas (`forbid`) |
-| `lint_descriptions.py` | Análisis estático gratuito: casos que apuntan a skills inexistentes, skills con menos de dos casos y pares de descripciones demasiado parecidas sin límite explícito |
+| `cases.json` | 128 peticiones con la skill esperada (`expect`), alternativas válidas (`accept`) y prohibidas (`forbid`) |
+| `lint_descriptions.py` | Análisis estático gratuito: casos que apuntan a skills inexistentes, skills con menos de dos casos, pares de descripciones demasiado parecidas sin límite explícito y presupuesto del listado (300 caracteres por descripción, 15 000 en total) |
 | `run_claude.py` | Ejecución real contra Claude Code en modo `--print`, solo con herramientas de lectura |
 
 ## 1. Análisis estático (siempre, no gasta nada)
 ```bash
 python3 tests/triggers/lint_descriptions.py
 ```
+
+### Presupuesto del listado de skills
+Claude Code muestra al modelo el nombre y la `description` de cada skill dentro de un presupuesto que escala con la ventana de contexto (por defecto, el 1 %). Si el listado se pasa, **deja skills sin descripción** empezando por las menos usadas, y esas skills solo se pueden invocar a mano con `/nombre`. Con 56 skills y unos 31 800 caracteres, 18 skills se quedaban sin descripción (TASK-081). Por eso el linter exige:
+
+- 300 caracteres como máximo por `description`: qué hace, cuándo usarla y su límite con la skill vecina.
+- 15 000 caracteres como máximo entre todas, para dejar sitio a las skills integradas y de plugins del usuario.
+
+Si aun así faltan descripciones (modelos con contexto pequeño o muchos plugins), se puede ampliar el presupuesto con el ajuste `skillListingBudgetFraction` de Claude Code (por ejemplo `0.02`) o la variable `SLASH_COMMAND_TOOL_CHAR_BUDGET`.
 
 ## 2. Claude Code (automático)
 Requisito único: la CLI debe tener sesión iniciada (la de la app de escritorio no se comparte):

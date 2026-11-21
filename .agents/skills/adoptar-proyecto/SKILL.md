@@ -1,6 +1,6 @@
 ---
 name: adoptar-proyecto
-description: Incorpora el gobierno multi-agente en un repositorio ya existente (brownfield) tras ejecutar init-project.sh --adopt - inspecciona código fuente, dependencias, pruebas, CI y documentación previa sin reescribir trabajo existente, mapea arquitectura y rutas reales en GLOBAL_STATE.md y AGENTS.md, registra deuda técnica y ADRs heredados en BRAIN.md y planifica las primeras tareas incrementales. Usar cuando se integra SKILL MAESTRO en una app o codebase ya construido o heredado. No usar para crear un proyecto vacío desde cero (iniciar-proyecto), para añadir una funcionalidad puntual sobre un tablero ya en marcha (nueva-tarea) ni para auditar entregas en revisión (qa-review).
+description: Incorpora el gobierno multi-agente a un repositorio ya construido (brownfield) sin reescribirlo - mapea rutas reales, deuda heredada y primeras tareas. Usar tras init-project.sh --adopt. No usar para proyectos desde cero (iniciar-proyecto).
 ---
 
 # /adoptar-proyecto — Incorporación en Proyecto Existente (Brownfield)

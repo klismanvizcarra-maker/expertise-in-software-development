@@ -1,6 +1,6 @@
 ---
 name: iniciar-proyecto
-description: Arranca un proyecto con el sistema multi-agente - verifica la instalación (.agents, AGENTS.md, CLAUDE.md, GLOBAL_STATE.md), acuerda con el usuario el stack tecnológico, completa los metadatos de GLOBAL_STATE.md, limpia las tareas de ejemplo y planifica las primeras tareas. Usar cuando el usuario quiere empezar un proyecto nuevo, configurar el stack o cuando GLOBAL_STATE.md no existe o aún tiene placeholders.
+description: Arranca un proyecto nuevo con el sistema multi-agente - verifica la instalación, acuerda el stack, completa GLOBAL_STATE.md y planifica las primeras tareas. Usar al empezar un proyecto o si GLOBAL_STATE.md falta o tiene placeholders. No usar en repositorios ya construidos (adoptar-proyecto).
 ---
 
 # /iniciar-proyecto — Kickoff

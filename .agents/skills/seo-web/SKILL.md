@@ -1,6 +1,6 @@
 ---
 name: seo-web
-description: Hace indexables y compartibles las páginas públicas de una aplicación web - SSR y prerender por ruta, title y meta description únicos, canonical y hreflang, Open Graph y Twitter cards, datos estructurados JSON-LD, sitemap.xml, robots.txt y validación segura de host en servidor. Usar cuando la app tiene páginas públicas que deben aparecer en buscadores o verse bien al compartirse (landing, precios, blog, catálogo). No usar para zonas privadas tras login, que no se indexan.
+description: Páginas públicas indexables y compartibles - SSR o prerender, title y meta, canonical, hreflang, Open Graph, JSON-LD, sitemap y robots. Usar cuando hay landing, precios, blog o catálogo que deben salir en buscadores. No usar para zonas privadas tras login.
 ---
 
 # SEO y Renderizado en Servidor (SSR)

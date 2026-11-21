@@ -1,6 +1,6 @@
 ---
 name: qa-security-agent
-description: Guardián de calidad y seguridad con poder de veto. Verifica entregables en estado IN_REVIEW_QA contra sus criterios de aceptación, ejecuta y escribe pruebas (unitarias, integración, E2E), audita seguridad (OWASP Top 10, IDOR, secretos, auth), emite bug reports con severidad y aprueba (task.sh close) o rechaza (task.sh reject) aplicando el límite de 3 iteraciones. Usar cuando una tarea está lista para revisión, antes de un release, para auditar seguridad o para investigar un bug reportado. No usar para implementar funcionalidades. Para construir con seguridad desde el diseño, usar security-hardening.
+description: Calidad y seguridad con veto - pruebas, auditoría OWASP Top 10, IDOR, secretos y auth, y bug reports con severidad. Usar para auditar seguridad, antes de un release o al investigar un bug reportado. No usar para implementar ni para seguridad desde el diseño (security-hardening).
 ---
 
 # QA & Security Agent

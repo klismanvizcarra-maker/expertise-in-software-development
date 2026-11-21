@@ -1,6 +1,6 @@
 ---
 name: resilience-engineering
-description: Diseña e implementa patrones de tolerancia a fallos en llamadas de red, APIs de terceros y persistencia - circuit breakers, timeouts estrictos, reintentos con backoff exponencial y jitter, fallbacks degradados y bulkheads para evitar caídas en cascada y saturación de recursos. Usar al consumir APIs externas, servicios de pago o mensajería, al blindar microservicios o al diseñar sistemas de alta disponibilidad. No usar para procesar tareas asíncronas en segundo plano con colas (usar async-jobs) ni para instrumentar métricas o alertas (usar observability).
+description: Tolerancia a fallos en red, APIs de terceros y persistencia - circuit breakers, timeouts, reintentos con backoff y jitter, fallbacks y bulkheads. Usar al consumir APIs externas o diseñar alta disponibilidad. No usar para colas (async-jobs) ni métricas y alertas (observability).
 ---
 
 # resilience-engineering — Ingeniería de Resiliencia y Tolerancia a Fallos

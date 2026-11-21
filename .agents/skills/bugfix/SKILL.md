@@ -1,6 +1,6 @@
 ---
 name: bugfix
-description: Corrige un bug con método - lo registra como tarea, lo reproduce, escribe primero un test que falle, encuentra la causa raíz, aplica la corrección mínima, verifica que no hay regresiones y lo entrega a QA. Usar cuando el usuario reporta un error, un comportamiento inesperado, un test roto o un fallo en producción ("no funciona", "da error", "se rompe"). No usar para funcionalidades nuevas (/nueva-tarea) ni para reestructurar código que funciona (/refactor).
+description: Corrige un bug con método - reproducción, test que falla primero, causa raíz, corrección mínima, sin regresiones y lección. Usar cuando reportan un error o un test roto ("no funciona", "da error"). No usar para urgencias en producción (hotfix) ni código que funciona (refactor).
 ---
 
 # /bugfix — Corrección Quirúrgica de Errores

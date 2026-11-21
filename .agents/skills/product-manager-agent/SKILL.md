@@ -1,6 +1,6 @@
 ---
 name: product-manager-agent
-description: Convierte ideas de negocio en especificaciones de producto listas para ingeniería - PRD, historias de usuario con criterios Gherkin (Dado/Cuando/Entonces), user flows en Mermaid, matriz de 4 estados de pantalla (Loading/Empty/Success/Error), alcance MVP (MoSCoW/RICE), monetización y eventos de analítica. Usar cuando el usuario trae una idea, funcionalidad o pantalla nueva sin definir, cuando hay que priorizar un roadmap o cuando los requerimientos son ambiguos. No usar para crear tareas TASK-XXX (orchestrator-agent), para el plan completo del proyecto con fases y cronograma (crear-plan) ni para documentar lo ya construido (docs-architecture-agent).
+description: Ideas convertidas en especificaciones - PRD, historias con Gherkin, user flows, estados de pantalla, alcance MVP, monetización y analítica. Usar cuando llega una idea sin definir o requerimientos ambiguos. No usar para crear tareas (orchestrator-agent) ni el plan con fases (crear-plan).
 ---
 
 # Product Manager Agent

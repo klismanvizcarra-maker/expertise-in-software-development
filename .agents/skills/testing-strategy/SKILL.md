@@ -1,6 +1,6 @@
 ---
 name: testing-strategy
-description: Diseña la estrategia y arquitectura de pruebas unitarias, de integración y de contrato - trofeo/pirámide de testing, uso de fakes reales frente a mocks acoplados, aislamiento de base de datos por test, validación de contratos Zod/OpenAPI, relojes/semillas deterministas y eliminación de flakiness. Usar al planificar o escribir pruebas unitarias y de integración, desacoplar tests frágiles o estabilizar suites lentas e inestables. No usar para flujos E2E completos en navegador (e2e-testing) ni para emitir el veredicto QA sobre una entrega (qa-review, qa-security-agent).
+description: Estrategia de pruebas unitarias, de integración y de contrato - pirámide, fakes frente a mocks, BD aislada por test y determinismo contra la inestabilidad. Usar al planificar o estabilizar suites. No usar para E2E en navegador (e2e-testing) ni el veredicto de QA (qa-review).
 ---
 
 # Estrategia de Pruebas (Testing Strategy)
