@@ -72,6 +72,7 @@
 | `TASK-090` | Fix: aumentar timeout de acquire_lock en task.sh para prevenir timeouts por concurrencia en CI | devops-cloud-agent | `DONE` | `0/3` | Timeout de acquire_lock en task.sh ampliado a 30s (timeout=600); test de concurrencia en tests/test-scripts.sh pasando de forma determinista en CI; suite completa en verde |
 | `TASK-091` | Incluir sección prominente de cómo cargar en un proyecto al inicio del README.md | docs-architecture-agent | `DONE` | `0/3` | Sección visible casi al inicio del README.md con comandos exactos para clonar, instalar en proyecto nuevo o existente e instalar hooks; verificado y sincronizado en GitHub |
 | `TASK-092` | Servidor MCP nativo de gobernanza y ciclo de vida (packages/mcp-server) | devops-cloud-agent | `DONE` | `0/3` | Implementar servidor MCP oficial de SKILL MAESTRO con SDK de Model Context Protocol; exponer herramientas de ciclo de vida (task, brain, doctor, contracts); integrado en .mcp.json e init-project.sh; suite de pruebas unitarias pasando |
+| `TASK-093` | Servidor web local y Live Dashboard interactivo (task.sh serve) | frontend-agent | `DONE` | `0/3` | Implementar task.sh serve con servidor HTTP local liviano; API REST para estado y acciones de aprobacion (approve/hold); recarga automatica de estado; integrado en task.sh y test-scripts.sh |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -335,3 +336,5 @@
 | `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-091` | Aprobada por QA -> DONE. Sin lección: Actualizacion de documentacion visible en README. |
 | `2026-11-21` | devops-cloud-agent | qa-security-agent | `TASK-092` | Servidor MCP nativo de gobernanza y ciclo de vida (packages/mcp-server). Comandos: `node --test tests/test-mcp.mjs`, `LC_ALL=C bash tests/test-scripts.sh` |
 | `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-092` | Aprobada por QA -> DONE. Sin lección: Servidor MCP nativo completado a la primera iteracion sin defectos. |
+| `2026-11-21` | frontend-agent | qa-security-agent | `TASK-093` | Servidor web local y Live Dashboard interactivo (task.sh serve). Comandos: `python3 .agents/scripts/dashboard-server.py --port 4321 & sleep 1; curl -s http://127.0.0.1:4321/api/status / grep -q 'metrics' && kill %1`, `LC_ALL=C bash tests/test-scripts.sh` |
+| `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-093` | Aprobada por QA -> DONE. Sin lección: Servidor Live Dashboard completado a la primera iteracion sin defectos. |
