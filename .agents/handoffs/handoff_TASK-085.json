@@ -1,0 +1,19 @@
+{
+  "task_id": "TASK-085",
+  "summary": "Fix: compatibilidad de scripts y suite en Linux GNU (CI Ubuntu)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T03:32:38Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/brain/lessons_learned.md" },
+    { "type": "file", "path": ".agents/scripts/brain-lib.sh" },
+    { "type": "file", "path": "BRAIN.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh",
+    "bash tests/test-skills.sh"
+  ]
+}
