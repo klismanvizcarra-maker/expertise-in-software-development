@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-087",
+  "summary": "Soporte de ANTHROPIC_API_KEY y resiliencia ante rate limits en run_claude.py",
+  "source_agent": "qa-security-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T03:40:11Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" },
+    { "type": "file", "path": "tests/triggers/run_claude.py" }
+  ],
+  "verification_commands": [
+    "python3 tests/triggers/run_claude.py --help",
+    "python3 tests/triggers/lint_descriptions.py"
+  ]
+}
