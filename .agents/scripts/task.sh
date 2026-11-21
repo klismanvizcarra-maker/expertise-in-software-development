@@ -1107,6 +1107,12 @@ EOF_ARCH
     say "   Para abrir en navegador: file://$OUT_FILE"
     ;;
 
+  serve)
+    require_state
+    shift
+    exec python3 "$PROJECT_ROOT/.agents/scripts/dashboard-server.py" "$@"
+    ;;
+
   commit)
     [ -n "$2" ] && [ -n "$3" ] || die "Uso: ./task.sh commit TASK-001 \"descripción\" [feat|fix|test|refactor|docs|perf|chore|style|build|ci] [--trailer \"Clave: valor\"]..."
     TASK_ID=$(normalize_id "$2")
@@ -1420,6 +1426,7 @@ print(f"✅ Contratos válidos: {count} endpoints definidos en {path}")
   doctor                                 Diagnóstico integral (estado, cerebro, secretos y skills)
   diff [TASK-ID] [--stat]                Diff y estadísticas de la tarea frente a main
   dashboard [--output ruta]              Genera un visor visual interactivo (HTML) del proyecto
+  serve [--port N]                       Inicia servidor local con Live Dashboard y acciones en tiempo real
   hold TASK-ID ["motivo"]                Pausa una tarea para aprobación humana (AWAITING_HUMAN_APPROVAL)
   approve TASK-ID [--status S] [--comment C]  Aprueba y reanuda una tarea (S: TODO o IN_PROGRESS)
   add "<desc>" "<agente>" "<criterios>"  Crear tarea (TODO)

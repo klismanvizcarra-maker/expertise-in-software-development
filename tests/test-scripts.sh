@@ -1221,6 +1221,7 @@ rm -f bad_in_repo.sh
 # 7. task.sh dashboard
 check "task.sh dashboard genera el archivo HTML por defecto" 'rm -f docs/dashboard.html; $T dashboard >/dev/null && [ -f docs/dashboard.html ] && grep -q "<!DOCTYPE html>" docs/dashboard.html'
 check "task.sh dashboard --output personalizado funciona" 'rm -f custom.html; $T dashboard --output custom.html >/dev/null && [ -f custom.html ] && grep -q "Dashboard" custom.html && rm -f custom.html'
+check "task.sh serve inicia el servidor Live Dashboard y responde en /api/status" 'python3 "$ROOT/.agents/scripts/dashboard-server.py" --port 4319 >/dev/null 2>&1 & SPID=$!; sleep 1; curl -s http://127.0.0.1:4319/api/status | grep -q "metrics"; RC=$?; kill $SPID 2>/dev/null; [ $RC -eq 0 ]'
 
 # 8. AWAITING_HUMAN_APPROVAL, task.sh hold y approve
 $T add "Tarea para punto de control humano" "backend-agent" "criterios" >/dev/null
