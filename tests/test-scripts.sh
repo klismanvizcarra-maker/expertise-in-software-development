@@ -433,7 +433,7 @@ to_qa "$F5"; REJ_PAR=$($T reject "$F5" "Los reemplazos con sed corrompieron los 
 check "detector de reincidencia compara causa raiz y plurales (TD-004)" 'printf "%s" "$REJ_PAR" | grep -q "Reincidencia.*LL-00[0-9]"'
 to_qa "$F5"; $T close "$F5" --no-lesson "Prueba de parafrasis" >/dev/null 2>&1; git checkout -q main 2>/dev/null
 cp .agents/brain/lessons_learned.md "$WORK/ll.doc"; cp BRAIN.md "$WORK/brain.doc"
-grep "LL-001" .agents/brain/lessons_learned.md >> .agents/brain/lessons_learned.md
+grep "LL-001" "$WORK/ll.doc" >> .agents/brain/lessons_learned.md
 check "brain doctor detecta un ID duplicado y sale con error" '! $T brain doctor >/dev/null 2>&1 && $T brain doctor 2>&1 | grep -q "ERROR: LL-001 está duplicada"'
 check "validate-state.sh falla si el cerebro tiene errores" '! bash .agents/scripts/validate-state.sh >/dev/null 2>&1'
 cat "$WORK/ll.doc" > .agents/brain/lessons_learned.md
@@ -463,7 +463,7 @@ check "brain doctor detecta tech_debt.md sin cabecera" '! $T brain doctor >/dev/
 cat "$WORK/td_doc.bak" > .agents/brain/tech_debt.md
 $T brain sync >/dev/null 2>&1
 cp GLOBAL_STATE.md "$WORK/gs_dup.bak"
-grep "| \`TASK-001\`" GLOBAL_STATE.md >> GLOBAL_STATE.md
+grep "| \`TASK-001\`" "$WORK/gs_dup.bak" >> GLOBAL_STATE.md
 check "validate-state.sh detecta IDs de tarea duplicados" '! bash .agents/scripts/validate-state.sh >/dev/null 2>&1 && bash .agents/scripts/validate-state.sh 2>&1 | grep -q "IDs de tarea duplicados"'
 cat "$WORK/gs_dup.bak" > GLOBAL_STATE.md
 $T add "Tarea con agente experimental" "agente-fantasma" "criterio" >/dev/null

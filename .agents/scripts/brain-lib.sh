@@ -769,9 +769,9 @@ brain_lint() {
           violations=$((violations + 1))
         fi
 
-        # LL-007: sed y/// no normaliza en locale C
+        # LL-007: sed y/// no normaliza en locale C (evitar rangos no ASCII como á-ú que fallan en GNU grep en locale C)
         local m_ll007
-        m_ll007=$(grep -nE "sed .*y/[a-zA-Zá-úÁ-Ú]" "$f" 2>/dev/null || true)
+        m_ll007=$(grep -nE "sed .*y/[^/]+/[^/]+/" "$f" 2>/dev/null || true)
         if [ -n "$m_ll007" ]; then
           say "❌ [LL-007] Uso de transliteración 'sed y///' no portable en $f:"
           printf '%s\n' "$m_ll007" | sed 's/^/     /'
