@@ -111,6 +111,8 @@ bash "$ROOT/.agents/scripts/init-project.sh" "Mi App CI" "$WORK/ci-app" --ci >/d
 check "init-project --ci no sobrescribe workflow existente" 'grep -q "# personalizado" "$WORK/ci-app/.github/workflows/audit.yml"'
 
 check "tareas de ejemplo de la plantilla usan nombres de skill" 'grep -q "orchestrator-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" && grep -q "backend-agent" "$ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md"'
+check "init-project.sh muestra el banner con nombre y creador" 'OUT=$(bash "$ROOT/.agents/scripts/init-project.sh" "Banner Test" "$WORK/banner-app"); printf "%s" "$OUT" | grep -q "SKILL MAESTRO" && printf "%s" "$OUT" | grep -q "Klisman Vizcarra"'
+check "welcome_cover_template.html existe e init-project lo instala" '[ -f "$ROOT/.agents/templates/welcome_cover_template.html" ] && [ -f "$WORK/banner-app/.agents/templates/welcome_cover_template.html" ]'
 
 # ------------------------------------------------------------------------------
 section "task.sh add / move / list / metrics"

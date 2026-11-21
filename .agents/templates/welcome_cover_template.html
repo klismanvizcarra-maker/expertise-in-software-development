@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased p-0 m-0 select-none">
+  <div class="p-5 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] shadow-lg relative overflow-hidden backdrop-blur-sm">
+    <div class="absolute -top-12 -right-12 w-48 h-48 bg-[var(--primary)]/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-[var(--accent)]/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-2 text-xs font-mono">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[var(--primary)]/15 text-[var(--primary)] border border-[var(--primary)]/30">
+            ⚡ SISTEMA MULTI-AGENTE
+          </span>
+          <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-[var(--border)]/30 text-[var(--muted-foreground)]">
+            Claude Code & Antigravity
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[var(--success)]/15 text-[var(--success)] border border-[var(--success)]/30">
+            v1.5.0
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-[var(--foreground)] via-[var(--primary)] to-[var(--accent)] bg-clip-text text-transparent">
+          SKILL MAESTRO
+        </h1>
+        <p class="text-xs sm:text-sm text-[var(--muted-foreground)] mt-1 font-medium">
+          Arquitectura, gobierno de tareas, 56 skills especializadas y memoria persistente.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+        <div class="p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--content)]/40 flex flex-col">
+          <span class="text-[10px] uppercase tracking-wider font-semibold text-[var(--muted-foreground)]">Creador</span>
+          <span class="text-xs sm:text-sm font-bold text-[var(--foreground)] truncate">Klisman Vizcarra</span>
+        </div>
+        <div class="p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--content)]/40 flex flex-col">
+          <span class="text-[10px] uppercase tracking-wider font-semibold text-[var(--muted-foreground)]">Versión Core</span>
+          <span class="text-xs sm:text-sm font-bold text-[var(--primary)] font-mono">v1.5.0 Enterprise</span>
+        </div>
+        <div class="p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--content)]/40 flex flex-col">
+          <span class="text-[10px] uppercase tracking-wider font-semibold text-[var(--muted-foreground)]">Catálogo</span>
+          <span class="text-xs sm:text-sm font-bold text-[var(--foreground)]">56 Skills / 17 Roles</span>
+        </div>
+        <div class="p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--content)]/40 flex flex-col">
+          <span class="text-[10px] uppercase tracking-wider font-semibold text-[var(--muted-foreground)]">Gobernanza</span>
+          <span class="text-xs sm:text-sm font-bold text-[var(--foreground)]">Veto QA + Cerebro</span>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-[var(--card-border)] flex items-center justify-between flex-wrap gap-2 text-xs">
+        <span class="text-[11px] text-[var(--muted-foreground)] font-medium">Comandos recomendados:</span>
+        <div class="flex items-center gap-1.5 flex-wrap font-mono text-[11px]">
+          <span class="px-2 py-1 rounded-md bg-[var(--border)]/40 text-[var(--foreground)] font-semibold">/iniciar-proyecto</span>
+          <span class="px-2 py-1 rounded-md bg-[var(--border)]/40 text-[var(--foreground)] font-semibold">/crear-plan</span>
+          <span class="px-2 py-1 rounded-md bg-[var(--border)]/40 text-[var(--foreground)] font-semibold">/nueva-tarea</span>
+          <span class="px-2 py-1 rounded-md bg-[var(--border)]/40 text-[var(--foreground)] font-semibold">/estado</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

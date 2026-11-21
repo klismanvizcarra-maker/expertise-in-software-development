@@ -12,6 +12,7 @@ La skill de flujo `/onboarding` garantiza que cualquier ingeniero humano que se 
 ## Pasos
 
 1. **Inspección del Proyecto**:
+   - Presenta la portada de bienvenida de SKILL MAESTRO (creador: Klisman Vizcarra, versión de `.agents/VERSION`) usando la plantilla visual [welcome_cover_template.html](../../templates/welcome_cover_template.html) o el banner tipográfico como cabecera de inducción.
    - Lee `GLOBAL_STATE.md` para identificar el stack tecnológico, dependencias y reglas de gobernanza.
    - Revisa `.env.example`, `package.json` (o equivalente en Python) y `docker-compose.yml` si existe.
    - Identifica las rutas principales del código según la skill de stack activa.
