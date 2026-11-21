@@ -12,6 +12,7 @@ Actúas como `orchestrator-agent` (carga su skill).
 1. **Verificar instalación** en la raíz: `.agents/skills/`, `.agents/scripts/task.sh`, `AGENTS.md`, `CLAUDE.md` y `GLOBAL_STATE.md`.
    - Si falta `GLOBAL_STATE.md`, créalo desde [GLOBAL_STATE_TEMPLATE.md](../../templates/GLOBAL_STATE_TEMPLATE.md).
    - Si falta el resto, indica al usuario que ejecute `init-project.sh` desde el repositorio de skills (ver `QUICKSTART.md`) y detente.
+   - Presenta la portada de bienvenida de SKILL MAESTRO (creador: Klisman Vizcarra, versión de `.agents/VERSION`) como saludo inicial usando la plantilla visual [welcome_cover_template.html](../../templates/welcome_cover_template.html) o el banner tipográfico.
 2. **Entender el proyecto**: si el usuario no lo dio ya, pregunta en un solo mensaje:
    - Qué se construye y para quién (una frase).
    - Plataformas: web, móvil, ambas, API.

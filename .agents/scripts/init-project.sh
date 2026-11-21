@@ -143,11 +143,22 @@ copy_if_missing() {
   fi
 }
 
+print_banner() {
+  local ver="1.5.0"
+  [ -f "$SKILL_ROOT/.agents/VERSION" ] && ver=$(tr -d '[:space:]' < "$SKILL_ROOT/.agents/VERSION")
+  echo "╔═══════════════════════════════════════════════════════════════════╗"
+  echo "║   SKILL MAESTRO · Sistema Multi-Agente para Desarrollo de Software ║"
+  echo "╠═══════════════════════════════════════════════════════════════════╣"
+  echo "║ • Creador: Klisman Vizcarra      • Versión Core: v$ver          ║"
+  echo "╚═══════════════════════════════════════════════════════════════════╝"
+}
+
 if [ "$IS_UPDATE" -eq 1 ]; then
   [ -d "$TARGET_DIR" ] || {
     echo "❌ ERROR: El directorio de destino '$TARGET_DIR' no existe." >&2
     exit 1
   }
+  print_banner
   echo "================================================================="
   echo "  Actualizando Entorno Multi-Agente en: $TARGET_DIR"
   echo "================================================================="
@@ -227,6 +238,7 @@ if [ "$IS_UPDATE" -eq 1 ]; then
   exit 0
 fi
 
+print_banner
 echo "================================================================="
 if [ "$IS_ADOPT" -eq 1 ]; then
   echo "  Adoptando Proyecto Existente (Brownfield): $PROJECT_NAME"
@@ -466,6 +478,7 @@ if [ "$INSTALL_CI" -eq 1 ]; then
   copy_if_missing "$SKILL_ROOT/.agents/templates/ci_workflow_template.yml" "$TARGET_DIR/.github/workflows/audit.yml"
 fi
 
+print_banner
 echo "================================================================="
 if [ "$IS_ADOPT" -eq 1 ]; then
   echo "  [OK] Adopción brownfield instalada sin sobrescribir trabajo previo!"

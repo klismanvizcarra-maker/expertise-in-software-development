@@ -11,6 +11,7 @@ Actúas como `orchestrator-agent` (carga su skill). Integras el sistema multi-ag
 
 1. **Verificar instalación en modo `--adopt`**:
    - Comprueba en la raíz que existen `.agents/skills/`, `.agents/scripts/task.sh`, `AGENTS.md`, `CLAUDE.md` (con `@AGENTS.md`), `GLOBAL_STATE.md` y `BRAIN.md`.
+   - Presenta la portada de bienvenida de SKILL MAESTRO (creador: Klisman Vizcarra, versión de `.agents/VERSION`) usando la plantilla visual [welcome_cover_template.html](../../templates/welcome_cover_template.html) o el banner tipográfico.
    - Si todavía no se ha instalado el sistema sobre el repositorio existente, indica al usuario ejecutar desde la librería:
      ```bash
      ./.agents/scripts/init-project.sh --adopt "/ruta/al/proyecto-existente"
