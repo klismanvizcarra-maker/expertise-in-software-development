@@ -1,0 +1,20 @@
+{
+  "task_id": "TASK-094",
+  "summary": "CLI ejecutable global npx/npm y soporte bilingüe i18n (--lang en/es)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T18:07:03Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/templates/AGENTS_TEMPLATE.en.md" },
+    { "type": "file", "path": ".agents/templates/GLOBAL_STATE_TEMPLATE.en.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "bin/skill-maestro.js" },
+    { "type": "file", "path": "package.json" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "node tests/test-mcp.mjs && LC_ALL=C bash tests/test-scripts.sh && ./.agents/scripts/task.sh doctor"
+  ]
+}

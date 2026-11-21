@@ -1,0 +1,45 @@
+{
+  "name": "skill-maestro",
+  "version": "2.0.0-beta.1",
+  "description": "Enterprise Multi-Agent Governance Framework for AI-Assisted Software Development",
+  "author": "Klisman Vizcarra",
+  "license": "MIT",
+  "type": "module",
+  "main": "bin/skill-maestro.js",
+  "bin": {
+    "skill-maestro": "./bin/skill-maestro.js",
+    "maestro": "./bin/skill-maestro.js"
+  },
+  "scripts": {
+    "test": "node tests/test-mcp.mjs && bash tests/test-scripts.sh",
+    "doctor": "./.agents/scripts/task.sh doctor",
+    "serve": "./.agents/scripts/task.sh serve",
+    "mcp": "node .agents/mcp/server.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/klismanvizcarra-maker/expertise-in-software-development.git"
+  },
+  "keywords": [
+    "multi-agent",
+    "claude-code",
+    "antigravity",
+    "governance",
+    "software-engineering",
+    "ai-agents",
+    "skills",
+    "mcp"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin",
+    ".agents",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "README.md",
+    "GLOBAL_STATE.md",
+    "BRAIN.md"
+  ]
+}

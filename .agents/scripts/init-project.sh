@@ -5,10 +5,11 @@
 # (.claude/skills + CLAUDE.md + .mcp.json) desde una única fuente.
 # ==============================================================================
 # Uso:
-#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular|fastapi|nuxt|react-vite|nestjs] [--ci]
-#   ./init-project.sh --adopt ["/ruta/al/proyecto-existente"] [--stack ...] [--ci] [--copy]
+#   ./init-project.sh "Mi Proyecto" "/ruta/al/nuevo/proyecto" [--copy] [--stack nextjs|angular|fastapi|nuxt|react-vite|nestjs] [--ci] [--lang en|es]
+#   ./init-project.sh --adopt ["/ruta/al/proyecto-existente"] [--stack ...] [--ci] [--copy] [--lang en|es]
 #   O simplemente: ./init-project.sh "Mi Proyecto"
 #
+#   --lang <en|es>       Configura el idioma de las plantillas y reglas (opciones: en | es; por defecto: es).
 #   --copy               Copia las skills en .claude/skills en vez de crear un enlace
 #                        simbólico (útil en Windows o si el repositorio no admite symlinks).
 #   --stack <nombre>     Pre-configura el stack tecnológico en GLOBAL_STATE.md sin
@@ -28,6 +29,7 @@ PROJECT_NAME="Nuevo Proyecto"
 TARGET_DIR="."
 LINK_MODE="symlink"
 SELECTED_STACK=""
+LANG_CHOICE="es"
 IS_UPDATE=0
 IS_ADOPT=0
 INSTALL_CI=0
@@ -35,6 +37,22 @@ INSTALL_CI=0
 positional=()
 while [ $# -gt 0 ]; do
   case "$1" in
+    --lang)
+      if [ -z "${2:-}" ] || [ "${2#-}" != "$2" ]; then
+        echo "❌ ERROR: --lang requiere un valor (en o es)." >&2
+        exit 1
+      fi
+      LANG_CHOICE="$2"
+      shift 2
+      ;;
+    --lang=*)
+      LANG_CHOICE="${1#*=}"
+      if [ -z "$LANG_CHOICE" ]; then
+        echo "❌ ERROR: --lang= requiere un valor (en o es)." >&2
+        exit 1
+      fi
+      shift
+      ;;
     --copy)
       LINK_MODE="copy"
       shift
@@ -73,6 +91,14 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
+
+case "$LANG_CHOICE" in
+  en|es) ;;
+  *)
+    echo "❌ ERROR: Idioma no soportado: '$LANG_CHOICE'. Valores permitidos: en, es." >&2
+    exit 1
+    ;;
+esac
 
 if [ "$IS_UPDATE" -eq 1 ] && [ "$IS_ADOPT" -eq 1 ]; then
   echo "❌ ERROR: Usa --update o --adopt, no ambos a la vez." >&2
@@ -146,11 +172,19 @@ copy_if_missing() {
 print_banner() {
   local ver="1.5.0"
   [ -f "$SKILL_ROOT/.agents/VERSION" ] && ver=$(tr -d '[:space:]' < "$SKILL_ROOT/.agents/VERSION")
-  echo "╔═══════════════════════════════════════════════════════════════════╗"
-  echo "║   SKILL MAESTRO · Sistema Multi-Agente para Desarrollo de Software ║"
-  echo "╠═══════════════════════════════════════════════════════════════════╣"
-  echo "║ • Creador: Klisman Vizcarra      • Versión Core: v$ver          ║"
-  echo "╚═══════════════════════════════════════════════════════════════════╝"
+  if [ "$LANG_CHOICE" = "en" ]; then
+    echo "╔═══════════════════════════════════════════════════════════════════╗"
+    echo "║   SKILL MAESTRO · Multi-Agent Engineering Operating System        ║"
+    echo "╠═══════════════════════════════════════════════════════════════════╣"
+    echo "║ • Creator: Klisman Vizcarra      • Core Version: v$ver          ║"
+    echo "╚═══════════════════════════════════════════════════════════════════╝"
+  else
+    echo "╔═══════════════════════════════════════════════════════════════════╗"
+    echo "║   SKILL MAESTRO · Sistema Multi-Agente para Desarrollo de Software ║"
+    echo "╠═══════════════════════════════════════════════════════════════════╣"
+    echo "║ • Creador: Klisman Vizcarra      • Versión Core: v$ver          ║"
+    echo "╚═══════════════════════════════════════════════════════════════════╝"
+  fi
 }
 
 if [ "$IS_UPDATE" -eq 1 ]; then
@@ -293,7 +327,11 @@ chmod +x "$TARGET_DIR/.agents/hooks/"* 2>/dev/null || true
 
 # Reglas globales: AGENTS.md (Antigravity) + CLAUDE.md que lo importa (Claude Code)
 echo "-> Instalando reglas maestras AGENTS.md y CLAUDE.md..."
-copy_if_missing "$SKILL_ROOT/AGENTS.md" "$TARGET_DIR/AGENTS.md"
+if [ "$LANG_CHOICE" = "en" ] && [ -f "$SKILL_ROOT/.agents/templates/AGENTS_TEMPLATE.en.md" ]; then
+  copy_if_missing "$SKILL_ROOT/.agents/templates/AGENTS_TEMPLATE.en.md" "$TARGET_DIR/AGENTS.md"
+else
+  copy_if_missing "$SKILL_ROOT/AGENTS.md" "$TARGET_DIR/AGENTS.md"
+fi
 if [ -f "$TARGET_DIR/CLAUDE.md" ]; then
   if ! grep -q '^@AGENTS.md' "$TARGET_DIR/CLAUDE.md"; then
     printf '\n@AGENTS.md\n' >> "$TARGET_DIR/CLAUDE.md"
@@ -341,6 +379,10 @@ if [ -f "$TARGET_DIR/GLOBAL_STATE.md" ]; then
   echo "-> GLOBAL_STATE.md ya existe; se conserva."
 else
   echo "-> Generando GLOBAL_STATE.md configurado..."
+  GS_TEMPLATE="$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md"
+  if [ "$LANG_CHOICE" = "en" ] && [ -f "$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.en.md" ]; then
+    GS_TEMPLATE="$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.en.md"
+  fi
   python3 -c "
 import sys
 pname, date, src, dst = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
@@ -349,7 +391,7 @@ with open(src, 'r', encoding='utf-8') as f:
 c = c.replace('[NOMBRE_DEL_PROYECTO]', pname).replace('YYYY-MM-DD', date)
 with open(dst, 'w', encoding='utf-8') as f:
     f.write(c)
-" "$PROJECT_NAME" "$CURRENT_DATE" "$SKILL_ROOT/.agents/templates/GLOBAL_STATE_TEMPLATE.md" "$TARGET_DIR/GLOBAL_STATE.md"
+" "$PROJECT_NAME" "$CURRENT_DATE" "$GS_TEMPLATE" "$TARGET_DIR/GLOBAL_STATE.md"
 
   if [ "$IS_ADOPT" -eq 1 ]; then
     tmp_gs=$(mktemp)
