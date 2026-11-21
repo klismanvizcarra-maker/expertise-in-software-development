@@ -1405,6 +1405,173 @@ print(f"✅ Contratos válidos: {count} endpoints definidos en {path}")
     esac
     ;;
 
+  swarm)
+    sub="${2:-status}"
+    case "$sub" in
+      status|list)
+        require_state
+        say "${BLUE}${BOLD}=== Enjambre Multi-Agente (Swarm Status) ===${NC}"
+        python3 -c '
+import subprocess, sys, signal
+if hasattr(signal, "SIGPIPE"):
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+state_file = sys.argv[1]
+is_list_only = (sys.argv[2] == "list")
+
+wt_map = {}
+try:
+    res = subprocess.run(["git", "worktree", "list", "--porcelain"], capture_output=True, text=True)
+    current_wt = None
+    for line in res.stdout.splitlines():
+        if line.startswith("worktree "):
+            current_wt = line.split(" ", 1)[1]
+        elif line.startswith("branch ") and current_wt:
+            b = line.split(" ", 1)[1].replace("refs/heads/", "")
+            wt_map[b] = current_wt
+            current_wt = None
+except Exception:
+    pass
+
+branches = []
+try:
+    res = subprocess.run(["git", "branch", "--format=%(refname:short)"], capture_output=True, text=True)
+    branches = [b.strip() for b in res.stdout.splitlines() if b.strip()]
+except Exception:
+    pass
+
+tasks = []
+with open(state_file, "r", encoding="utf-8") as f:
+    for line in f:
+        line = line.strip()
+        if not line.startswith("|"): continue
+        parts = [p.strip().replace("`", "") for p in line.split("|")]
+        if len(parts) >= 6:
+            tid = parts[1]
+            desc = parts[2]
+            agent = parts[3]
+            status = parts[4]
+            if tid.startswith("TASK-") and tid[5:].isdigit():
+                matching_branch = "-"
+                for b in branches:
+                    if tid.lower() in b.lower():
+                        matching_branch = b
+                        break
+                workspace = wt_map.get(matching_branch, "main")
+                tasks.append({
+                    "id": tid,
+                    "desc": desc,
+                    "agent": agent,
+                    "status": status,
+                    "branch": matching_branch,
+                    "workspace": workspace
+                })
+
+in_progress = [t for t in tasks if t["status"] in ("IN_PROGRESS", "AWAITING_HUMAN_APPROVAL", "IN_REVIEW_QA")]
+
+if is_list_only:
+    print("ID\tAGENTE\tESTADO\tRAMA\tWORKSPACE")
+    for t in tasks:
+        if t["status"] in ("IN_PROGRESS", "AWAITING_HUMAN_APPROVAL", "IN_REVIEW_QA", "TODO"):
+            print("%s\t%s\t%s\t%s\t%s" % (t["id"], t["agent"], t["status"], t["branch"], t["workspace"]))
+else:
+    print("- Agentes activos concurrentes: %d" % len(in_progress))
+    b_count = len([t for t in tasks if t["branch"] != "-"])
+    print("- Ramas de tareas detectadas: %d" % b_count)
+    print("- Workspaces aislados (worktrees): %d\n" % len(wt_map))
+    if in_progress:
+        print("| Tarea    | Agente                 | Estado      | Rama Git                         | Workspace |")
+        print("| :---     | :---                   | :---        | :---                             | :---      |")
+        for t in in_progress:
+            print("| %-8s | %-22s | %-11s | %-32s | %s |" % (t["id"], t["agent"], t["status"], t["branch"], t["workspace"]))
+    else:
+        print("ℹ️  No hay agentes trabajando concurrentemente en este momento.")
+' "$STATE_FILE" "$sub"
+        ;;
+
+      spawn)
+        require_state
+        TID="${3:-}"
+        [ -n "$TID" ] || die "Falta el ID de tarea."$'\n'"   Uso: ./task.sh swarm spawn TASK-XXX [--workspace branch|share]"
+        TID=$(normalize_id "$TID")
+        require_task "$TID"
+
+        CUR_STATUS=$(task_field "$TID" 5)
+        if [ "$CUR_STATUS" = "TODO" ] || [ "$CUR_STATUS" = "BACKLOG" ]; then
+          set_task "$TID" "IN_PROGRESS"
+        fi
+
+        DESC=$(task_field "$TID" 3)
+        PREFIX="feature"
+        case "$(printf '%s' "$DESC" | tr '[:upper:]' '[:lower:]')" in
+          bug[:\ ]*|fix[:\ ]*|hotfix[:\ ]*) PREFIX="fix";      DESC="${DESC#*[: ]}" ;;
+          refactor[:\ ]*)                   PREFIX="refactor"; DESC="${DESC#*[: ]}" ;;
+        esac
+        SLUG=$(printf '%s\n' "$DESC" | norm_text \
+          | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c 1-30 | sed 's/-$//')
+        BRANCH="$PREFIX/$TID-${SLUG:-tarea}"
+
+        WS_DIR="$PROJECT_ROOT/.agents/workspaces/$TID"
+        if [ -d "$WS_DIR" ]; then
+          say "ℹ️  El workspace aislado ya existe en: $WS_DIR"
+        else
+          mkdir -p "$PROJECT_ROOT/.agents/workspaces"
+          if in_git; then
+            if git -C "$PROJECT_ROOT" show-ref --verify --quiet "refs/heads/$BRANCH"; then
+              if [ "$(git -C "$PROJECT_ROOT" branch --show-current 2>/dev/null)" = "$BRANCH" ]; then
+                git -C "$PROJECT_ROOT" worktree add --detach "$WS_DIR" "$BRANCH" >/dev/null 2>&1 \
+                  || git -C "$PROJECT_ROOT" worktree add "$WS_DIR" "$BRANCH" >/dev/null 2>&1
+              else
+                git -C "$PROJECT_ROOT" worktree add "$WS_DIR" "$BRANCH" >/dev/null 2>&1
+              fi
+            else
+              git -C "$PROJECT_ROOT" worktree add -b "$BRANCH" "$WS_DIR" HEAD >/dev/null 2>&1 \
+                || git -C "$PROJECT_ROOT" worktree add "$WS_DIR" -B "$BRANCH" HEAD >/dev/null 2>&1
+            fi
+          else
+            mkdir -p "$WS_DIR"
+          fi
+          say "🐝 Enjambre: Workspace aislado creado para $TID"
+          say "   Directorio: $WS_DIR"
+          say "   Rama activa: $BRANCH"
+        fi
+        ;;
+
+      clean)
+        require_state
+        TID="${3:-}"
+        if [ -n "$TID" ]; then
+          TID=$(normalize_id "$TID")
+          WS_DIR="$PROJECT_ROOT/.agents/workspaces/$TID"
+          if [ -d "$WS_DIR" ]; then
+            git worktree remove "$WS_DIR" --force 2>/dev/null || rm -rf "$WS_DIR"
+            git worktree prune 2>/dev/null || true
+            say "🧹 Workspace de $TID limpiado exitosamente."
+          else
+            say "ℹ️  No existe workspace para $TID."
+          fi
+        else
+          if [ -d "$PROJECT_ROOT/.agents/workspaces" ]; then
+            for wdir in "$PROJECT_ROOT/.agents/workspaces"/*; do
+              if [ -d "$wdir" ]; then
+                git worktree remove "$wdir" --force 2>/dev/null || rm -rf "$wdir"
+              fi
+            done
+            rm -rf "$PROJECT_ROOT/.agents/workspaces"
+            git worktree prune 2>/dev/null || true
+            say "🧹 Todos los workspaces del enjambre han sido limpiados."
+          else
+            say "ℹ️  No hay workspaces activos para limpiar."
+          fi
+        fi
+        ;;
+
+      *)
+        die "Comando swarm desconocido: '$sub'"$'\n'"   Uso: ./task.sh swarm [status|list|spawn TASK-XXX|clean [TASK-XXX]]"
+        ;;
+    esac
+    ;;
+
   help|-h|--help|*)
     # Un comando desconocido (errata como 'clsoe') no puede parecer un éxito: ayuda por stderr y exit 1
     HELP_RC=0
@@ -1447,6 +1614,7 @@ print(f"✅ Contratos válidos: {count} endpoints definidos en {path}")
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
   contracts [validate] [ruta]            Valida contratos API y DTOs (contracts.json por defecto)
+  swarm [status|list|spawn|clean]        Coordina enjambres concurrentes de agentes y workspaces aislados
   check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones
                                          de esas rutas; exit 2 si alguna está bloqueada (Antigravity)
   brain search <términos...>             Busca en lecciones, gotchas y deuda

@@ -94,3 +94,6 @@ docs/dashboard.html
 
 # Claude Code (configuracion local por usuario)
 .claude/settings.local.json
+
+# Workspaces de Enjambre Multi-Agente (task.sh swarm)
+.agents/workspaces/

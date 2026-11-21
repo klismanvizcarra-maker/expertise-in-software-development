@@ -224,6 +224,15 @@ const TOOLS = [
       },
       required: []
     }
+  },
+  {
+    name: "swarm_status",
+    description: "Inspecciona el estado del enjambre multi-agente: agentes activos concurrentes, ramas de trabajo y workspaces aislados.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      required: []
+    }
   }
 ];
 
@@ -232,6 +241,10 @@ const TOOLS = [
  */
 async function handleToolCall(name, args) {
   switch (name) {
+    case "swarm_status": {
+      const res = await runTaskScript(["swarm", "status"]);
+      return { content: [{ type: "text", text: res.stdout || res.stderr }], isError: res.exitCode !== 0 };
+    }
     case "task_list": {
       const res = await runTaskScript(["list"]);
       return { content: [{ type: "text", text: res.stdout || res.stderr }], isError: res.exitCode !== 0 };

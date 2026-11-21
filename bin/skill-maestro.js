@@ -45,6 +45,7 @@ Commands:
   update [path]             Update installed skills, hooks, and scripts to latest
   serve [--port <port>]     Start real-time interactive Live Dashboard (default: 4200)
   ui                        Alias for 'serve'
+  swarm [status|list]       Coordinate concurrent multi-agent branches & workspaces
   doctor                    Run 5-stage health check, secret scan, and brain linter
   mcp                       Start the native Model Context Protocol (MCP) server
   task <subcommand> [...]   Execute task.sh commands (list, add, start, close, etc.)
@@ -117,6 +118,12 @@ switch (command) {
   case 'mcp': {
     const mcpServer = resolve(PKG_ROOT, '.agents/mcp/server.mjs');
     runScript('node', [mcpServer, ...args.slice(1)]);
+    break;
+  }
+  case 'swarm': {
+    const localTaskSh = resolve(process.cwd(), '.agents/scripts/task.sh');
+    const taskSh = existsSync(localTaskSh) ? localTaskSh : resolve(PKG_ROOT, '.agents/scripts/task.sh');
+    runScript('bash', [taskSh, 'swarm', ...args.slice(1)]);
     break;
   }
   case 'task': {
