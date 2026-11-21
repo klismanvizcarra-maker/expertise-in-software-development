@@ -73,7 +73,7 @@
 | `TASK-091` | Incluir sección prominente de cómo cargar en un proyecto al inicio del README.md | docs-architecture-agent | `DONE` | `0/3` | Sección visible casi al inicio del README.md con comandos exactos para clonar, instalar en proyecto nuevo o existente e instalar hooks; verificado y sincronizado en GitHub |
 | `TASK-092` | Servidor MCP nativo de gobernanza y ciclo de vida (packages/mcp-server) | devops-cloud-agent | `DONE` | `0/3` | Implementar servidor MCP oficial de SKILL MAESTRO con SDK de Model Context Protocol; exponer herramientas de ciclo de vida (task, brain, doctor, contracts); integrado en .mcp.json e init-project.sh; suite de pruebas unitarias pasando |
 | `TASK-093` | Servidor web local y Live Dashboard interactivo (task.sh serve) | frontend-agent | `DONE` | `0/3` | Implementar task.sh serve con servidor HTTP local liviano; API REST para estado y acciones de aprobacion (approve/hold); recarga automatica de estado; integrado en task.sh y test-scripts.sh |
-| `TASK-094` | CLI ejecutable global npx/npm y soporte bilingüe i18n (--lang en/es) | devops-cloud-agent | `IN_PROGRESS` | `0/3` | Crear package.json y bin/skill-maestro.js para ejecucion global via npx/npm; soporte de bandera --lang en/es en init-project.sh con plantillas en ingles; tests unitarios y de integracion pasando |
+| `TASK-094` | CLI ejecutable global npx/npm y soporte bilingüe i18n (--lang en/es) | devops-cloud-agent | `DONE` | `0/3` | Crear package.json y bin/skill-maestro.js para ejecucion global via npx/npm; soporte de bandera --lang en/es en init-project.sh con plantillas en ingles; tests unitarios y de integracion pasando |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -339,3 +339,5 @@
 | `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-092` | Aprobada por QA -> DONE. Sin lección: Servidor MCP nativo completado a la primera iteracion sin defectos. |
 | `2026-11-21` | frontend-agent | qa-security-agent | `TASK-093` | Servidor web local y Live Dashboard interactivo (task.sh serve). Comandos: `python3 .agents/scripts/dashboard-server.py --port 4321 & sleep 1; curl -s http://127.0.0.1:4321/api/status / grep -q 'metrics' && kill %1`, `LC_ALL=C bash tests/test-scripts.sh` |
 | `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-093` | Aprobada por QA -> DONE. Sin lección: Servidor Live Dashboard completado a la primera iteracion sin defectos. |
+| `2026-11-21` | devops-cloud-agent | qa-security-agent | `TASK-094` | Implementado CLI global npx/npm bin/skill-maestro.js, package.json y bandera --lang en/es con plantillas en inglés. Comandos: `node tests/test-mcp.mjs && LC_ALL=C bash tests/test-scripts.sh && ./.agents/scripts/task.sh doctor` |
+| `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-094` | Aprobada por QA -> DONE. Sin lección: Implementación limpia de CLI global y bilingüismo en primera iteración 1/3 sin defectos. |
