@@ -1253,6 +1253,14 @@ check "task.sh contracts validate valida contrato mínimo válido (exit 0)" '$T 
 rm -f bad_contract.json bad_path.json no_version.json valid_contract.json
 check "task.sh contracts con subcomando inválido falla (exit 1)" '! $T contracts invalid_sub >/dev/null 2>&1'
 
+# 10. task.sh swarm
+check "task.sh swarm status muestra el estado del enjambre" '$T swarm status | grep -q "Enjambre Multi-Agente"'
+check "task.sh swarm list lista las tareas en formato estructurado" '$T swarm list | grep -q "ID	AGENTE	ESTADO"'
+check "task.sh swarm con subcomando desconocido falla con exit 1" '! $T swarm invalid_cmd >/dev/null 2>&1'
+check "task.sh swarm spawn sin ID falla con exit 1" '! $T swarm spawn >/dev/null 2>&1'
+check "task.sh swarm spawn crea un workspace aislado bajo .agents/workspaces/" '$T add "Tarea swarm aislado" "backend-agent" "criterios" >/dev/null && TSWARM=$(grep "Tarea swarm aislado" GLOBAL_STATE.md | grep -oE "TASK-[0-9]+" | head -1) && $T swarm spawn "$TSWARM" >/dev/null && [ -d ".agents/workspaces/$TSWARM" ]'
+check "task.sh swarm clean limpia el workspace aislado de la tarea" '$T swarm clean "$TSWARM" >/dev/null && [ ! -d ".agents/workspaces/$TSWARM" ]'
+
 cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"

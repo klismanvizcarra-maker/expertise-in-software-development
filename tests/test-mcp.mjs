@@ -128,6 +128,21 @@ test("MCP Server: tools/call brain_search devuelve resultados", async () => {
   }
 });
 
+test("MCP Server: tools/call swarm_status devuelve estado del enjambre", async () => {
+  const client = createMcpClient();
+  try {
+    const res = await client.send("tools/call", {
+      name: "swarm_status",
+      arguments: {}
+    });
+    assert.equal(res.isError, false);
+    assert.ok(Array.isArray(res.content));
+    assert.ok(res.content[0].text.includes("Enjambre Multi-Agente"));
+  } finally {
+    client.close();
+  }
+});
+
 test("MCP Server: tools/call herramienta inexistente devuelve isError true", async () => {
   const client = createMcpClient();
   try {

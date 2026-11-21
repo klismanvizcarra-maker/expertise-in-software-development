@@ -1,0 +1,20 @@
+{
+  "task_id": "TASK-095",
+  "summary": "Protocolo de enjambres concurrentes y workspaces aislados (task.sh swarm)",
+  "source_agent": "orchestrator-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T18:23:37Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/mcp/server.mjs" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": ".gitignore" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "bin/skill-maestro.js" },
+    { "type": "file", "path": "tests/test-mcp.mjs" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "node tests/test-mcp.mjs && LC_ALL=C bash tests/test-scripts.sh && ./.agents/scripts/task.sh doctor"
+  ]
+}
