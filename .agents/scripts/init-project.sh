@@ -191,6 +191,16 @@ if [ "$IS_UPDATE" -eq 1 ]; then
   cp -R "$SKILL_ROOT/.agents/hooks/"* "$TARGET_DIR/.agents/hooks/"
   chmod +x "$TARGET_DIR/.agents/hooks/"* 2>/dev/null || true
   cp -R "$SKILL_ROOT/.agents/plugins/"* "$TARGET_DIR/.agents/plugins/"
+if [ -d "$SKILL_ROOT/.agents/mcp" ]; then
+  mkdir -p "$TARGET_DIR/.agents/mcp"
+  cp -R "$SKILL_ROOT/.agents/mcp/"* "$TARGET_DIR/.agents/mcp/"
+  chmod +x "$TARGET_DIR/.agents/mcp/"*.mjs 2>/dev/null || true
+fi
+  if [ -d "$SKILL_ROOT/.agents/mcp" ]; then
+    mkdir -p "$TARGET_DIR/.agents/mcp"
+    cp -R "$SKILL_ROOT/.agents/mcp/"* "$TARGET_DIR/.agents/mcp/"
+    chmod +x "$TARGET_DIR/.agents/mcp/"*.mjs 2>/dev/null || true
+  fi
 
   if [ -f "$SKILL_ROOT/.agents/VERSION" ]; then
     cp "$SKILL_ROOT/.agents/VERSION" "$TARGET_DIR/.agents/VERSION"
@@ -268,6 +278,11 @@ cp -R "$SKILL_ROOT/.agents/templates/"* "$TARGET_DIR/.agents/templates/"
 cp -R "$SKILL_ROOT/.agents/scripts/"* "$TARGET_DIR/.agents/scripts/"
 cp -R "$SKILL_ROOT/.agents/hooks/"* "$TARGET_DIR/.agents/hooks/"
 cp -R "$SKILL_ROOT/.agents/plugins/"* "$TARGET_DIR/.agents/plugins/"
+if [ -d "$SKILL_ROOT/.agents/mcp" ]; then
+  mkdir -p "$TARGET_DIR/.agents/mcp"
+  cp -R "$SKILL_ROOT/.agents/mcp/"* "$TARGET_DIR/.agents/mcp/"
+  chmod +x "$TARGET_DIR/.agents/mcp/"*.mjs 2>/dev/null || true
+fi
 if [ -f "$SKILL_ROOT/.agents/VERSION" ]; then
   cp "$SKILL_ROOT/.agents/VERSION" "$TARGET_DIR/.agents/VERSION"
 fi

@@ -1,5 +1,9 @@
 {
   "mcpServers": {
+    "skill-maestro": {
+      "command": "node",
+      "args": [".agents/mcp/server.mjs"]
+    },
     "web-tester-playwright": {
       "command": "npx",
       "args": ["-y", "@playwright/mcp@0.0.83"]
