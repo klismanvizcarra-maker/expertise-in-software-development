@@ -30,6 +30,52 @@
  */
 ```
 
+> **Sistema multi-agente determinista para Claude Code y Antigravity**. Convierte a los asistentes de IA en un equipo de ingeniería coordinado: 17 roles especializados, 56 skills, ciclo de vida estricto, veto de QA independiente y memoria persistente que recuerda errores pasados.
+
+---
+
+## 🚀 Cómo Cargar en tu Proyecto (Quickstart)
+
+> [!TIP]
+> Solo necesitas `bash`, `git` y `python3` (>= 3.10) en Linux, macOS o Windows (WSL 2). Puedes iniciar un **proyecto nuevo** o **adoptar un repositorio existente** sin tocar tu código anterior.
+
+### 1. En un Proyecto Nuevo (Desde Cero)
+```bash
+# 1. Clona el repositorio de la librería
+git clone https://github.com/klismanvizcarra-maker/expertise-in-software-development.git skill-maestro
+
+# 2. Inicializa tu proyecto con stack preconfigurado y CI automatizado
+#    Stacks disponibles: nextjs, angular, fastapi, nuxt, react-vite, nestjs
+./skill-maestro/.agents/scripts/init-project.sh "Mi Proyecto" ./mi-nuevo-proyecto --stack nextjs --ci
+
+# 3. Entra a tu proyecto e instala los hooks de protección de gobernanza
+cd ./mi-nuevo-proyecto && ./.agents/scripts/install-hooks.sh
+
+# 4. Abre tu asistente de IA (Claude Code o Antigravity IDE) y ejecuta:
+/iniciar-proyecto
+```
+
+### 2. En un Proyecto Existente (Brownfield)
+```bash
+# 1. Clona la librería (si aún no la tienes)
+git clone https://github.com/klismanvizcarra-maker/expertise-in-software-development.git skill-maestro
+
+# 2. Adopta tu repositorio existente (conserva tu código, dependencias y configuración intactas)
+./skill-maestro/.agents/scripts/init-project.sh --adopt ./tu-proyecto-existente
+
+# 3. Entra e instala los hooks
+cd ./tu-proyecto-existente && ./.agents/scripts/install-hooks.sh
+
+# 4. Abre tu asistente de IA y ejecuta:
+/adoptar-proyecto
+```
+
+### 3. Actualizar la Librería en un Proyecto Activo
+```bash
+# Sincroniza las 56 skills, scripts y plantillas a la última versión
+./skill-maestro/.agents/scripts/init-project.sh --update ./tu-proyecto
+```
+
 ---
 
 ```typescript
@@ -91,39 +137,6 @@ export const FrameworkConfig: GovernanceFramework = {
                                                         │
                                                         ▼
                                               git merge --no-ff main
-```
-
----
-
-## 🚀 Inicio Rápido (Quickstart)
-
-### Requisitos Previos
-- **Entorno**: Linux, macOS o Windows (WSL 2).
-- **Herramientas**: `bash`, `git`, `python3` (>= 3.10).
-- **Asistentes soportados**: [Claude Code](https://claude.ai/code) y [Google Antigravity](https://deepmind.google/technologies/antigravity/).
-
-### 1. Inicializar un Proyecto Nuevo
-```bash
-# Inicializar con stack preconfigurado y workflow de CI automatizado
-./.agents/scripts/init-project.sh "Mi Proyecto" ../mi-proyecto --stack nextjs --ci
-
-# Instalar hooks de protección en el nuevo repositorio
-cd ../mi-proyecto && ./.agents/scripts/install-hooks.sh
-```
-
-### 2. Adoptar un Repositorio Existente (Brownfield)
-```bash
-# Incorpora gobierno multi-agente sin alterar tu código ni dependencias previas
-./.agents/scripts/init-project.sh --adopt ../proyecto-existente
-
-# Luego en tu asistente ejecuta:
-/adoptar-proyecto
-```
-
-### 3. Actualizar la Librería de Skills
-```bash
-# Sincroniza las 56 skills y scripts con la última versión de SKILL MAESTRO
-./.agents/scripts/init-project.sh --update ../mi-proyecto
 ```
 
 ---

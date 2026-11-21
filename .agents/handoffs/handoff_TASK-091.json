@@ -1,0 +1,15 @@
+{
+  "task_id": "TASK-091",
+  "summary": "Incluir sección prominente de cómo cargar en un proyecto al inicio del README.md",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T10:27:41Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "README.md" }
+  ],
+  "verification_commands": [
+    "git diff HEAD~1 README.md"
+  ]
+}
