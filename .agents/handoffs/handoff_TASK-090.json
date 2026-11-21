@@ -1,0 +1,15 @@
+{
+  "task_id": "TASK-090",
+  "summary": "Fix: aumentar timeout de acquire_lock en task.sh para prevenir timeouts por concurrencia en CI",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-21T04:02:58Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh"
+  ]
+}
