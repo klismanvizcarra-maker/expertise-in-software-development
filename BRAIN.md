@@ -110,3 +110,4 @@ Solo las trampas del entorno en que se desarrolla **esta librería** (shell, git
 
 | ID | Tarea Vinculada | Descripción de la Deuda | Solución Temporal Aplicada | Acción Definitiva Pendiente | Prioridad |
 | :---: | :---: | :--- | :--- | :--- | :---: |
+| `TD-007` | `TASK-081` | lint_descriptions.py no suma la clave when_to_use del frontmatter (Claude Code la concatena a la descripcion del listado) y ante UTF-8 invalido da un traceback en lugar de nombrar la SKILL.md | Workaround temporal | Sumar when_to_use a la longitud de cada skill y capturar UnicodeDecodeError como SKILL.md ilegible, con sus checks en test-scripts.sh | `BAJA` |
