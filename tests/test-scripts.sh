@@ -701,6 +701,7 @@ SEEDED=$(cd "$ROOT" && python3 -c "import sys; sys.path.insert(0, 'tests/trigger
 check "make_project() crea el proyecto sembrado" '[ -n "$SEEDED" ] && [ -f "$SEEDED/GLOBAL_STATE.md" ]'
 check "las tareas sembradas tienen el estado de cases.json" '(cd "$SEEDED" && [ "$(col TASK-003 5)" = IN_PROGRESS ] && [ "$(col TASK-004 5)" = IN_REVIEW_QA ])'
 check "el proyecto sembrado queda en main" '[ "$(git -C "$SEEDED" branch --show-current)" = main ]'
+check "run_claude clean_env preserva ANTHROPIC_API_KEY si se especifica" 'python3 -c "import sys; sys.path.insert(0, \"$ROOT/tests/triggers\"); import run_claude; env = run_claude.clean_env(\"sk-test\"); assert env.get(\"ANTHROPIC_API_KEY\") == \"sk-test\", env"'
 [ -n "$SEEDED" ] && rm -rf "$SEEDED"
 
 # ------------------------------------------------------------------------------

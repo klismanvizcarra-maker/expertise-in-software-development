@@ -88,10 +88,14 @@ def make_project() -> Path:
     return tmp
 
 
-def clean_env() -> dict:
+def clean_env(api_key: str = "") -> dict:
     # Si este script corre dentro de otra sesión de Claude (app de escritorio, IDE), las variables
     # CLAUDE_*/ANTHROPIC_* heredadas hacen que la CLI ignore la sesión iniciada con `auth login`.
-    return {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "ANTHROPIC"))}
+    # Si se pasa una clave explícita o se exporta ANTHROPIC_API_KEY, se preserva para pago por uso.
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("CLAUDE", "ANTHROPIC"))}
+    if api_key:
+        env["ANTHROPIC_API_KEY"] = api_key
+    return env
 
 
 def run_case(claude: str, project: Path, case: dict, args, known: set[str]) -> dict:
@@ -111,7 +115,7 @@ def run_case(claude: str, project: Path, case: dict, args, known: set[str]) -> d
     error = None
     cost = 0.0
     started = time.time()
-    proc = subprocess.Popen(cmd, cwd=project, env=clean_env(), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+    proc = subprocess.Popen(cmd, cwd=project, env=clean_env(getattr(args, "api_key", "")), stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
                             stderr=subprocess.DEVNULL, text=True)
     timer = threading.Timer(args.timeout, proc.kill)
     timer.start()
@@ -120,6 +124,17 @@ def run_case(claude: str, project: Path, case: dict, args, known: set[str]) -> d
             try:
                 event = json.loads(line)
             except json.JSONDecodeError:
+                continue
+            if event.get("type") == "rate_limit_event":
+                info = event.get("rate_limit_info", {})
+                resets_at = info.get("resetsAt")
+                t_str = ""
+                if resets_at:
+                    try:
+                        t_str = f" (reinicia a las {datetime.fromtimestamp(resets_at).strftime('%H:%M:%S')})"
+                    except Exception:
+                        pass
+                error = f"Límite de cuota ({info.get('rateLimitType', '5-hour')}){t_str}. Usa --api-key para créditos directos de API."
                 continue
             if event.get("type") == "result":
                 cost = event.get("total_cost_usd") or 0.0
@@ -183,6 +198,7 @@ def main() -> int:
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--budget", type=float, default=0.25)
     ap.add_argument("--timeout", type=int, default=120)
+    ap.add_argument("--api-key", default=os.environ.get("ANTHROPIC_API_KEY", ""))
     args = ap.parse_args()
 
     cases = json.loads(CASES.read_text())["cases"]
