@@ -1,6 +1,6 @@
 ---
 name: stack-angular-express-postgres
-description: Stack monorepo Angular 22 + Express 5 + Drizzle sobre PostgreSQL 18, con contratos Zod compartidos y JWT propio - apps/web, apps/api, packages/shared, comandos y gotchas. Usar cuando el proyecto use Angular o Express.
+description: Monorepo Angular 22 + Express 5 + Drizzle sobre PostgreSQL 18 con contratos Zod y JWT propio - apps/web, apps/api, packages/shared y gotchas. Usar cuando el proyecto use Angular, junto con la skill del rol. No usar con React (stack-react-vite-node, stack-nextjs-tailwind-prisma).
 ---
 
 # Stack: Angular + Express + PostgreSQL

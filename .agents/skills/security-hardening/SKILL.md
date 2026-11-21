@@ -1,6 +1,6 @@
 ---
 name: security-hardening
-description: Seguridad desde el diseño - STRIDE, contraseñas, JWT y cookies, autorización contra IDOR, validación, cabeceras, CORS, rate limiting, subidas, SSRF y secretos. Usar al implementar login, permisos o datos de usuarios. No usar para auditar entregas (qa-security-agent) ni pipelines (devsecops-agent).
+description: Seguridad desde el diseño - STRIDE, contraseñas, JWT y cookies, autorización contra IDOR, validación, cabeceras, CORS, rate limiting, subidas y SSRF. Usar al implementar login, permisos o datos de usuarios. No usar para auditar entregas (qa-security-agent) ni pipelines (devsecops-agent).
 ---
 
 # Endurecimiento de Seguridad (Security Hardening)

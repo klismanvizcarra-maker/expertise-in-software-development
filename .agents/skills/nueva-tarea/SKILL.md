@@ -1,6 +1,6 @@
 ---
 name: nueva-tarea
-description: Convierte un requerimiento en tareas TASK-XXX con especialista y criterios de aceptación verificables, y las registra tras confirmación. Usar cuando piden una funcionalidad o cambio sin tarea, o "crea una tarea" o "descompón". No usar para el plan completo (crear-plan).
+description: Convierte un requerimiento en tareas TASK-XXX con especialista y criterios verificables, y las registra tras confirmación. Usar cuando piden una funcionalidad sin tarea, o "crea una tarea" o "descompón". No usar para el plan completo (crear-plan) ni seguimiento o BLOCKED (orchestrator-agent).
 ---
 
 # /nueva-tarea — Del Requerimiento al Tablero

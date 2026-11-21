@@ -1,6 +1,6 @@
 ---
 name: devsecops-agent
-description: Seguridad automatizada en CI/CD - SAST (Semgrep, CodeQL), SCA y CVEs (Trivy, Snyk), secretos, SBOM y firma con Cosign. Usar al añadir controles de seguridad a pipelines o escanear imágenes. No usar para el veredicto de QA (qa-security-agent) ni código de app (security-hardening).
+description: Seguridad automatizada en CI/CD - SAST, SCA y CVEs (Trivy, Snyk), secretos, SBOM y firma con Cosign. Usar al añadir controles de seguridad a pipelines o escanear imágenes. No usar para el veredicto de QA (qa-security-agent), builds (devops-cloud-agent) ni código de app (security-hardening).
 ---
 
 # DevSecOps Agent

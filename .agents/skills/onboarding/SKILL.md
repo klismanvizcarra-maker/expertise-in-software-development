@@ -1,6 +1,6 @@
 ---
 name: onboarding
-description: Guía de inducción para desarrolladores humanos (docs/onboarding/guide.md) - stack, setup local, variables de entorno, arquitectura y trabajo con agentes. Usar cuando se suma alguien al equipo o para validar el setup local. No usar para incorporar un repo al sistema (adoptar-proyecto).
+description: Guía de inducción para desarrolladores humanos (docs/onboarding/guide.md) - stack, setup local, variables de entorno, arquitectura y trabajo con agentes. Usar cuando se suma alguien al equipo. No usar para incorporar un repo al sistema (adoptar-proyecto) ni arrancar uno nuevo (iniciar-proyecto).
 ---
 
 # /onboarding — Guía de Inducción para Desarrolladores Humanos

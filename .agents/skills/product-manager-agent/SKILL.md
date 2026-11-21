@@ -1,6 +1,6 @@
 ---
 name: product-manager-agent
-description: Ideas convertidas en especificaciones - PRD, historias con Gherkin, user flows, estados de pantalla, alcance MVP, monetización y analítica. Usar cuando llega una idea sin definir o requerimientos ambiguos. No usar para crear tareas (orchestrator-agent) ni el plan con fases (crear-plan).
+description: Ideas convertidas en especificaciones - PRD, historias con Gherkin, user flows, estados de pantalla, MVP, monetización y analítica. Usar cuando llega una idea sin definir o requerimientos ambiguos. No usar para crear tareas (orchestrator-agent) ni el plan con fases (crear-plan).
 ---
 
 # Product Manager Agent

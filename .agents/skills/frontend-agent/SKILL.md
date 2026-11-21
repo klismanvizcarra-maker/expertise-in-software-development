@@ -1,6 +1,6 @@
 ---
 name: frontend-agent
-description: Interfaces web en React, Next.js, Vue, Angular o Svelte - pantallas, formularios, componentes, estado, consumo de APIs por contrato y estados de carga, vacío y error. Usar al crear o depurar pantallas web. No usar para tokens visuales (ui-ux-agent) ni apps nativas (mobile-agent).
+description: Interfaces web en React, Next.js, Vue, Angular o Svelte - pantallas, formularios, componentes, estado, APIs por contrato y estados de carga, vacío y error. Usar al crear o depurar pantallas web. No usar para tokens visuales (ui-ux-agent) ni apps nativas (mobile-agent).
 ---
 
 # Frontend Agent

@@ -55,21 +55,52 @@ def words(text: str) -> set[str]:
     return {w for w in re.findall(r"[a-z0-9]+", normalize(text)) if len(w) > 2 and w not in STOPWORDS}
 
 
-def load_skills() -> dict[str, str]:
-    skills = {}
+def frontmatter(text: str) -> dict[str, str]:
+    """Claves de primer nivel del frontmatter YAML: cualquier orden, valores entre comillas
+    y bloques multilínea (> o |), sin depender de PyYAML."""
+    text = text.replace("\r\n", "\n")
+    m = re.match(r"^---[ \t]*\n(.*?)\n---[ \t]*(\n|$)", text, re.S)
+    if not m:
+        return {}
+    data, key, block = {}, None, None
+    for line in m.group(1).split("\n"):
+        top = re.match(r"^([A-Za-z_][\w-]*):[ \t]*(.*)$", line)
+        if top:
+            key, value = top.group(1), top.group(2).strip()
+            block = value[:1] if value[:1] in (">", "|") else None
+            if block:
+                value = ""
+            elif len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+                value = value[1:-1]
+            data[key] = value
+        elif key and (block or line.startswith((" ", "\t"))):
+            sep = "\n" if block == "|" else " "
+            data[key] = (data[key] + sep + line.strip()).strip() if line.strip() else data[key]
+    return data
+
+
+def load_skills() -> tuple[dict[str, str], list[str]]:
+    """Devuelve las skills legibles y las SKILL.md que no se pudieron leer: estas cuentan como
+    problema, porque Claude Code sí las lista y gastan presupuesto sin que nadie las mida."""
+    skills, unreadable = {}, []
     for f in sorted(SKILLS_DIR.glob("*/SKILL.md")):
-        m = re.match(r"^---\nname: (.+)\ndescription: (.+)\n---\n", f.read_text())
-        if m:
-            skills[m.group(1)] = m.group(2)
-    return skills
+        fm = frontmatter(f.read_text(encoding="utf-8"))
+        if fm.get("name") and fm.get("description"):
+            skills[fm["name"]] = fm["description"]
+        else:
+            unreadable.append(f"{f.parent.name}/SKILL.md")
+    return skills, unreadable
 
 
 def main() -> int:
-    skills = load_skills()
-    cases = json.loads(CASES.read_text())["cases"]
+    skills, unreadable = load_skills()
+    cases = json.loads(CASES.read_text(encoding="utf-8"))["cases"]
     problems = 0
 
     print(f"Skills: {len(skills)} · Casos: {len(cases)}\n")
+    for path in unreadable:
+        print(f"❌ {path}: frontmatter sin name o description legibles (no se puede medir su presupuesto)")
+        problems += 1
 
     # 1. Referencias de cases.json
     referenced = set()

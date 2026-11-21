@@ -1,6 +1,6 @@
 ---
 name: web-performance
-description: Rendimiento de webs y APIs medido antes de optimizar - Core Web Vitals, presupuestos de bundle, carga diferida, imágenes, caché, compresión, latencia p95 y SQL. Usar cuando una página o endpoint es lento o antes de un lanzamiento. No usar para logs y alertas (observability).
+description: Rendimiento de webs y APIs medido antes de optimizar - Core Web Vitals, bundle, carga diferida, imágenes, caché, latencia p95 y SQL. Usar cuando una página o endpoint es lento o antes de un lanzamiento. No usar para logs y alertas (observability).
 ---
 
 # Rendimiento Web y de APIs

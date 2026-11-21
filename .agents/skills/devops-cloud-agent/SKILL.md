@@ -1,6 +1,6 @@
 ---
 name: devops-cloud-agent
-description: Build, infraestructura y entrega - configuración de build, CI/CD, Dockerfile multi-etapa, docker-compose, variables de entorno, despliegues y rollback. Usar al configurar o depurar builds, pipelines o despliegues. No usar para código de aplicación ni logs y alertas (observability).
+description: Build, infraestructura y entrega - CI/CD, Dockerfile multi-etapa, docker-compose, variables de entorno, despliegues y rollback. Usar al configurar o depurar builds, pipelines o despliegues. No usar para código de app, controles de seguridad (devsecops-agent) ni alertas (observability).
 ---
 
 # DevOps & Cloud Agent

@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Prepara y revisa Pull Requests - descripción con plantilla, lectura crítica del diff (contratos, migraciones, pruebas), convención de commits y conflictos. Usar cuando piden revisar un PR o diff o redactar su descripción. No usar para entregar a QA (handoff) ni el veredicto (qa-review).
+description: Prepara y revisa Pull Requests - descripción con plantilla, lectura crítica del diff (contratos, migraciones, pruebas), commits y conflictos. Usar cuando piden revisar un PR o diff. No usar para entregar a QA (handoff), el veredicto (qa-review) ni reestructurar código (refactor).
 ---
 
 # Revisión Técnica de Pull Requests (`/pr-review`)

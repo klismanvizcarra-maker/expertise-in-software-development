@@ -1,6 +1,6 @@
 ---
 name: orchestrator-agent
-description: Líder del proyecto multi-agente - descompone requerimientos en TASK-XXX, mantiene GLOBAL_STATE.md, asigna especialistas y escala al humano a 3/3 rechazos. Usar al recibir requerimientos, cambios de alcance o tareas BLOCKED. No usar para escribir código ni el plan maestro (crear-plan).
+description: Líder del proyecto multi-agente - mantiene GLOBAL_STATE.md, asigna especialistas, ordena dependencias y escala a 3/3 rechazos. Usar al recibir cambios de alcance, al planificar fases o con tareas BLOCKED. No usar para ideas sin definir (product-manager-agent) ni el plan maestro (crear-plan).
 ---
 
 # Orchestrator Agent

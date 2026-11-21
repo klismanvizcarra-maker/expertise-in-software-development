@@ -1,6 +1,6 @@
 ---
 name: adoptar-proyecto
-description: Incorpora el gobierno multi-agente a un repositorio ya construido (brownfield) sin reescribirlo - mapea rutas reales, deuda heredada y primeras tareas. Usar tras init-project.sh --adopt. No usar para proyectos desde cero (iniciar-proyecto).
+description: Incorpora el gobierno multi-agente a un repositorio ya construido (brownfield) sin reescribirlo - mapea rutas reales, deuda heredada y primeras tareas. Usar tras init-project.sh --adopt. No usar para proyectos desde cero (iniciar-proyecto) ni funcionalidades sueltas (nueva-tarea).
 ---
 
 # /adoptar-proyecto — Incorporación en Proyecto Existente (Brownfield)

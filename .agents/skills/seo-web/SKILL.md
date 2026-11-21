@@ -1,6 +1,6 @@
 ---
 name: seo-web
-description: Páginas públicas indexables y compartibles - SSR o prerender, title y meta, canonical, hreflang, Open Graph, JSON-LD, sitemap y robots. Usar cuando hay landing, precios, blog o catálogo que deben salir en buscadores. No usar para zonas privadas tras login.
+description: Páginas públicas indexables y compartibles - SSR o prerender, meta, canonical, hreflang, Open Graph, JSON-LD, sitemap y robots. Usar cuando landing, precios, blog o catálogo deben salir en buscadores. No usar para zonas privadas tras login.
 ---
 
 # SEO y Renderizado en Servidor (SSR)

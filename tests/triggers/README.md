@@ -14,7 +14,7 @@ python3 tests/triggers/lint_descriptions.py
 ```
 
 ### Presupuesto del listado de skills
-Claude Code muestra al modelo el nombre y la `description` de cada skill dentro de un presupuesto que escala con la ventana de contexto (por defecto, el 1 %). Si el listado se pasa, **deja skills sin descripción** empezando por las menos usadas, y esas skills solo se pueden invocar a mano con `/nombre`. Con 56 skills y unos 31 800 caracteres, 18 skills se quedaban sin descripción (TASK-081). Por eso el linter exige:
+Claude Code muestra al modelo el nombre y la `description` de cada skill dentro de un presupuesto que escala con la ventana de contexto (por defecto, el 1 %). Si el listado se pasa, **deja skills sin descripción** empezando por las menos usadas, y esas skills solo se pueden invocar a mano con `/nombre`. Con 56 skills y unos 31 500 caracteres, 18 skills se quedaban sin descripción (TASK-081). Por eso el linter exige:
 
 - 300 caracteres como máximo por `description`: qué hace, cuándo usarla y su límite con la skill vecina.
 - 15 000 caracteres como máximo entre todas, para dejar sitio a las skills integradas y de plugins del usuario.

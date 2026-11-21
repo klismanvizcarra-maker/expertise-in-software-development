@@ -1,6 +1,6 @@
 ---
 name: incidente
-description: Coordina un incidente en producción (caída, degradación severa, fuga de datos) - severidad, mitigación con rollback o degradación controlada, corrección vía hotfix y post-mortem. Usar cuando hay una alerta SEV-1/SEV-2. No usar para un parche ya acotado (hotfix).
+description: Coordina un incidente en producción (caída, degradación severa, fuga de datos) - severidad, mitigación con rollback o degradación controlada, corrección vía hotfix y post-mortem. Usar cuando hay una alerta SEV-1/SEV-2. No usar para un parche ya acotado (hotfix) ni bugs de desarrollo (bugfix).
 ---
 
 # /incidente — Gestión y Contención de Incidentes en Producción

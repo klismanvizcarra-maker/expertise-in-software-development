@@ -1,6 +1,6 @@
 ---
 name: i18n
-description: Internacionalización de webs y APIs - catálogos por idioma, plurales ICU, rutas por locale, formatos regionales de fecha, número y moneda, y errores y emails traducidos. Usar al traducir pantallas o añadir un idioma. No usar para apps de un solo idioma.
+description: Internacionalización de webs y APIs - catálogos por idioma, plurales ICU, rutas por locale y formatos regionales de fecha, número y moneda. Usar al traducir pantallas o añadir un idioma. No usar para apps de un solo idioma.
 ---
 
 # Internacionalización (i18n)

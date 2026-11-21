@@ -1,6 +1,6 @@
 ---
 name: e2e-testing
-description: Pruebas end-to-end con Playwright - escenarios Gherkin, selectores accesibles, datos aislados, sesión reutilizable y trazas para tests inestables. Usar para cubrir flujos completos (login, checkout) o depurar un E2E que falla. No usar para pruebas unitarias o de integración (testing-strategy).
+description: Pruebas end-to-end con Playwright - escenarios Gherkin, selectores accesibles, datos aislados, sesión reutilizable y trazas. Usar para cubrir flujos completos (login, checkout) o depurar un E2E que falla. No usar para pruebas unitarias o de integración (testing-strategy).
 ---
 
 # E2E Testing con Playwright
