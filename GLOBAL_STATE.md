@@ -10,7 +10,7 @@
 - **Descripción**: `Framework y catálogo multi-agente para Claude Code y Antigravity: directrices de gobernanza, roles especializados, scripts de ciclo de vida de tareas y batería de evals.`
 - **Estado Actual**: `IN_PROGRESS`
 - **Fase Actual**: `FASE 6: Consolidación y Activación Fiable del Catálogo (v1.6.0)`
-- **Última Actualización**: `2026-11-20`
+- **Última Actualización**: `2026-11-21`
 - **Iteraciones Críticas Acumuladas**: `0 / 3`
 
 ---
@@ -70,6 +70,7 @@
 | `TASK-088` | Saldar deudas tecnicas TD-007, TD-008 y TD-009 en linters y comprobadores | devops-cloud-agent | `DONE` | `0/3` | TD-007 saldada en lint_descriptions.py (when_to_use y UnicodeDecodeError); TD-008 saldada en resilience_checks.mjs y finops_check.py (timeouts y senales); TD-009 saldada en a11y_check.py y finops_check.py; debt-resolve ejecutado para cada una; suite en verde |
 | `TASK-089` | Rediseño de README.md para GitHub con estetica de codigo, badges y presentacion enterprise | docs-architecture-agent | `DONE` | `0/3` | README.md con badges de GitHub Actions CI, version v1.5.0, skills y licencia; cabecera ASCII de codigo de SKILL MAESTRO con creador Klisman Vizcarra; bloques de codigo sintactico para arquitectura, flujo y comandos rapidos; sincronizado en GitHub |
 | `TASK-090` | Fix: aumentar timeout de acquire_lock en task.sh para prevenir timeouts por concurrencia en CI | devops-cloud-agent | `DONE` | `0/3` | Timeout de acquire_lock en task.sh ampliado a 30s (timeout=600); test de concurrencia en tests/test-scripts.sh pasando de forma determinista en CI; suite completa en verde |
+| `TASK-091` | Incluir sección prominente de cómo cargar en un proyecto al inicio del README.md | docs-architecture-agent | `IN_PROGRESS` | `0/3` | Sección visible casi al inicio del README.md con comandos exactos para clonar, instalar en proyecto nuevo o existente e instalar hooks; verificado y sincronizado en GitHub |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
