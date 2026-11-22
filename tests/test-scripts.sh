@@ -1157,6 +1157,9 @@ check "test-skills.sh usa colores en terminal y los desactiva con NO_COLOR" '[ "
 section "task.sh: doctor y diff"
 new_project doc_diff
 check "task.sh doctor sale con 0 en un proyecto limpio" '$T doctor >/dev/null'
+check "task.sh doctor --kickoff ejecuta diagnóstico pre-vuelo exitosamente" '$T doctor --kickoff | grep -q "Diagnóstico Pre-Vuelo" && $T doctor -k >/dev/null'
+check "bin/skill-maestro.js kickoff ejecuta diagnóstico pre-vuelo exitosamente" 'node "$ROOT/bin/skill-maestro.js" kickoff | grep -q "Diagnóstico Pre-Vuelo"'
+check "init-project.sh --interactive acepta inputs y genera proyecto válido" 'printf "TestApp\n./test-app\n1\n1\ns\ns\n" | bash "$ROOT/.agents/scripts/init-project.sh" --interactive >/dev/null && [ -f test-app/GLOBAL_STATE.md ] && grep -q "nextjs" test-app/GLOBAL_STATE.md && rm -rf test-app'
 check "task.sh doctor falla (exit 1) si GLOBAL_STATE.md tiene errores" 'printf "\n| \`TASK-001\` | dup | backend-agent | \`TODO\` | \`0/3\` | c |\n" >> GLOBAL_STATE.md; ! $T doctor >/dev/null'
 git checkout -q GLOBAL_STATE.md
 check "task.sh doctor falla (exit 1) si hay un secreto expuesto" 'printf "%s\n" "$FAKE_KEY" > secret.txt; git add secret.txt; ! $T doctor >/dev/null; git reset -q HEAD secret.txt 2>/dev/null; rm -f secret.txt'
