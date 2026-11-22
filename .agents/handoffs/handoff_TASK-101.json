@@ -1,0 +1,19 @@
+{
+  "task_id": "TASK-101",
+  "summary": "CLI Wizard interactivo para init/adopt y diagnostico pre-vuelo doctor --kickoff",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T12:59:25Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/init-project.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "bin/skill-maestro.js" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh",
+    "./.agents/scripts/task.sh doctor --kickoff"
+  ]
+}
