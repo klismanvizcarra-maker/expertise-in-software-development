@@ -1256,6 +1256,7 @@ printf '{"version": "1.0", "endpoints": [{"method": "GET", "path": "/test"}]}' >
 check "task.sh contracts validate valida contrato mínimo válido (exit 0)" '$T contracts validate valid_contract.json >/dev/null'
 rm -f bad_contract.json bad_path.json no_version.json valid_contract.json
 check "task.sh contracts con subcomando inválido falla (exit 1)" '! $T contracts invalid_sub >/dev/null 2>&1'
+check "task.sh contracts mock inicia el servidor mock y responde en /__health y endpoints simulados" '$T contracts mock --port 4390 --file "$ROOT/.agents/templates/contracts_template.json" >/dev/null 2>&1 & MPID=$!; sleep 1; HEALTH=$(curl -s http://127.0.0.1:4390/__health || true); echo "$HEALTH" | grep -q "skill-maestro-mock-server"; R1=$?; LOGIN_MOCK=$(curl -s -X POST http://127.0.0.1:4390/auth/login || true); echo "$LOGIN_MOCK" | grep -q "token"; R2=$?; kill $MPID 2>/dev/null; [ $R1 -eq 0 ] && [ $R2 -eq 0 ]'
 
 # 10. task.sh swarm
 check "task.sh swarm status muestra el estado del enjambre" '$T swarm status | grep -q "Enjambre Multi-Agente"'
