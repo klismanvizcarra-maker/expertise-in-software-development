@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-097",
+  "summary": "Coordinador de fusión e integración de enjambre (task.sh swarm merge)",
+  "source_agent": "orchestrator-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T01:46:56Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "LC_ALL=C bash tests/test-scripts.sh && ./.agents/scripts/task.sh doctor"
+  ]
+}
