@@ -10,7 +10,7 @@
 - **Descripción**: `Framework y catálogo multi-agente para Claude Code y Antigravity: directrices de gobernanza, roles especializados, scripts de ciclo de vida de tareas y batería de evals.`
 - **Estado Actual**: `PRODUCTION_READY`
 - **Fase Actual**: `FASE 7: Lanzamiento Enterprise v2.0.0 (MCP, Live Dashboard, CLI Global, Swarm)`
-- **Última Actualización**: `2026-11-21`
+- **Última Actualización**: `2026-11-22`
 - **Iteraciones Críticas Acumuladas**: `0 / 3`
 
 ---
@@ -80,7 +80,7 @@
 | `TASK-095` | Protocolo de enjambres concurrentes y workspaces aislados (task.sh swarm) | orchestrator-agent | `DONE` | `0/3` | Implementar subcomando task.sh swarm (status, list, spawn, merge) para coordinacion de multiples agentes concurrentes en ramas aisladas; integracion con contracts.json y suite de tests pasando |
 | `TASK-096` | Lanzamiento oficial v2.0.0 Enterprise: empaquetado, CHANGELOG, versionado y documentación | docs-architecture-agent | `DONE` | `0/3` | Actualizar .agents/VERSION y package.json a 2.0.0; documentar release en CHANGELOG.md; actualizar README.md; tag de Git v2.0.0; suite de pruebas al 100% y doctor 5/5 |
 | `TASK-097` | Coordinador de fusión e integración de enjambre (task.sh swarm merge) | orchestrator-agent | `DONE` | `0/3` | Implementar task.sh swarm merge TASK-XXX con verificación de estado DONE, validación de contratos, comprobación de conflictos de git, fusión --no-ff a main y poda de worktree; tests unitarios y de integración pasando |
-| `TASK-098` | Servidor MCP v2: Transporte SSE/HTTP, Resources URI y Prompts preconfigurados | devops-cloud-agent | `TODO` | `0/3` | Extender .agents/mcp/server.mjs con soporte de transporte HTTP SSE (--port/--sse), exposición de MCP resources (maestro://state, maestro://brain, maestro://contracts) y prompts de ciclo de vida (start, handoff, qa); suite test-mcp.mjs pasando |
+| `TASK-098` | Servidor MCP v2: Transporte SSE/HTTP, Resources URI y Prompts preconfigurados | devops-cloud-agent | `DONE` | `0/3` | Extender .agents/mcp/server.mjs con soporte de transporte HTTP SSE (--port/--sse), exposición de MCP resources (maestro://state, maestro://brain, maestro://contracts) y prompts de ciclo de vida (start, handoff, qa); suite test-mcp.mjs pasando |
 | `TASK-099` | Live Dashboard 2.0: Eventos en tiempo real SSE, creación de tareas y visor de terminal | frontend-agent | `TODO` | `0/3` | Actualizar dashboard-server.py con endpoint SSE (/api/events) para actualización reactiva <50ms; acciones web para crear tareas (task.sh add) e iniciar diagnóstico (task.sh doctor) con streaming de logs; tests en test-scripts.sh pasando |
 | `TASK-100` | Pipeline CI de release NPM, badges dinámicos y showcase visual en README | docs-architecture-agent | `TODO` | `0/3` | Crear workflow .github/workflows/publish-npm.yml para publicación automatizada en registry con tags; enriquecer README.md con showcase visual, diagramas de arquitectura y badges; verificación completa |
 
@@ -356,3 +356,5 @@
 | `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-096` | Aprobada por QA -> DONE. Sin lección: Lanzamiento mayor v2.0.0 Enterprise completado en primera iteración 1/3 sin defectos. |
 | `2026-11-21` | orchestrator-agent | qa-security-agent | `TASK-097` | Implementado coordinador de fusion task.sh swarm merge con chequeo de estado DONE, validacion de contratos, comprobacion de conflictos y limpieza automatica de worktrees. Comandos: `LC_ALL=C bash tests/test-scripts.sh && ./.agents/scripts/task.sh doctor` |
 | `2026-11-21` | qa-security-agent | orchestrator-agent | `TASK-097` | Aprobada por QA -> DONE. Sin lección: Coordinador de fusion swarm merge completado en primera iteracion 1/3 sin defectos. |
+| `2026-11-21` | devops-cloud-agent | qa-security-agent | `TASK-098` | Servidor MCP v2: Transporte SSE/HTTP, Resources URI y Prompts preconfigurados. Comandos: `node tests/test-mcp.mjs` |
+| `2026-11-22` | qa-security-agent | orchestrator-agent | `TASK-098` | Aprobada por QA -> DONE. Sin lección: servidor MCP v2 completado a la primera sin defectos ni rechazos. |
