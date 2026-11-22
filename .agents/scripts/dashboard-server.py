@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Servidor Web Local y Live Dashboard interactivo para SKILL MAESTRO.
+Servidor Web Local y Live Dashboard interactivo 2.0 para SKILL MAESTRO.
+Incluye sincronización en tiempo real vía Server-Sent Events (SSE),
+acciones web para creación de tareas (task.sh add) y terminal drawer
+para streaming de logs de diagnóstico (task.sh doctor y doctor --kickoff).
+
 Uso: python3 dashboard-server.py [--port 4200] [--host 127.0.0.1]
 """
 
@@ -8,17 +12,26 @@ import os
 import re
 import sys
 import json
+import time
+import queue
+import threading
 import subprocess
 from pathlib import Path
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path.cwd() if (Path.cwd() / "GLOBAL_STATE.md").is_file() else Path(__file__).resolve().parents[2]
 STATE_FILE = PROJECT_ROOT / "GLOBAL_STATE.md"
 BRAIN_FILE = PROJECT_ROOT / "BRAIN.md"
 LESSONS_FILE = PROJECT_ROOT / ".agents/brain/lessons_learned.md"
 DEBT_FILE = PROJECT_ROOT / ".agents/brain/tech_debt.md"
 TASK_SH = PROJECT_ROOT / ".agents/scripts/task.sh"
+if not TASK_SH.is_file():
+    TASK_SH = Path(__file__).resolve().parents[0] / "task.sh"
+
+server_shutdown = False
+sse_subscribers = []
+sse_lock = threading.Lock()
 
 def run_command(args):
     try:
@@ -138,6 +151,36 @@ def get_current_data():
         "debts": debts
     }
 
+def broadcast_state():
+    try:
+        data = get_current_data()
+        payload = json.dumps(data)
+        with sse_lock:
+            dead = []
+            for q in sse_subscribers:
+                try:
+                    q.put_nowait(payload)
+                except Exception:
+                    dead.append(q)
+            for d in dead:
+                if d in sse_subscribers:
+                    sse_subscribers.remove(d)
+    except Exception:
+        pass
+
+def start_file_watcher():
+    last_mtime = 0
+    while not server_shutdown:
+        try:
+            if STATE_FILE.is_file():
+                mtime = STATE_FILE.stat().st_mtime
+                if mtime != last_mtime:
+                    last_mtime = mtime
+                    broadcast_state()
+        except Exception:
+            pass
+        time.sleep(0.3)
+
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -151,249 +194,261 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       theme: {
         extend: {
           colors: {
-            brand: { 50: '#eef2ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+            brand: { 500: '#6366f1', 600: '#4f46e5' }
           }
         }
       }
-    };
+    }
   </script>
   <style>
-    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
-    .card-glow:hover { box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.3); border-color: rgba(99, 102, 241, 0.4); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e1e2e; }
+    ::-webkit-scrollbar-thumb { background: #3b4261; border-radius: 3px; }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col">
-  <!-- Header -->
-  <header class="glass sticky top-0 z-40 border-b border-slate-800/80 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-brand-500/30">M</div>
-      <div>
-        <h1 class="font-bold text-lg leading-tight flex items-center gap-2" id="ui-project-title">SKILL MAESTRO <span class="text-xs bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full font-semibold">v2.0 LIVE</span></h1>
-        <p class="text-xs text-slate-400" id="ui-phase-title">Cargando fase...</p>
+<body class="bg-neutral-950 text-neutral-100 font-sans min-h-screen flex flex-col">
+  <!-- Top Navigation -->
+  <header class="border-b border-neutral-800 bg-neutral-900/60 backdrop-blur sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
+          M
+        </div>
+        <div>
+          <h1 class="text-lg font-bold leading-none flex items-center gap-2">
+            <span id="proj-name">SKILL MAESTRO</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium" id="proj-status">LIVE</span>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono" id="sse-badge">⚡ SSE Activo</span>
+          </h1>
+          <p class="text-xs text-neutral-400 mt-0.5" id="proj-phase">Fase Actual</p>
+        </div>
       </div>
-    </div>
-    
-    <!-- Controls & Status -->
-    <div class="flex items-center gap-3">
-      <div class="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800/50 px-3 py-1.5 rounded-lg">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>En vivo (Polling activo)</span>
+      <div class="flex items-center gap-2">
+        <button onclick="openAddTaskModal()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+          <span>+</span> Nueva Tarea
+        </button>
+        <button onclick="runDoctor(false)" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-lg shadow-indigo-600/20">
+          <span>🩺</span> Doctor
+        </button>
+        <button onclick="runDoctor(true)" class="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-lg shadow-amber-600/20">
+          <span>🚀</span> Kickoff
+        </button>
       </div>
-      <button onclick="runDoctor()" class="text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 flex items-center gap-1.5 transition">
-        <span>🩺</span> Ejecutar Doctor
-      </button>
-      <button onclick="fetchData()" class="text-xs font-medium bg-brand-600 hover:bg-brand-500 text-white px-3 py-1.5 rounded-lg shadow-md transition">
-        <span>🔄</span> Actualizar
-      </button>
     </div>
   </header>
 
-  <!-- Metrics Bar -->
-  <section class="max-w-7xl mx-auto w-full px-6 pt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-    <div class="glass p-4 rounded-xl flex flex-col">
-      <span class="text-xs text-slate-400 font-medium">Progreso Global</span>
-      <span class="text-2xl font-bold text-brand-400 mt-1" id="m-percent">0%</span>
-    </div>
-    <div class="glass p-4 rounded-xl flex flex-col">
-      <span class="text-xs text-slate-400 font-medium">En Progreso</span>
-      <span class="text-2xl font-bold text-blue-400 mt-1" id="m-inprog">0</span>
-    </div>
-    <div class="glass p-4 rounded-xl flex flex-col">
-      <span class="text-xs text-slate-400 font-medium">En Revisión QA</span>
-      <span class="text-2xl font-bold text-amber-400 mt-1" id="m-inreview">0</span>
-    </div>
-    <div class="glass p-4 rounded-xl flex flex-col">
-      <span class="text-xs text-slate-400 font-medium">Esperando Aprobación</span>
-      <span class="text-2xl font-bold text-purple-400 mt-1" id="m-awaiting">0</span>
-    </div>
-    <div class="glass p-4 rounded-xl flex flex-col">
-      <span class="text-xs text-slate-400 font-medium">Bloqueadas (3/3)</span>
-      <span class="text-2xl font-bold text-rose-400 mt-1" id="m-blocked">0</span>
-    </div>
-    <div class="glass p-4 rounded-xl flex flex-col">
-      <span class="text-xs text-slate-400 font-medium">Completadas (DONE)</span>
-      <span class="text-2xl font-bold text-emerald-400 mt-1" id="m-done">0</span>
-    </div>
-  </section>
-
-  <!-- Kanban Board -->
-  <main class="max-w-7xl mx-auto w-full px-6 py-6 flex-1">
-    <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-      <span>📋 Tablero Kanban de Tareas</span>
-      <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-full" id="task-count-badge">0</span>
-    </h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-start">
-      <!-- TODO -->
-      <div class="flex flex-col gap-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800/60 min-h-[400px]">
-        <div class="flex items-center justify-between px-2 text-xs font-bold text-slate-400 uppercase">
-          <span>Por Hacer (TODO)</span>
-          <span class="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center" id="col-todo-count">0</span>
-        </div>
-        <div class="flex flex-col gap-2.5" id="col-todo"></div>
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- Metrics Grid -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div class="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+        <p class="text-xs text-neutral-400 font-medium">Completadas</p>
+        <p class="text-2xl font-bold text-emerald-400 mt-1" id="m-done">0</p>
       </div>
-
-      <!-- IN_PROGRESS -->
-      <div class="flex flex-col gap-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800/60 min-h-[400px]">
-        <div class="flex items-center justify-between px-2 text-xs font-bold text-blue-400 uppercase">
-          <span>En Curso</span>
-          <span class="w-5 h-5 rounded-full bg-blue-900/60 flex items-center justify-center text-blue-300" id="col-inprog-count">0</span>
-        </div>
-        <div class="flex flex-col gap-2.5" id="col-inprog"></div>
+      <div class="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+        <p class="text-xs text-neutral-400 font-medium">En Progreso</p>
+        <p class="text-2xl font-bold text-sky-400 mt-1" id="m-inprog">0</p>
       </div>
-
-      <!-- IN_REVIEW_QA -->
-      <div class="flex flex-col gap-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800/60 min-h-[400px]">
-        <div class="flex items-center justify-between px-2 text-xs font-bold text-amber-400 uppercase">
-          <span>Revisión QA</span>
-          <span class="w-5 h-5 rounded-full bg-amber-900/60 flex items-center justify-center text-amber-300" id="col-inreview-count">0</span>
-        </div>
-        <div class="flex flex-col gap-2.5" id="col-inreview"></div>
+      <div class="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+        <p class="text-xs text-neutral-400 font-medium">En Revisión QA</p>
+        <p class="text-2xl font-bold text-purple-400 mt-1" id="m-review">0</p>
       </div>
-
-      <!-- AWAITING_HUMAN_APPROVAL -->
-      <div class="flex flex-col gap-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800/60 min-h-[400px]">
-        <div class="flex items-center justify-between px-2 text-xs font-bold text-purple-400 uppercase">
-          <span>Aprobación Humana</span>
-          <span class="w-5 h-5 rounded-full bg-purple-900/60 flex items-center justify-center text-purple-300" id="col-awaiting-count">0</span>
-        </div>
-        <div class="flex flex-col gap-2.5" id="col-awaiting"></div>
+      <div class="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+        <p class="text-xs text-neutral-400 font-medium">Esperando Aprobación</p>
+        <p class="text-2xl font-bold text-amber-400 mt-1" id="m-hold">0</p>
       </div>
-
-      <!-- DONE -->
-      <div class="flex flex-col gap-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-800/60 min-h-[400px]">
-        <div class="flex items-center justify-between px-2 text-xs font-bold text-emerald-400 uppercase">
-          <span>Completadas (DONE)</span>
-          <span class="w-5 h-5 rounded-full bg-emerald-900/60 flex items-center justify-center text-emerald-300" id="col-done-count">0</span>
-        </div>
-        <div class="flex flex-col gap-2.5 max-h-[600px] overflow-y-auto pr-1" id="col-done"></div>
+      <div class="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+        <p class="text-xs text-neutral-400 font-medium">Bloqueadas (3/3)</p>
+        <p class="text-2xl font-bold text-rose-400 mt-1" id="m-blocked">0</p>
       </div>
+      <div class="p-4 rounded-xl bg-neutral-900 border border-neutral-800">
+        <p class="text-xs text-neutral-400 font-medium">Progreso Global</p>
+        <p class="text-2xl font-bold text-indigo-400 mt-1" id="m-percent">0%</p>
+      </div>
+    </section>
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-neutral-900 rounded-full h-2 overflow-hidden border border-neutral-800">
+      <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
     </div>
+
+    <!-- Kanban Board -->
+    <section>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-neutral-200">Tablero Kanban de Tareas</h2>
+        <span class="text-xs text-neutral-400" id="total-tasks-label">0 tareas registradas</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="kanban-cols">
+        <!-- Columns rendered dynamically -->
+      </div>
+    </section>
   </main>
 
-  <!-- Modal Action Dialog -->
-  <div id="action-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="glass p-6 rounded-2xl max-w-md w-full border border-slate-700 shadow-2xl flex flex-col gap-4">
-      <h3 class="font-bold text-lg text-white" id="modal-title">Aprobar Tarea</h3>
-      <p class="text-xs text-slate-300" id="modal-desc">¿Deseas reanudar esta tarea?</p>
-      
-      <div id="modal-inputs" class="flex flex-col gap-3">
-        <label class="text-xs font-medium text-slate-400">Comentario o Directriz:</label>
-        <textarea id="modal-comment" rows="2" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500"></textarea>
+  <!-- Terminal Drawer for Doctor Logs -->
+  <div id="terminal-drawer" class="fixed bottom-0 inset-x-0 bg-neutral-950 border-t border-neutral-800 shadow-2xl z-40 transform translate-y-full transition-transform duration-300 ease-out flex flex-col" style="height: 380px;">
+    <div class="px-4 py-2.5 bg-neutral-900/90 border-b border-neutral-800 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-xs font-mono font-semibold text-neutral-200" id="terminal-title">Terminal de Diagnóstico</span>
       </div>
+      <div class="flex items-center gap-2">
+        <button onclick="clearTerminal()" class="text-xs text-neutral-400 hover:text-neutral-200 px-2 py-0.5 rounded bg-neutral-800">Limpiar</button>
+        <button onclick="closeTerminal()" class="text-xs text-neutral-400 hover:text-neutral-200 px-2 py-0.5 rounded bg-neutral-800">✕ Cerrar</button>
+      </div>
+    </div>
+    <div id="terminal-content" class="flex-1 p-4 overflow-y-auto font-mono text-xs text-neutral-300 space-y-1 bg-neutral-950 selection:bg-indigo-600">
+      <p class="text-neutral-500">// Esperando ejecución de diagnóstico...</p>
+    </div>
+  </div>
 
+  <!-- Modal Nueva Tarea -->
+  <div id="add-task-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <h3 class="text-base font-bold text-neutral-100 flex items-center gap-2">
+        <span>✨</span> Crear Nueva Tarea (task.sh add)
+      </h3>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-neutral-400 mb-1">Descripción del objetivo:</label>
+          <input type="text" id="task-desc" placeholder="Ej: Implementar endpoint de recuperación de contraseñas" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-neutral-400 mb-1">Especialista asignado:</label>
+          <select id="task-agent" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:outline-none focus:border-indigo-500">
+            <option value="backend-agent">backend-agent (Endpoints, APIs y Auth)</option>
+            <option value="frontend-agent">frontend-agent (Vistas, componentes y estado)</option>
+            <option value="database-architect-agent">database-architect-agent (Modelos y migraciones)</option>
+            <option value="devops-cloud-agent">devops-cloud-agent (Docker, CI/CD y despliegue)</option>
+            <option value="docs-architecture-agent">docs-architecture-agent (README, contratos y docs)</option>
+            <option value="qa-security-agent">qa-security-agent (Auditoría, seguridad y tests)</option>
+            <option value="domain-logic-agent">domain-logic-agent (Reglas de negocio puras DDD)</option>
+            <option value="mobile-agent">mobile-agent (React Native / Flutter / nativo)</option>
+            <option value="ai-integrator-agent">ai-integrator-agent (LLMs, prompts y RAG)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-neutral-400 mb-1">Criterios de Aceptación verificables:</label>
+          <textarea id="task-criteria" rows="3" placeholder="Ej: Endpoint POST /api/auth/forgot validado; correo transaccional en cola; tests en pytest pasando." class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2.5 text-neutral-100 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+      </div>
       <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeModal()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-slate-200">Cancelar</button>
-        <button id="modal-confirm-btn" class="px-4 py-2 text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white rounded-lg shadow-md transition">Confirmar</button>
+        <button onclick="closeAddTaskModal()" class="px-4 py-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-300 transition">Cancelar</button>
+        <button onclick="submitNewTask()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition shadow-lg shadow-emerald-600/20">Crear Tarea</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Aprobación Humana -->
+  <div id="action-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <h3 class="text-base font-bold text-neutral-100 flex items-center gap-2">
+        <span>📋</span> Revisión de Punto de Control
+      </h3>
+      <p class="text-xs text-neutral-400" id="modal-desc">Detalles de la aprobación</p>
+      <div>
+        <label class="block text-xs text-neutral-400 mb-1">Directriz / Comentario (opcional):</label>
+        <textarea id="modal-comment" rows="2" class="w-full bg-neutral-950 border border-neutral-800 rounded-lg p-2 text-xs text-neutral-100 focus:outline-none focus:border-indigo-500" placeholder="Comentarios para el especialista..."></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal()" class="px-3 py-1.5 rounded-lg bg-neutral-800 text-xs text-neutral-300">Cancelar</button>
+        <button id="btn-approve" class="px-3 py-1.5 rounded-lg bg-emerald-600 text-xs font-semibold text-white">Aprobar (TODO)</button>
       </div>
     </div>
   </div>
 
   <script>
-    let activeData = null;
+    let currentData = null;
+    let selectedTaskId = null;
 
-    async function fetchData() {
-      try {
-        const res = await fetch('/api/status');
-        const data = await res.json();
-        activeData = data;
-        renderDashboard(data);
-      } catch (err) {
-        console.error("Error al cargar estado:", err);
-      }
+    function renderAll(data) {
+      currentData = data;
+      document.getElementById('proj-name').innerText = data.project;
+      document.getElementById('proj-phase').innerText = 'Fase: ' + data.phase;
+      document.getElementById('proj-status').innerText = data.status;
+
+      document.getElementById('m-done').innerText = data.metrics.done;
+      document.getElementById('m-inprog').innerText = data.metrics.inProgress;
+      document.getElementById('m-review').innerText = data.metrics.inReview;
+      document.getElementById('m-hold').innerText = data.metrics.awaitingApproval;
+      document.getElementById('m-blocked').innerText = data.metrics.blocked;
+      document.getElementById('m-percent').innerText = data.metrics.percent + '%';
+      document.getElementById('progress-bar').style.width = data.metrics.percent + '%';
+
+      document.getElementById('total-tasks-label').innerText = data.tasks.length + ' tareas registradas';
+
+      renderKanban(data.tasks);
     }
 
-    function renderDashboard(data) {
-      document.getElementById('ui-project-title').innerHTML = `${data.project} <span class="text-xs bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2 py-0.5 rounded-full font-semibold">v2.0 LIVE</span>`;
-      document.getElementById('ui-phase-title').textContent = data.phase;
+    function renderKanban(tasks) {
+      const cols = [
+        { id: 'TODO', title: 'Por Hacer', color: 'border-neutral-700', bg: 'bg-neutral-800/20' },
+        { id: 'IN_PROGRESS', title: 'En Progreso', color: 'border-sky-500/40', bg: 'bg-sky-500/5' },
+        { id: 'IN_REVIEW_QA', title: 'En Revisión QA', color: 'border-purple-500/40', bg: 'bg-purple-500/5' },
+        { id: 'DONE', title: 'Completadas', color: 'border-emerald-500/40', bg: 'bg-emerald-500/5' }
+      ];
 
-      // Métricas
-      document.getElementById('m-percent').textContent = data.metrics.percent + '%';
-      document.getElementById('m-inprog').textContent = data.metrics.inProgress;
-      document.getElementById('m-inreview').textContent = data.metrics.inReview;
-      document.getElementById('m-awaiting').textContent = data.metrics.awaitingApproval;
-      document.getElementById('m-blocked').textContent = data.metrics.blocked;
-      document.getElementById('m-done').textContent = data.metrics.done;
-      document.getElementById('task-count-badge').textContent = data.tasks.length;
+      const container = document.getElementById('kanban-cols');
+      container.innerHTML = '';
 
-      // Limpiar columnas
-      const cols = {
-        'TODO': document.getElementById('col-todo'),
-        'IN_PROGRESS': document.getElementById('col-inprog'),
-        'IN_REVIEW_QA': document.getElementById('col-inreview'),
-        'AWAITING_HUMAN_APPROVAL': document.getElementById('col-awaiting'),
-        'DONE': document.getElementById('col-done')
-      };
+      cols.forEach(col => {
+        let colTasks = [];
+        if (col.id === 'TODO') {
+          colTasks = tasks.filter(t => t.status === 'TODO' || t.status === 'AWAITING_HUMAN_APPROVAL' || t.status === 'BLOCKED');
+        } else {
+          colTasks = tasks.filter(t => t.status === col.id);
+        }
 
-      Object.values(cols).forEach(el => el.innerHTML = '');
-
-      const counts = { 'TODO': 0, 'IN_PROGRESS': 0, 'IN_REVIEW_QA': 0, 'AWAITING_HUMAN_APPROVAL': 0, 'DONE': 0 };
-
-      data.tasks.forEach(t => {
-        const colKey = cols[t.status] ? t.status : 'TODO';
-        counts[colKey]++;
-        const card = createCard(t);
-        cols[colKey].appendChild(card);
+        const colEl = document.createElement('div');
+        colEl.className = 'rounded-xl border ' + col.color + ' ' + col.bg + ' p-3 flex flex-col max-h-[640px] overflow-hidden';
+        colEl.innerHTML = `
+          <div class="flex items-center justify-between pb-3 border-b border-neutral-800 mb-3">
+            <h3 class="text-xs font-semibold text-neutral-300 uppercase tracking-wider">${col.title}</h3>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-neutral-800 text-neutral-400 font-mono">${colTasks.length}</span>
+          </div>
+          <div class="flex-1 overflow-y-auto space-y-2.5 pr-1">
+            ${colTasks.map(t => renderCard(t)).join('')}
+          </div>
+        `;
+        container.appendChild(colEl);
       });
-
-      document.getElementById('col-todo-count').textContent = counts['TODO'];
-      document.getElementById('col-inprog-count').textContent = counts['IN_PROGRESS'];
-      document.getElementById('col-inreview-count').textContent = counts['IN_REVIEW_QA'];
-      document.getElementById('col-awaiting-count').textContent = counts['AWAITING_HUMAN_APPROVAL'];
-      document.getElementById('col-done-count').textContent = counts['DONE'];
     }
 
-    function createCard(task) {
-      const el = document.createElement('div');
-      el.className = 'glass card-glow p-3.5 rounded-xl flex flex-col gap-2 transition duration-200 border border-slate-800 text-xs';
-      
-      let actionButtons = '';
-      if (task.status === 'AWAITING_HUMAN_APPROVAL') {
-        actionButtons = `
-          <div class="flex gap-1.5 pt-1.5 border-t border-slate-800">
-            <button onclick="promptApprove('${task.id}')" class="flex-1 bg-emerald-600/80 hover:bg-emerald-500 text-white font-semibold py-1 rounded text-[11px] transition">✓ Aprobar</button>
-          </div>
-        `;
-      } else if (task.status === 'IN_PROGRESS') {
-        actionButtons = `
-          <div class="flex gap-1.5 pt-1.5 border-t border-slate-800">
-            <button onclick="promptHold('${task.id}')" class="flex-1 bg-purple-600/60 hover:bg-purple-500 text-slate-100 font-medium py-1 rounded text-[11px] transition">⏸ Pausar (Hold)</button>
-          </div>
-        `;
+    function renderCard(t) {
+      let badge = '';
+      if (t.status === 'AWAITING_HUMAN_APPROVAL') {
+        badge = '<span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">⏸️ Aprobación Requerida</span>';
+      } else if (t.status === 'BLOCKED') {
+        badge = '<span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">🚨 Bloqueada (3/3)</span>';
       }
 
-      el.innerHTML = `
-        <div class="flex items-center justify-between gap-2">
-          <span class="font-mono font-bold text-slate-300 text-[11px] bg-slate-800 px-1.5 py-0.5 rounded">${task.id}</span>
-          <span class="text-[10px] text-slate-400 font-medium truncate max-w-[120px]">${task.agent}</span>
+      let actions = '';
+      if (t.status === 'AWAITING_HUMAN_APPROVAL') {
+        actions = `<button onclick="handleApprovalClick('${t.id}')" class="mt-2 w-full py-1 rounded bg-amber-600 hover:bg-amber-500 text-white text-[11px] font-semibold transition">Revisar y Aprobar</button>`;
+      }
+
+      return `
+        <div class="p-3 rounded-lg bg-neutral-900 border border-neutral-800 hover:border-neutral-700 transition shadow-sm space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold text-indigo-400">${t.id}</span>
+            <span class="text-[10px] text-neutral-500 font-mono">${t.iteration}</span>
+          </div>
+          <p class="text-xs text-neutral-200 line-clamp-2">${t.desc}</p>
+          <div class="flex items-center justify-between pt-1 text-[11px] text-neutral-400">
+            <span class="truncate max-w-[140px]">👤 ${t.agent}</span>
+            ${badge}
+          </div>
+          ${actions}
         </div>
-        <p class="text-slate-200 leading-snug line-clamp-3">${task.desc}</p>
-        <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
-          <span>Iteración: ${task.iteration}</span>
-        </div>
-        ${actionButtons}
       `;
-      return el;
     }
 
-    function promptApprove(taskId) {
-      document.getElementById('modal-title').textContent = `Aprobar Tarea ${taskId}`;
-      document.getElementById('modal-desc').textContent = `Al aprobar, la tarea saldrá de AWAITING_HUMAN_APPROVAL y se reanudará en TODO o IN_PROGRESS.`;
-      document.getElementById('modal-confirm-btn').onclick = async () => {
+    function handleApprovalClick(taskId) {
+      selectedTaskId = taskId;
+      document.getElementById('modal-desc').innerText = 'Aprobar la tarea ' + taskId + ' para continuar su ejecución.';
+      document.getElementById('btn-approve').onclick = () => {
         const comment = document.getElementById('modal-comment').value;
+        postAction({ action: 'approve', taskId: selectedTaskId, comment });
         closeModal();
-        await postAction({ action: 'approve', taskId, status: 'TODO', comment });
-      };
-      openModal();
-    }
-
-    function promptHold(taskId) {
-      document.getElementById('modal-title').textContent = `Pausar Tarea ${taskId}`;
-      document.getElementById('modal-desc').textContent = `Indica el motivo por el cual requieres pausar esta tarea para aprobación humana.`;
-      document.getElementById('modal-confirm-btn').onclick = async () => {
-        const reason = document.getElementById('modal-comment').value;
-        closeModal();
-        await postAction({ action: 'hold', taskId, reason });
       };
       openModal();
     }
@@ -409,24 +464,33 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         if (!result.ok) {
           alert('Error: ' + (result.stderr || 'No se pudo completar la acción'));
         }
-        fetchData();
       } catch (err) {
         alert('Error de conexión: ' + err.message);
       }
     }
 
-    async function runDoctor() {
-      const btn = event.currentTarget;
-      btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span> Analizando...';
-      try {
-        const res = await fetch('/api/doctor');
-        const data = await res.json();
-        alert(data.stdout || data.stderr || 'Diagnóstico completado');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span>🩺</span> Ejecutar Doctor';
+    function openAddTaskModal() {
+      document.getElementById('task-desc').value = '';
+      document.getElementById('task-criteria').value = '';
+      document.getElementById('add-task-modal').classList.remove('hidden');
+    }
+
+    function closeAddTaskModal() {
+      document.getElementById('add-task-modal').classList.add('hidden');
+    }
+
+    async function submitNewTask() {
+      const description = document.getElementById('task-desc').value.trim();
+      const agent = document.getElementById('task-agent').value;
+      const criteria = document.getElementById('task-criteria').value.trim();
+
+      if (!description || !criteria) {
+        alert('Por favor completa la descripción y los criterios de aceptación.');
+        return;
       }
+
+      closeAddTaskModal();
+      await postAction({ action: 'add', description, agent, criteria });
     }
 
     function openModal() {
@@ -438,9 +502,83 @@ HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('action-modal').classList.add('hidden');
     }
 
-    // Inicializar y polling cada 3 segundos
-    fetchData();
-    setInterval(fetchData, 3000);
+    function openTerminal(title) {
+      document.getElementById('terminal-title').innerText = title;
+      document.getElementById('terminal-drawer').classList.remove('translate-y-full');
+    }
+
+    function closeTerminal() {
+      document.getElementById('terminal-drawer').classList.add('translate-y-full');
+    }
+
+    function clearTerminal() {
+      document.getElementById('terminal-content').innerHTML = '';
+    }
+
+    function appendTerminalLine(text) {
+      const c = document.getElementById('terminal-content');
+      const p = document.createElement('p');
+      if (text.includes('✅')) p.className = 'text-emerald-400';
+      else if (text.includes('❌')) p.className = 'text-rose-400 font-bold';
+      else if (text.includes('⚠️')) p.className = 'text-amber-400';
+      else if (text.includes('===') || text.includes('🚀')) p.className = 'text-indigo-400 font-semibold';
+      else p.className = 'text-neutral-300';
+      p.innerText = text;
+      c.appendChild(p);
+      c.scrollTop = c.scrollHeight;
+    }
+
+    function runDoctor(kickoff = false) {
+      openTerminal(kickoff ? 'Diagnóstico Pre-Vuelo (doctor --kickoff)' : 'Diagnóstico Integral (doctor)');
+      clearTerminal();
+      appendTerminalLine('🚀 Conectando y ejecutando diagnóstico en vivo...');
+
+      const url = kickoff ? '/api/doctor/stream?kickoff=1' : '/api/doctor/stream';
+      const eventSource = new EventSource(url);
+
+      eventSource.addEventListener('log', (e) => {
+        try {
+          const text = JSON.parse(e.data);
+          appendTerminalLine(text);
+        } catch (err) {}
+      });
+
+      eventSource.addEventListener('done', (e) => {
+        appendTerminalLine('───────────────────────────────────────────────────────');
+        appendTerminalLine('🏁 Diagnóstico finalizado.');
+        eventSource.close();
+      });
+
+      eventSource.onerror = () => {
+        appendTerminalLine('⚠️ Finalizada la transmisión de diagnóstico.');
+        eventSource.close();
+      };
+    }
+
+    // Inicializar SSE en tiempo real
+    function initSSE() {
+      if (window.EventSource) {
+        const source = new EventSource('/api/events');
+        source.addEventListener('state', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            renderAll(data);
+          } catch (err) {}
+        });
+        source.onerror = () => {
+          document.getElementById('sse-badge').innerText = '🔄 Reconectando...';
+          document.getElementById('sse-badge').className = 'text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono';
+        };
+        source.onopen = () => {
+          document.getElementById('sse-badge').innerText = '⚡ SSE Activo';
+          document.getElementById('sse-badge').className = 'text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono';
+        };
+      }
+    }
+
+    // Fallback de carga inicial
+    fetch('/api/status').then(r => r.json()).then(renderAll).catch(() => {});
+    initSSE();
   </script>
 </body>
 </html>
@@ -461,6 +599,75 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps(data).encode("utf-8"))
+        elif parsed.path == "/api/events":
+            # Conexión SSE reactiva en tiempo real
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "keep-alive")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            # Enviar estado inicial de inmediato
+            init_payload = json.dumps(get_current_data())
+            try:
+                self.wfile.write(f"event: state\ndata: {init_payload}\n\n".encode("utf-8"))
+                self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                return
+
+            client_queue = queue.Queue(maxsize=50)
+            with sse_lock:
+                sse_subscribers.append(client_queue)
+
+            try:
+                while not server_shutdown:
+                    try:
+                        msg = client_queue.get(timeout=1.0)
+                        self.wfile.write(f"event: state\ndata: {msg}\n\n".encode("utf-8"))
+                        self.wfile.flush()
+                    except queue.Empty:
+                        self.wfile.write(b": keepalive\n\n")
+                        self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+            finally:
+                with sse_lock:
+                    if client_queue in sse_subscribers:
+                        sse_subscribers.remove(client_queue)
+        elif parsed.path == "/api/doctor/stream":
+            # Streaming SSE de logs de ejecución de diagnóstico
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache")
+            self.send_header("Connection", "keep-alive")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+
+            params = parse_qs(parsed.query)
+            cmd = ["doctor"]
+            if "kickoff" in params:
+                cmd.append("--kickoff")
+
+            proc = subprocess.Popen(
+                ["bash", str(TASK_SH)] + cmd,
+                cwd=str(PROJECT_ROOT),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
+
+            try:
+                for line in proc.stdout:
+                    clean_line = line.rstrip("\r\n")
+                    self.wfile.write(f"event: log\ndata: {json.dumps(clean_line)}\n\n".encode("utf-8"))
+                    self.wfile.flush()
+                proc.wait()
+                self.wfile.write(f"event: done\ndata: {json.dumps({'code': proc.returncode})}\n\n".encode("utf-8"))
+                self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                proc.terminate()
         elif parsed.path == "/api/doctor":
             res = run_command(["doctor"])
             self.send_response(200)
@@ -488,18 +695,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
             action = payload.get("action")
             task_id = payload.get("taskId")
 
-            if action == "approve" and task_id:
+            if action == "add":
+                desc = payload.get("description", "").strip()
+                agent = payload.get("agent", "").strip()
+                criteria = payload.get("criteria", "").strip()
+                if not desc or not agent or not criteria:
+                    res = {"ok": False, "stderr": "Faltan campos requeridos (descripción, agente o criterios)"}
+                else:
+                    res = run_command(["add", desc, agent, criteria])
+                    if res["ok"]:
+                        broadcast_state()
+            elif action == "approve" and task_id:
                 cmd = ["approve", task_id]
                 if payload.get("status"):
                     cmd.extend(["--status", payload["status"]])
                 if payload.get("comment"):
                     cmd.extend(["--comment", payload["comment"]])
                 res = run_command(cmd)
+                if res["ok"]:
+                    broadcast_state()
             elif action == "hold" and task_id:
                 cmd = ["hold", task_id]
                 if payload.get("reason"):
                     cmd.append(payload["reason"])
                 res = run_command(cmd)
+                if res["ok"]:
+                    broadcast_state()
             else:
                 res = {"ok": False, "stderr": "Acción inválida"}
 
@@ -513,20 +734,30 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
 def main():
+    global server_shutdown
     import argparse
-    parser = argparse.ArgumentParser(description="Live Dashboard Server para SKILL MAESTRO")
+    parser = argparse.ArgumentParser(description="Live Dashboard Server 2.0 para SKILL MAESTRO")
     parser.add_argument("--port", type=int, default=4200, help="Puerto HTTP (por defecto 4200)")
     parser.add_argument("--host", default="127.0.0.1", help="Host bind (por defecto 127.0.0.1)")
     args = parser.parse_args()
 
+    # Iniciar observador de cambios en segundo plano
+    watcher = threading.Thread(target=start_file_watcher, daemon=True)
+    watcher.start()
+
     server_address = (args.host, args.port)
-    httpd = HTTPServer(server_address, DashboardHandler)
-    print(f"🚀 SKILL MAESTRO Live Dashboard activo en: http://{args.host}:{args.port}")
+    httpd = ThreadingHTTPServer(server_address, DashboardHandler)
+    print(f"🚀 SKILL MAESTRO Live Dashboard 2.0 activo en: http://{args.host}:{args.port}")
+    print("   • SSE Event Stream:   /api/events")
+    print("   • Streaming Doctor:   /api/doctor/stream")
+    print("   • Acciones Web:       /api/action (add, approve, hold)")
     print("   Presiona Ctrl+C para detener el servidor.")
+
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nDeteniendo servidor...")
+        server_shutdown = True
         httpd.server_close()
 
 if __name__ == "__main__":

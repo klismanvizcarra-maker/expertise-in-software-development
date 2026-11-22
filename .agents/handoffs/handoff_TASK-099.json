@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-099",
+  "summary": "Live Dashboard 2.0: Eventos en tiempo real SSE, creación de tareas y visor de terminal",
+  "source_agent": "frontend-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T13:16:55Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/dashboard-server.py" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "python3 .agents/scripts/dashboard-server.py --port 4329 >/dev/null 2>&1 & SPID=$!; sleep 1; curl -s -m 2 http://127.0.0.1:4329/api/events | grep -q 'event: state'; R=$?; kill $SPID 2>/dev/null; [ $R -eq 0 ]"
+  ]
+}
