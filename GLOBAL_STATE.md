@@ -74,6 +74,7 @@
 | `TASK-112` | Generador de Reportes de Cumplimiento Ejecutivo (task.sh audit report) | compliance-legal-agent | `DONE` | `0/3` | Implementar .agents/scripts/audit-report.py y comando task.sh audit report [--format html/md] [--output ruta] que consolida diagnostico en 5 fases, estado de gobernanza, salud del cerebro, cumplimiento de licencias y metricas; tests en test-scripts.sh pasando |
 | `TASK-113` | DevContainer Oficial para VS Code, Codespaces y Antigravity | devops-cloud-agent | `DONE` | `0/3` | Crear .devcontainer/devcontainer.json y Dockerfile con Node 22 LTS, Python 3, Git, puertos 4200/4201 y hooks preconfigurados; tests en test-scripts.sh pasando |
 | `TASK-114` | Fix: corregir variable de directorio temporal WORK en pruebas de openapi y audit report | qa-security-agent | `DONE` | `0/3` | Reemplazar TMP_DIR por WORK en test-scripts.sh para que las pruebas de contracts export openapi y audit report escriban en el directorio temporal correcto; 462/462 tests pasando |
+| `TASK-115` | Actualizar README y showcase con las 5 nuevas capacidades (TASK-109..113) y 462 tests | docs-architecture-agent | `DONE` | `0/3` | Actualizar badge de tests a 462 passing en README.md, documentar task.sh contracts export, brain fix, stress, audit report y devcontainer; tests y doctor en verde |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -386,3 +387,5 @@
 | `2026-11-22` | qa-security-agent | orchestrator-agent | `TASK-113` | Aprobada por QA -> DONE. Sin lección: devcontainer oficial implementado y validado. |
 | `2026-11-22` | qa-security-agent | devops-cloud-agent | `TASK-114` | Corregido uso de variable de directorio temporal en pruebas de openapi y audit report, logrando 462/462 tests pasando. Comandos: `bash tests/test-scripts.sh` |
 | `2026-11-22` | devops-cloud-agent | orchestrator-agent | `TASK-114` | Aprobada por QA -> DONE. Lección: LL-024. |
+| `2026-11-22` | docs-architecture-agent | qa-security-agent | `TASK-115` | Actualizado README.md con el nuevo conteo de 462 pruebas deterministas pasando y showcase ampliado para openapi, brain fix, stress, audit y devcontainer. Comandos: `grep -q '462 passing' README.md` |
+| `2026-11-22` | qa-security-agent | orchestrator-agent | `TASK-115` | Aprobada por QA -> DONE. Sin lección: documentacion de release y showcase actualizada. |
