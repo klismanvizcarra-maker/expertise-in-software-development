@@ -1,0 +1,39 @@
+{
+  "name": "SKILL MAESTRO Enterprise DevContainer",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+      },
+      "extensions": [
+        "ms-python.python",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "eamodio.gitlens",
+        "DavidAnson.vscode-markdownlint"
+      ]
+    }
+  },
+  "forwardPorts": [4200, 4201, 4390],
+  "portsAttributes": {
+    "4200": {
+      "label": "Live Dashboard 2.0",
+      "onAutoForward": "notify"
+    },
+    "4201": {
+      "label": "MCP Server SSE",
+      "onAutoForward": "silent"
+    },
+    "4390": {
+      "label": "Contracts Mock Server",
+      "onAutoForward": "silent"
+    }
+  },
+  "postCreateCommand": "chmod +x .agents/scripts/*.sh 2>/dev/null || true; ./.agents/scripts/install-hooks.sh || true",
+  "remoteUser": "node"
+}
