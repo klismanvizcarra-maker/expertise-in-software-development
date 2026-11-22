@@ -919,6 +919,142 @@ EOF_ARCH
 
   doctor)
     require_state
+    shift # descartar 'doctor'
+    KICKOFF=0
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --kickoff|-k|kickoff) KICKOFF=1; shift ;;
+        *) shift ;;
+      esac
+    done
+
+    if [ "$KICKOFF" -eq 1 ]; then
+      say "${BLUE}${BOLD}=== Diagnóstico Pre-Vuelo de Desarrollo (task.sh doctor --kickoff) ===${NC}"
+      say "Directorio: $PROJECT_ROOT"
+      say ""
+      KICKOFF_FAILED=0
+
+      # 1. Herramientas del entorno local
+      say "${BOLD}[1/5] Herramientas del Entorno Local...${NC}"
+      if command -v node >/dev/null 2>&1; then
+        NODE_VER=$(node -v 2>/dev/null || true)
+        NODE_MAJOR=$(printf '%s\n' "$NODE_VER" | sed 's/^v//' | cut -d. -f1)
+        if [ "${NODE_MAJOR:-0}" -ge 18 ]; then
+          say "  ${GREEN}✅ Node.js: $NODE_VER (>= 18.0.0)${NC}"
+        else
+          say "  ${YELLOW}⚠️  Node.js: $NODE_VER (recomendado >= 18.0.0)${NC}"
+        fi
+      else
+        say "  ${RED}❌ Node.js: no instalado (requerido para runtime de scripts y herramientas)${NC}"
+        KICKOFF_FAILED=1
+      fi
+
+      if command -v python3 >/dev/null 2>&1; then
+        PY_VER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")' 2>/dev/null || true)
+        PY_MAJOR=$(printf '%s\n' "$PY_VER" | cut -d. -f1)
+        PY_MINOR=$(printf '%s\n' "$PY_VER" | cut -d. -f2)
+        if [ "${PY_MAJOR:-0}" -ge 3 ] && [ "${PY_MINOR:-0}" -ge 10 ]; then
+          say "  ${GREEN}✅ Python 3: $PY_VER (>= 3.10.0)${NC}"
+        else
+          say "  ${YELLOW}⚠️  Python 3: $PY_VER (recomendado >= 3.10.0)${NC}"
+        fi
+      else
+        say "  ${RED}❌ Python 3: no instalado (requerido para linter de cerebro y dashboard)${NC}"
+        KICKOFF_FAILED=1
+      fi
+
+      if command -v git >/dev/null 2>&1; then
+        GIT_VER=$(git --version 2>/dev/null || true)
+        say "  ${GREEN}✅ Git: $GIT_VER${NC}"
+      else
+        say "  ${RED}❌ Git: no instalado (requerido para control de versiones y ramas de tareas)${NC}"
+        KICKOFF_FAILED=1
+      fi
+
+      if command -v docker >/dev/null 2>&1; then
+        if docker info >/dev/null 2>&1; then
+          DOCKER_VER=$(docker --version 2>/dev/null || true)
+          say "  ${GREEN}✅ Docker: $DOCKER_VER (daemon activo)${NC}"
+        else
+          say "  ${YELLOW}ℹ️  Docker: instalado pero el daemon no está activo (opcional)${NC}"
+        fi
+      else
+        say "  ${CYAN}ℹ️  Docker: no instalado (opcional para desarrollo local sin contenedores)${NC}"
+      fi
+
+      # 2. Repositorio Git y Gobernanza
+      say "${BOLD}[2/5] Repositorio Git y Gobernanza...${NC}"
+      if in_git; then
+        CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "desconocida")
+        say "  ${GREEN}✅ Repositorio Git inicializado (rama activa: $CURR_BRANCH)${NC}"
+        
+        GIT_HOOKS_DIR=$(git rev-parse --git-path hooks 2>/dev/null || echo "$PROJECT_ROOT/.git/hooks")
+        if [ -x "$GIT_HOOKS_DIR/pre-commit" ] && [ -x "$GIT_HOOKS_DIR/commit-msg" ]; then
+          say "  ${GREEN}✅ Git hooks de gobernanza activos (pre-commit, commit-msg)${NC}"
+        else
+          say "  ${YELLOW}⚠️  Git hooks no instalados o sin permisos ejecutables${NC}"
+          say "     Ejecuta: ./.agents/scripts/install-hooks.sh"
+        fi
+      else
+        say "  ${YELLOW}⚠️  No es un repositorio Git (ejecuta 'git init')${NC}"
+      fi
+
+      # 3. Disponibilidad de Puertos de Desarrollo
+      say "${BOLD}[3/5] Puertos de Desarrollo...${NC}"
+      check_port() {
+        local p="$1"
+        local label="$2"
+        if python3 -c "import socket; s = socket.socket(); s.settimeout(0.15); res = s.connect_ex(('127.0.0.1', $p)); s.close(); exit(0 if res != 0 else 1)" 2>/dev/null; then
+          say "  ${GREEN}✅ Puerto $p ($label): disponible${NC}"
+        else
+          say "  ${YELLOW}⚠️  Puerto $p ($label): actualmente en uso${NC}"
+        fi
+      }
+      check_port 4200 "Live Dashboard"
+      check_port 4201 "Servidor MCP SSE"
+      check_port 3000 "Servidor Web App / API"
+
+      # 4. Variables de Entorno y Configuración
+      say "${BOLD}[4/5] Configuración y Variables de Entorno...${NC}"
+      ENV_FOUND=0
+      for ef in .env .env.local .env.example; do
+        if [ -f "$PROJECT_ROOT/$ef" ]; then
+          say "  ${GREEN}✅ Archivo de configuración detectado: $ef${NC}"
+          ENV_FOUND=1
+          break
+        fi
+      done
+      if [ "$ENV_FOUND" -eq 0 ]; then
+        say "  ${YELLOW}ℹ️  No se detectó .env ni .env.example (crea uno si tu app usa variables)${NC}"
+      fi
+
+      # 5. Estado Global y Tareas Iniciales
+      say "${BOLD}[5/5] Estado Global del Proyecto...${NC}"
+      if [ -f "$STATE_FILE" ]; then
+        FASE=$(grep -E '^\- \*\*Fase Actual\*\*' "$STATE_FILE" | head -n 1 | sed 's/.*: `\{0,1\}//; s/`\{0,1\}$//' || true)
+        [ -n "$FASE" ] || FASE="No definida"
+        say "  ${GREEN}✅ GLOBAL_STATE.md presente (Fase: $FASE)${NC}"
+        TODO_COUNT=$(grep -c '`TODO`' "$STATE_FILE" || true)
+        say "  ${GREEN}✅ Tareas en TODO listas para iniciar: $TODO_COUNT${NC}"
+      else
+        say "  ${RED}❌ GLOBAL_STATE.md no encontrado en $PROJECT_ROOT${NC}"
+        KICKOFF_FAILED=1
+      fi
+
+      say ""
+      say "================================================================="
+      if [ "$KICKOFF_FAILED" -eq 0 ]; then
+        say "${GREEN}${BOLD}🚀 ¡Diagnóstico pre-vuelo completado! El entorno está listo para programar.${NC}"
+        say "   Próximos pasos recomendados:"
+        say "   • Ver tablero interactivo:  ./.agents/scripts/task.sh serve"
+        say "   • Iniciar primera tarea:    ./.agents/scripts/task.sh start TASK-XXX"
+        say "   • En tu asistente de IA:    ejecuta /iniciar-proyecto o /crear-plan"
+        exit 0
+      else
+        die "Se detectaron problemas críticos en el entorno (ver detalles arriba)."
+      fi
+    fi
+
     say "${BLUE}${BOLD}=== Diagnóstico General del Proyecto (task.sh doctor) ===${NC}"
     say "Directorio: $PROJECT_ROOT"
     say ""
@@ -1644,7 +1780,7 @@ else:
 =================================================================
   list                                   Ver el tablero
   metrics                                Progreso y salud de QA
-  doctor                                 Diagnóstico integral (estado, cerebro, secretos y skills)
+  doctor [--kickoff]                     Diagnóstico integral o pre-vuelo de desarrollo (--kickoff)
   diff [TASK-ID] [--stat]                Diff y estadísticas de la tarea frente a main
   dashboard [--output ruta]              Genera un visor visual interactivo (HTML) del proyecto
   serve [--port N]                       Inicia servidor local con Live Dashboard y acciones en tiempo real

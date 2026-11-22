@@ -33,10 +33,15 @@ LANG_CHOICE="es"
 IS_UPDATE=0
 IS_ADOPT=0
 INSTALL_CI=0
+IS_INTERACTIVE=0
 
 positional=()
 while [ $# -gt 0 ]; do
   case "$1" in
+    --interactive|-i)
+      IS_INTERACTIVE=1
+      shift
+      ;;
     --lang)
       if [ -z "${2:-}" ] || [ "${2#-}" != "$2" ]; then
         echo "❌ ERROR: --lang requiere un valor (en o es)." >&2
@@ -144,6 +149,68 @@ elif [ "$IS_ADOPT" -eq 1 ]; then
 else
   [ -n "${positional[0]:-}" ] && PROJECT_NAME="${positional[0]}"
   [ -n "${positional[1]:-}" ] && TARGET_DIR="${positional[1]}"
+fi
+
+if [ "$IS_INTERACTIVE" -eq 1 ]; then
+  echo "╔═══════════════════════════════════════════════════════════════════╗"
+  echo "║     Asistente Interactivo de Inicialización SKILL MAESTRO         ║"
+  echo "╚═══════════════════════════════════════════════════════════════════╝"
+  echo ""
+  if [ "$IS_ADOPT" -eq 0 ]; then
+    printf '1. Nombre del proyecto [%s]: ' "$PROJECT_NAME"
+    read -r RESP_NAME || true
+    [ -n "$RESP_NAME" ] && PROJECT_NAME="$RESP_NAME"
+    printf '2. Directorio de destino [%s]: ' "$TARGET_DIR"
+    read -r RESP_DIR || true
+    [ -n "$RESP_DIR" ] && TARGET_DIR="$RESP_DIR"
+  fi
+
+  if [ -z "$SELECTED_STACK" ]; then
+    echo ""
+    echo "3. Selecciona el stack tecnológico:"
+    echo "  1) Next.js 15 (React 19, Tailwind, Prisma, PostgreSQL)"
+    echo "  2) Angular 22 (Express 5, Drizzle, PostgreSQL)"
+    echo "  3) FastAPI (Python, SQLAlchemy 2, PostgreSQL)"
+    echo "  4) Nuxt 3 (Vue 3, Nitro, Drizzle, PostgreSQL)"
+    echo "  5) React 19 + Vite (Node, Tailwind)"
+    echo "  6) NestJS (TypeScript, Prisma, PostgreSQL)"
+    echo "  7) Definir después en /iniciar-proyecto"
+    printf 'Opción [1-7] (por defecto 1): '
+    read -r RESP_STACK || true
+    case "$RESP_STACK" in
+      2) SELECTED_STACK="angular" ;;
+      3) SELECTED_STACK="fastapi" ;;
+      4) SELECTED_STACK="nuxt" ;;
+      5) SELECTED_STACK="react-vite" ;;
+      6) SELECTED_STACK="nestjs" ;;
+      7) SELECTED_STACK="" ;;
+      *) SELECTED_STACK="nextjs" ;;
+    esac
+  fi
+
+  echo ""
+  printf '4. Idioma de plantillas y reglas (1: es [Español], 2: en [English]) [1]: '
+  read -r RESP_LANG || true
+  case "$RESP_LANG" in
+    2|en) LANG_CHOICE="en" ;;
+    *) LANG_CHOICE="es" ;;
+  esac
+
+  echo ""
+  printf '5. ¿Instalar pipeline CI de GitHub Actions? (s/N): '
+  read -r RESP_CI || true
+  case "$RESP_CI" in
+    s|S|y|Y) INSTALL_CI=1 ;;
+    *) INSTALL_CI=0 ;;
+  esac
+
+  echo ""
+  printf '6. ¿Copiar archivos físicamente (--copy)? Recomendado para portabilidad (s/N): '
+  read -r RESP_CP || true
+  case "$RESP_CP" in
+    s|S|y|Y) LINK_MODE="copy" ;;
+    *) LINK_MODE="symlink" ;;
+  esac
 fi
 CURRENT_DATE=$(date +"%Y-%m-%d")
 
