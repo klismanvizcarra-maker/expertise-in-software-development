@@ -1,0 +1,14 @@
+{
+  "task_id": "TASK-082",
+  "summary": "Evals de activacion contra Claude real para las 15 skills de FASE 4 y FASE 5",
+  "source_agent": "qa-security-agent",
+  "target_agent": "orchestrator-agent",
+  "timestamp": "2026-11-22T15:27:50Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" }
+  ],
+  "verification_commands": [
+    "[ -f tests/triggers/results/2026-11-20_2153-claude.json ]"
+  ]
+}
