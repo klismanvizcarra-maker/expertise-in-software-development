@@ -1,0 +1,52 @@
+name: CI Self-Healing Pipeline
+
+on:
+  workflow_run:
+    workflows: ["Librería"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  diagnose-and-heal:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 24
+
+      - name: Setup Python
+        uses: actions/setup-python@0b93645e9fb717ef6f147a7545b4c5832376322c # v5.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Configurar identidad git
+        run: |
+          git config --global user.email "ci-bot@skill-maestro.dev"
+          git config --global user.name "SKILL MAESTRO Self-Heal Bot"
+
+      - name: Ejecutar diagnóstico y auto-sanación de CI
+        run: |
+          echo "=== Analizando última ejecución de CI ==="
+          bash .agents/scripts/auto-heal-ci.sh --create-task --auto-fix
+
+      - name: Persistir tarea de corrección /bugfix si hubo cambios
+        run: |
+          if [ -n "$(git status --porcelain GLOBAL_STATE.md)" ]; then
+            git add GLOBAL_STATE.md
+            git commit -m "chore(ci): registrar tarea automatica de reparacion /bugfix tras fallo de CI"
+            git push origin HEAD || true
+          else
+            echo "Sin cambios necesarios en GLOBAL_STATE.md"
+          fi
