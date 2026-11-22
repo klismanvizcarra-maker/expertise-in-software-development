@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-109",
+  "summary": "Exportador de OpenAPI 3.1 / Swagger desde contracts.json (task.sh contracts export openapi)",
+  "source_agent": "backend-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T15:40:21Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/contracts-openapi.py" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/task.sh contracts export openapi --file .agents/templates/contracts_template.json | grep -q 'openapi.*3.1.0'"
+  ]
+}
