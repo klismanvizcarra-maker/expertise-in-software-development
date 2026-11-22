@@ -813,3 +813,90 @@ brain_lint() {
   say "✅ [brain lint] 0 violaciones de antipatrones del cerebro detectadas."
   return 0
 }
+
+brain_fix() {
+  local target_paths=("$@")
+  local fixed_count=0
+  local files=()
+
+  if [ ${#target_paths[@]} -eq 0 ]; then
+    while IFS= read -r f; do
+      [ -f "$f" ] && files+=("$f")
+    done < <(git ls-files --cached --others --exclude-standard 2>/dev/null || find . -type f -not -path '*/.*/*')
+  else
+    for p in "${target_paths[@]}"; do
+      if [ -f "$p" ]; then
+        files+=("$p")
+      elif [ -d "$p" ]; then
+        while IFS= read -r f; do
+          [ -f "$f" ] && files+=("$f")
+        done < <(find "$p" -type f)
+      fi
+    done
+  fi
+
+  [ ${#files[@]} -gt 0 ] || { say "ℹ️  No hay archivos que procesar para brain fix."; return 0; }
+
+  for f in "${files[@]}"; do
+    case "$f" in
+      *.sh)
+        local bn
+        bn="$(basename "$f")"
+        if [ "$bn" = "test-scripts.sh" ] || [ "$bn" = "brain-lib.sh" ] || [ "$bn" = "task.sh" ]; then
+          continue
+        fi
+
+        local tmp_fixed
+        tmp_fixed="$(mktemp "${TMPDIR:-/tmp}/brain_fix.XXXXXX")" || continue
+
+        python3 -c '
+import sys, re
+
+path = sys.argv[1]
+out_path = sys.argv[2]
+fixes = 0
+
+with open(path, "r", encoding="utf-8", errors="replace") as fin:
+    lines = fin.readlines()
+
+new_lines = []
+for line in lines:
+    orig = line
+    # LL-001: awk con \s -> [[:space:]]
+    if "awk" in line and "\\s" in line:
+        line = line.replace("\\s", "[[:space:]]")
+    # LL-007: sed y/// -> sed sustituciones portables
+    if re.search(r"sed\s+.*y/[^/]+/[^/]+/", line):
+        line = re.sub(r"sed\s+([^\s]*)\s*y/áéíóúÁÉÍÓÚ/aeiouAEIOU/", r"sed \1 -e \"s/[áàäâ]/a/g; s/[éèëê]/e/g; s/[íìïî]/i/g; s/[óòöô]/o/g; s/[úùüû]/u/g; s/[ÁÀÄÂ]/A/g; s/[ÉÈËÊ]/E/g; s/[ÍÌÏÎ]/I/g; s/[ÓÒÖÔ]/O/g; s/[ÚÙÜÛ]/U/g; s/ñ/n/g; s/Ñ/N/g\"", line)
+    
+    if line != orig:
+        fixes += 1
+    new_lines.append(line)
+
+with open(out_path, "w", encoding="utf-8") as fout:
+    fout.writelines(new_lines)
+
+print(fixes)
+' "$f" "$tmp_fixed" > "${tmp_fixed}.count" 2>/dev/null
+
+        local cnt
+        cnt="$(cat "${tmp_fixed}.count" 2>/dev/null || echo 0)"
+        rm -f "${tmp_fixed}.count"
+
+        if [ "$cnt" -gt 0 ]; then
+          cat "$tmp_fixed" > "$f"
+          fixed_count=$((fixed_count + cnt))
+          say "🩹 [LL-FIX] Corregido(s) $cnt antipatrón(es) en $f"
+        fi
+        rm -f "$tmp_fixed"
+        ;;
+    esac
+  done
+
+  if [ "$fixed_count" -gt 0 ]; then
+    say "✅ [brain fix] Se corrigieron automáticamente $fixed_count antipatrón(es) en el código."
+  else
+    say "✅ [brain fix] No se requirieron correcciones. Código limpio de antipatrones detectables."
+  fi
+  return 0
+}
