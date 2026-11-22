@@ -1,0 +1,40 @@
+name: Publicar en NPM
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Configurar identidad de git para tests
+        run: |
+          git config --global user.email ci@example.com
+          git config --global user.name ci
+
+      - name: Auditoría previa y batería de pruebas
+        run: |
+          node tests/test-mcp.mjs
+          bash tests/test-skills.sh
+          bash tests/test-scripts.sh
+
+      - name: Publicar paquete en NPM con Provenance
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

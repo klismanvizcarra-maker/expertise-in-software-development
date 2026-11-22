@@ -3,10 +3,12 @@
 <div align="center">
 
 [![CI Audit](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions/workflows/audit.yml/badge.svg)](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions)
+[![npm version](https://img.shields.io/npm/v/skill-maestro.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/skill-maestro)
 ![Version](https://img.shields.io/badge/version-v2.0.0-blue.svg?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-435%20passing-success.svg?style=flat-square)
 ![Skills](https://img.shields.io/badge/skills-56%20expertos-success.svg?style=flat-square)
 ![Architecture](https://img.shields.io/badge/governance-multi--agent-purple.svg?style=flat-square)
-![Protocol](https://img.shields.io/badge/protocol-MCP%20Native-yellow.svg?style=flat-square)
+![Protocol](https://img.shields.io/badge/protocol-MCP%20v2%20SSE-yellow.svg?style=flat-square)
 ![AI Compatibility](https://img.shields.io/badge/AI-Claude%20Code%20%7C%20Antigravity-orange.svg?style=flat-square)
 ![Creator](https://img.shields.io/badge/creator-Klisman%20Vizcarra-cyan.svg?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)
@@ -31,65 +33,82 @@
  */
 ```
 
-> **Sistema operativo multi-agente determinista para Claude Code y Antigravity**. Convierte a los asistentes de IA en un equipo de ingeniería coordinado: 17 roles especializados, 56 skills, servidor MCP nativo, Live Dashboard interactivo, orquestador de enjambres concurrentes (`task.sh swarm`), ciclo de vida estricto, veto de QA independiente y memoria persistente que recuerda errores pasados.
+> **Sistema operativo multi-agente determinista para Claude Code y Antigravity**. Convierte a los asistentes de IA en un equipo de ingeniería coordinado: 17 roles especializados, 56 skills, servidor MCP v2 nativo (stdio + SSE HTTP), Live Dashboard 2.0 con eventos reactivos en tiempo real, orquestador de enjambres concurrentes en ramas aisladas (`task.sh swarm`), ciclo de vida estricto, veto de QA independiente y memoria persistente que recuerda errores pasados.
+
+---
+
+## 🏛️ Arquitectura del Sistema v2.0
+
+```text
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │                         SKILL MAESTRO v2.0 CORE                             │
+ └──────┬──────────────────────┬──────────────────────┬─────────────────┬──────┘
+        │                      │                      │                 │
+        ▼                      ▼                      ▼                 ▼
+ ┌──────────────┐      ┌──────────────┐      ┌──────────────┐    ┌──────────────┐
+ │  GLOBAL CLI  │      │  MCP SERVER  │      │  LIVE DASH   │    │  SWARM ENGINE│
+ │ skill-maestro│      │ stdio / SSE  │      │  Web 2.0 SSE │    │   Workspaces │
+ ├──────────────┤      ├──────────────┤      ├──────────────┤    ├──────────────┤
+ │ • init/adopt │      │ • 14 Tools   │      │ • Kanban SSE │    │ • task spawn │
+ │ • wizard CLI │      │ • Resources  │      │ • Add Task   │    │ • worktrees  │
+ │ • kickoff    │      │ • Prompts    │      │ • Log Stream │    │ • safe merge │
+ └──────────────┘      └──────────────┘      └──────────────┘    └──────────────┘
+        │                      │                      │                 │
+        └──────────────────────┼──────────────────────┼─────────────────┘
+                               ▼
+        ┌──────────────────────────────────────────────┐
+        │        GOBERNANZA & MEMORIA DETERMINISTA      │
+        ├──────────────────────────────────────────────┤
+        │ • AGENTS.md        : Leyes inviolables y veto│
+        │ • GLOBAL_STATE.md  : SSOT y tablero Kanban   │
+        │ • BRAIN.md         : Lecciones activas (LL)  │
+        │ • contracts.json   : Contratos inter-agente  │
+        └──────────────────────────────────────────────┘
+```
 
 ---
 
 ## 🚀 Cómo Cargar en tu Proyecto (Quickstart)
 
 > [!TIP]
-> Puedes usar **`npx skill-maestro`** directamente (sin clonar el repositorio) o usar el instalador de `bash`. Compatible con macOS, Linux y Windows (WSL 2).
+> Puedes usar **`npx skill-maestro`** directamente (sin clonar el repositorio) o usar los scripts locales de `bash`. Compatible con macOS, Linux y Windows (WSL 2).
 
 ### ⚡ Opción 1: Ejecución Directa con NPX (Recomendada)
-```bash
-# Inicializar en un proyecto nuevo con stack preconfigurado y CI:
-npx skill-maestro init "Mi Proyecto" ./mi-nuevo-proyecto --stack nextjs --ci
 
-# Adoptar un repositorio existente (Brownfield):
+```bash
+# 1. Inicializar con el Asistente Interactivo (te guía paso a paso):
+npx skill-maestro init
+
+# O con parámetros directos para scripts o CI:
+npx skill-maestro init "Mi Proyecto" ./mi-nuevo-proyecto --stack nextjs --lang es --ci
+
+# 2. Adoptar un repositorio existente (Brownfield sin tocar tu código):
 npx skill-maestro adopt ./mi-repositorio-existente
 
-# Iniciar Live Dashboard Kanban interactivo en tiempo real:
+# 3. Diagnóstico pre-vuelo del entorno local (Node, Python, Git, Docker, puertos):
+npx skill-maestro kickoff
+
+# 4. Iniciar Live Dashboard 2.0 interactivo con sincronización reactiva SSE:
 npx skill-maestro serve --port 4200
 
-# Arrancar el servidor MCP nativo (Model Context Protocol):
-npx skill-maestro mcp
+# 5. Arrancar el servidor MCP v2 (Model Context Protocol con stdio o SSE):
+npx skill-maestro mcp --port 4201
 ```
 
-### 📦 Opción 2: Clonando el Repositorio
+### 📦 Opción 2: Desde el Repositorio Clonado
+
 ```bash
-# 1. Clona el repositorio de la librería
+# 1. Clona el repositorio
 git clone https://github.com/klismanvizcarra-maker/expertise-in-software-development.git skill-maestro
 
-# 2. Inicializa tu proyecto con stack preconfigurado y CI automatizado
-#    Stacks disponibles: nextjs, angular, fastapi, nuxt, react-vite, nestjs
-./skill-maestro/.agents/scripts/init-project.sh "Mi Proyecto" ./mi-nuevo-proyecto --stack nextjs --ci
+# 2. Inicializa tu proyecto nuevo o adopta uno existente
+./skill-maestro/.agents/scripts/init-project.sh "Mi Proyecto" ./mi-nuevo-proyecto --stack nextjs --copy
 
-# 3. Entra a tu proyecto e instala los hooks de protección de gobernanza
+# 3. Entra a tu proyecto e instala los hooks de protección
 cd ./mi-nuevo-proyecto && ./.agents/scripts/install-hooks.sh
 
 # 4. Abre tu asistente de IA (Claude Code o Antigravity IDE) y ejecuta:
 /iniciar-proyecto
-```
-
-### 2. En un Proyecto Existente (Brownfield)
-```bash
-# 1. Clona la librería (si aún no la tienes)
-git clone https://github.com/klismanvizcarra-maker/expertise-in-software-development.git skill-maestro
-
-# 2. Adopta tu repositorio existente (conserva tu código, dependencias y configuración intactas)
-./skill-maestro/.agents/scripts/init-project.sh --adopt ./tu-proyecto-existente
-
-# 3. Entra e instala los hooks
-cd ./tu-proyecto-existente && ./.agents/scripts/install-hooks.sh
-
-# 4. Abre tu asistente de IA y ejecuta:
-/adoptar-proyecto
-```
-
-### 3. Actualizar la Librería en un Proyecto Activo
-```bash
-# Sincroniza las 56 skills, scripts y plantillas a la última versión
-./skill-maestro/.agents/scripts/init-project.sh --update ./tu-proyecto
 ```
 
 ---
@@ -99,7 +118,7 @@ import type { GovernanceFramework, AutonomousAgentSuite } from "@skill-maestro/c
 
 export const FrameworkConfig: GovernanceFramework = {
   name: "SKILL MAESTRO",
-  version: "1.5.0",
+  version: "2.0.0",
   creator: "Klisman Vizcarra",
   architecture: "Deterministic Multi-Agent Governance & Continuous Learning",
   
@@ -119,6 +138,7 @@ export const FrameworkConfig: GovernanceFramework = {
     antiDeadlockLimit: 3,              // Máximo 3 rechazos -> escalamiento a humano
     mandatoryLearning: true,           // Lecciones aprendidas obligatorias ante defectos
     activeBrainLinting: true,          // Auditoría estricta de antipatrones en el código
+    concurrentSwarmIsolation: true,    // Aislamiento de agentes en git worktrees dedicados
   }
 };
 ```
@@ -164,11 +184,18 @@ export const FrameworkConfig: GovernanceFramework = {
   "governance": {
     "AGENTS.md": "Reglas de oro, matriz de propiedad de código y protocolos de veto",
     "GLOBAL_STATE.md": "Fuente única de verdad: fases, tablero Kanban y contratos activos",
-    "BRAIN.md": "Memoria persistente: lecciones (LL-XXX), deuda técnica (TD-XXX) y preferencias"
+    "BRAIN.md": "Memoria persistente: lecciones (LL-XXX), deuda técnica (TD-XXX) y preferencias",
+    "contracts.json": "Contratos API formalizados entre especialistas frontend/backend"
   },
   "cli": {
-    "task.sh": "Comandos deterministas: add, start, hold, approve, handoff, reject, close, doctor, dashboard...",
-    "pre-commit": "Escaneo automático de secretos y validación estructural de estado antes de cada commit"
+    "skill-maestro": "CLI global multiplataforma: init, adopt, kickoff, serve, swarm, mcp, doctor",
+    "task.sh": "Comandos deterministas: add, start, hold, approve, handoff, reject, close, swarm..."
+  },
+  "mcp": {
+    "version": "2.0.0",
+    "transports": ["stdio", "sse-http"],
+    "resources": ["maestro://state", "maestro://brain", "maestro://contracts", "maestro://preferences"],
+    "prompts": ["start_task", "handoff_task", "qa_review"]
   },
   "skills": {
     "roles": 17,
@@ -205,11 +232,12 @@ export const FrameworkConfig: GovernanceFramework = {
 ## 🛠️ CLI de Control de Tareas (`task.sh`)
 
 ```bash
-# Tablero y Métricas
+# Tablero y Diagnóstico
 ./.agents/scripts/task.sh list                     # Ver estado del tablero Kanban
 ./.agents/scripts/task.sh metrics                  # Reporte de progreso y salud de QA
 ./.agents/scripts/task.sh doctor                   # Diagnóstico integral en 5 fases (exit 0/1)
-./.agents/scripts/task.sh dashboard                # Genera dashboard interactivo HTML autónomo
+./.agents/scripts/task.sh doctor --kickoff         # Chequeo pre-vuelo de herramientas y puertos
+./.agents/scripts/task.sh serve --port 4200        # Live Dashboard 2.0 interactivo con SSE
 
 # Ciclo de Vida
 ./.agents/scripts/task.sh add "<desc>" "<agente>" "<criterios>"  # Crear tarea (TODO)
@@ -217,6 +245,11 @@ export const FrameworkConfig: GovernanceFramework = {
 ./.agents/scripts/task.sh handoff TASK-XXX         # Entregar a revisión independiente de QA
 ./.agents/scripts/task.sh reject TASK-XXX "<motivo>" # Rechazar entrega (+1 iteración hasta 3/3)
 ./.agents/scripts/task.sh close TASK-XXX           # Aprobar y cerrar (DONE) con lección requerida
+
+# Enjambres Concurrentes (Swarm)
+./.agents/scripts/task.sh swarm status             # Inspeccionar agentes y ramas activas
+./.agents/scripts/task.sh swarm spawn TASK-XXX     # Crear workspace aislado en git worktree
+./.agents/scripts/task.sh swarm merge TASK-XXX     # Fusión segura --no-ff a main y poda
 
 # Cerebro y Memoria Persistente
 ./.agents/scripts/task.sh brain for TASK-XXX       # Consultar lecciones relevantes para la tarea
@@ -229,11 +262,12 @@ export const FrameworkConfig: GovernanceFramework = {
 
 ## 🧪 Batería de Pruebas y Validación Continua
 
-El ecosistema se somete a una suite rigurosa de 416 pruebas deterministas:
+El ecosistema se somete a una suite rigurosa de **435 pruebas deterministas**:
 
 ```bash
-# 1. Validación de scripts, hooks y cerebro persistente
+# 1. Validación de scripts, hooks, servidor MCP v2 y Live Dashboard
 LC_ALL=C bash tests/test-scripts.sh
+node tests/test-mcp.mjs
 
 # 2. Simulación del ciclo completo de vida y reglas de veto
 bash tests/test-flow.sh
