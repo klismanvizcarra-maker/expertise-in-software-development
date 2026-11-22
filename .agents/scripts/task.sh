@@ -1566,8 +1566,62 @@ else:
         fi
         ;;
 
+      merge)
+        require_state
+        TID="${3:-}"
+        [ -n "$TID" ] || die "Falta el ID de tarea."$'\n'"   Uso: ./task.sh swarm merge TASK-XXX"
+        TID=$(normalize_id "$TID")
+        require_task "$TID"
+
+        CUR_STATUS=$(task_field "$TID" 5)
+        if [ "$CUR_STATUS" != "DONE" ]; then
+          die "La tarea $TID está en estado '$CUR_STATUS'. Solo las tareas aprobadas por QA en 'DONE' pueden fusionarse con swarm merge."
+        fi
+
+        if ! in_git; then
+          die "swarm merge requiere un repositorio git."
+        fi
+
+        BRANCH=$(git branch --format="%(refname:short)" | grep -i "$TID" | head -1 || true)
+        [ -n "$BRANCH" ] || die "No se encontró una rama git local asociada a $TID."
+
+        if [ -f "$PROJECT_ROOT/contracts.json" ]; then
+          say "-> Validando contratos de integración previos a la fusión..."
+          "$0" contracts validate "$PROJECT_ROOT/contracts.json" >/dev/null 2>&1 \
+            || die "❌ Error de validación en contracts.json. Resuelve las discrepancias antes de fusionar."
+        fi
+
+        WS_DIR="$PROJECT_ROOT/.agents/workspaces/$TID"
+        if [ -d "$WS_DIR" ]; then
+          git worktree remove "$WS_DIR" --force 2>/dev/null || rm -rf "$WS_DIR"
+          git worktree prune 2>/dev/null || true
+        fi
+
+        TARGET_MAIN="main"
+        if ! git show-ref --verify --quiet "refs/heads/main"; then
+          if git show-ref --verify --quiet "refs/heads/master"; then
+            TARGET_MAIN="master"
+          fi
+        fi
+
+        CURR_B=$(git branch --show-current 2>/dev/null || true)
+        if [ "$CURR_B" != "$TARGET_MAIN" ]; then
+          git checkout "$TARGET_MAIN" >/dev/null 2>&1 \
+            || die "No se pudo cambiar a $TARGET_MAIN para la fusión (¿cambios locales sin guardar?)."
+        fi
+
+        say "-> Fusionando $BRANCH a $TARGET_MAIN con trazabilidad (--no-ff)..."
+        git merge --no-ff "$BRANCH" -m "chore($TID): fusionar tarea completada a $TARGET_MAIN" >/dev/null 2>&1 \
+          || die "Conflicto o error al fusionar $BRANCH en $TARGET_MAIN. Resuelve el conflicto manualmente."
+
+        git branch -d "$BRANCH" >/dev/null 2>&1 || git branch -D "$BRANCH" >/dev/null 2>&1 || true
+
+        say "🐝 Enjambre: Tarea $TID fusionada e integrada exitosamente a $TARGET_MAIN."
+        say "   Rama eliminada: $BRANCH"
+        ;;
+
       *)
-        die "Comando swarm desconocido: '$sub'"$'\n'"   Uso: ./task.sh swarm [status|list|spawn TASK-XXX|clean [TASK-XXX]]"
+        die "Comando swarm desconocido: '$sub'"$'\n'"   Uso: ./task.sh swarm [status|list|spawn TASK-XXX|merge TASK-XXX|clean [TASK-XXX]]"
         ;;
     esac
     ;;
@@ -1614,7 +1668,7 @@ else:
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
   contracts [validate] [ruta]            Valida contratos API y DTOs (contracts.json por defecto)
-  swarm [status|list|spawn|clean]        Coordina enjambres concurrentes de agentes y workspaces aislados
+  swarm [status|list|spawn|merge|clean]  Coordina enjambres concurrentes de agentes y workspaces aislados
   check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones
                                          de esas rutas; exit 2 si alguna está bloqueada (Antigravity)
   brain search <términos...>             Busca en lecciones, gotchas y deuda

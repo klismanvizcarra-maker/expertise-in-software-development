@@ -1260,6 +1260,9 @@ check "task.sh swarm con subcomando desconocido falla con exit 1" '! $T swarm in
 check "task.sh swarm spawn sin ID falla con exit 1" '! $T swarm spawn >/dev/null 2>&1'
 check "task.sh swarm spawn crea un workspace aislado bajo .agents/workspaces/" '$T add "Tarea swarm aislado" "backend-agent" "criterios" >/dev/null && TSWARM=$(grep "Tarea swarm aislado" GLOBAL_STATE.md | grep -oE "TASK-[0-9]+" | head -1) && $T swarm spawn "$TSWARM" >/dev/null && [ -d ".agents/workspaces/$TSWARM" ]'
 check "task.sh swarm clean limpia el workspace aislado de la tarea" '$T swarm clean "$TSWARM" >/dev/null && [ ! -d ".agents/workspaces/$TSWARM" ]'
+check "task.sh swarm merge sin ID falla con exit 1" '! $T swarm merge >/dev/null 2>&1'
+check "task.sh swarm merge sobre tarea no DONE falla con exit 1" '! $T swarm merge "$TSWARM" >/dev/null 2>&1'
+check "task.sh swarm merge sobre tarea DONE fusiona a main exitosamente" 'mkdir -p .agents/reviews && printf "# Reporte\n- **Tarea**: %s\n- **Revisor**: qa-security-agent\n- **Veredicto**: APROBADO\n" "$TSWARM" > ".agents/reviews/qa_${TSWARM}.md" && $T handoff "$TSWARM" >/dev/null && $T close "$TSWARM" --no-lesson "test" >/dev/null && $T swarm merge "$TSWARM" >/dev/null && ! git branch --format="%(refname:short)" | grep -q "$TSWARM"'
 
 cd "$WORK" || exit 1
 
