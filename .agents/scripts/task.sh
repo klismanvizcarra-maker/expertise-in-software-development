@@ -1907,6 +1907,22 @@ else:
     exec python3 "$STRESS_SCRIPT" "${@:2}"
     ;;
 
+  audit)
+    sub="${2:-report}"
+    case "$sub" in
+      report)
+        shift 2
+        AUDIT_SCRIPT="$SCRIPT_DIR/audit-report.py"
+        [ -f "$AUDIT_SCRIPT" ] || AUDIT_SCRIPT="$PROJECT_ROOT/.agents/scripts/audit-report.py"
+        [ -f "$AUDIT_SCRIPT" ] || die "Script audit-report.py no encontrado."
+        exec python3 "$AUDIT_SCRIPT" "$@"
+        ;;
+      *)
+        die "Comando audit desconocido: '$sub'"$'\n'"   Uso: ./task.sh audit report [--format html|md] [--output ruta]"
+        ;;
+    esac
+    ;;
+
   help|-h|--help|*)
     # Un comando desconocido (errata como 'clsoe') no puede parecer un éxito: ayuda por stderr y exit 1
     HELP_RC=0
@@ -1951,6 +1967,7 @@ else:
   contracts [validate|mock|export] [ruta] Valida contratos API, inicia mock server o exporta a OpenAPI 3.1
   seed [--count N] [--format json|sql]   Genera datos sintéticos realistas para pruebas y persistencia
   stress [--url URL] [-c N] [-n N]       Simulador de carga HTTP y resiliencia (p50/p95/p99)
+  audit report [--format html|md]        Genera reporte ejecutivo de cumplimiento y auditoría
   swarm [status|list|spawn|run|merge|clean] Coordina enjambres concurrentes de agentes y workspaces aislados
   check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones
                                          de esas rutas; exit 2 si alguna está bloqueada (Antigravity)
