@@ -1270,7 +1270,20 @@ check "task.sh seed --format sql genera sentencias SQL válidas" '$T seed --coun
 check "task.sh seed --count 0 falla con exit 1" '! $T seed --count 0 >/dev/null 2>&1'
 check "task.sh seed con formato inválido falla con exit 2" '! $T seed --format invalid_fmt >/dev/null 2>&1'
 
-# 11. task.sh swarm
+# 11. task.sh stress
+$T contracts mock --port 4395 --file "$ROOT/.agents/templates/contracts_template.json" >/dev/null 2>&1 &
+STRESS_PID=$!
+for _wait_idx in 1 2 3 4 5 6 7 8 9 10; do
+  curl -s http://127.0.0.1:4395/__health >/dev/null 2>&1 && break
+  sleep 0.2
+done
+check "task.sh stress evalúa latencias y devuelve métricas en texto" '$T stress --url http://127.0.0.1:4395/__health -c 2 -n 6 | grep -q "Resiliencia Aprobada"'
+check "task.sh stress --json genera métricas estructuradas con p50 y p95" '$T stress --url http://127.0.0.1:4395/__health -c 2 -n 6 --json | grep -q "\"p50\""'
+check "task.sh stress con concurrencia inválida falla con exit 1" '! $T stress --concurrency 0 >/dev/null 2>&1'
+check "bin/skill-maestro.js stress funciona a través del CLI global" 'node "$ROOT/bin/skill-maestro.js" stress --url http://127.0.0.1:4395/__health -c 2 -n 4 --json | grep -q "\"requests_per_second\""'
+kill $STRESS_PID 2>/dev/null || true
+
+# 12. task.sh swarm
 check "task.sh swarm status muestra el estado del enjambre" '$T swarm status | grep -q "Enjambre Multi-Agente"'
 check "task.sh swarm list lista las tareas en formato estructurado" '$T swarm list | grep -q "ID	AGENTE	ESTADO"'
 check "task.sh swarm con subcomando desconocido falla con exit 1" '! $T swarm invalid_cmd >/dev/null 2>&1'
