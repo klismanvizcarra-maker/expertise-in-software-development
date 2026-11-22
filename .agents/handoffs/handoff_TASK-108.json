@@ -1,0 +1,19 @@
+{
+  "task_id": "TASK-108",
+  "summary": "Release v2.1.0 Enterprise: bump de version, CHANGELOG con tareas TASK-098..107, showcase README y archivo del tablero",
+  "source_agent": "docs-architecture-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T15:36:35Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/VERSION" },
+    { "type": "file", "path": ".agents/archive/tasks_2026-11-22.md" },
+    { "type": "file", "path": "CHANGELOG.md" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "README.md" },
+    { "type": "file", "path": "package.json" }
+  ],
+  "verification_commands": [
+    "grep -q '2.1.0' .agents/VERSION"
+  ]
+}
