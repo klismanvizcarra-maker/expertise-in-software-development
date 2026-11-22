@@ -1218,7 +1218,10 @@ printf '#!/usr/bin/env bash\nsed "y/á/a/" test.txt\n' > bad_sed.sh
 check "task.sh brain lint detecta antipatrón LL-007 (sed y///) y sale con 1" '! $T brain lint bad_sed.sh >/dev/null 2>&1'
 printf '#!/usr/bin/env bash\nawk "{ print \$1 }" test.txt\n' > clean.sh
 check "task.sh brain lint sale con 0 en script sin antipatrones" '$T brain lint clean.sh >/dev/null'
-rm -f bad_awk.sh bad_sed.sh clean.sh
+printf '#!/usr/bin/env bash\nawk "{ print \\s }" test.txt\n' > fixable.sh
+check "task.sh brain fix corrige antipatrón LL-001 automáticamente" '$T brain fix fixable.sh | grep -q "Corregido" && grep -q "\[\[:space:\]\]" fixable.sh'
+check "task.sh brain fix deja el código limpio para brain lint (exit 0)" '$T brain lint fixable.sh >/dev/null'
+rm -f bad_awk.sh bad_sed.sh clean.sh fixable.sh
 
 # 6. task.sh doctor con linter integrado
 check "task.sh doctor incluye el paso de brain lint y completa los 5 pasos" 'OUT=$($T doctor); [ $? -eq 0 ] && printf "%s" "$OUT" | grep -q "\[3/5\] Linter de Antipatrones" && printf "%s" "$OUT" | grep -q "\[5/5\]"'

@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-110",
+  "summary": "Auto-Cura Determinista de Antipatrones en Codigo (task.sh brain fix)",
+  "source_agent": "devops-cloud-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T15:43:05Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/brain-lib.sh" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash -c 'echo \"awk {print \\s}\" > /tmp/t.sh && ./.agents/scripts/task.sh brain fix /tmp/t.sh && ./.agents/scripts/task.sh brain lint /tmp/t.sh && rm -f /tmp/t.sh'"
+  ]
+}

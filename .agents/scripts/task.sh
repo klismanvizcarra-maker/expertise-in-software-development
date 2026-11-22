@@ -1489,8 +1489,12 @@ EOF_ARCH
         shift 2
         brain_lint "$@"
         ;;
+      fix)
+        shift 2
+        brain_fix "$@"
+        ;;
       *)
-        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\" | doctor | stats | hotspots | lint [ruta...]>"
+        die "Uso: ./task.sh brain <sync | search <términos> | for TASK-ID [ruta...] | scope LL-ID \"<globs>\" | doctor | stats | hotspots | lint [ruta...] | fix [ruta...]>"
         ;;
     esac
     ;;
@@ -1947,6 +1951,7 @@ else:
   brain stats                            Lecciones por categoría, reincidencias y deuda
   brain hotspots                         Identifica hotspots de riesgo según lecciones y reincidencias
   brain lint [ruta...]                   Audita activamente antipatrones aprendidos en el código
+  brain fix [ruta...]                    Auto-cura determinista de antipatrones aprendidos (LL-001/LL-007)
   prefer "<categoría>" "<regla>"         Registra una preferencia en .agents/brain/preferences.md
   debt-resolve TD-ID                     Deuda saldada: la marca SALDADA y la retira de BRAIN.md
   lesson-retire LL-ID                    Marca una lección como OBSOLETA
