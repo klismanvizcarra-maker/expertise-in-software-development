@@ -1258,7 +1258,13 @@ rm -f bad_contract.json bad_path.json no_version.json valid_contract.json
 check "task.sh contracts con subcomando inválido falla (exit 1)" '! $T contracts invalid_sub >/dev/null 2>&1'
 check "task.sh contracts mock inicia el servidor mock y responde en /__health y endpoints simulados" '$T contracts mock --port 4390 --file "$ROOT/.agents/templates/contracts_template.json" >/dev/null 2>&1 & MPID=$!; sleep 1; HEALTH=$(curl -s http://127.0.0.1:4390/__health || true); echo "$HEALTH" | grep -q "skill-maestro-mock-server"; R1=$?; LOGIN_MOCK=$(curl -s -X POST http://127.0.0.1:4390/auth/login || true); echo "$LOGIN_MOCK" | grep -q "token"; R2=$?; kill $MPID 2>/dev/null; [ $R1 -eq 0 ] && [ $R2 -eq 0 ]'
 
-# 10. task.sh swarm
+# 10. task.sh seed
+check "task.sh seed genera JSON válido con usuarios y transacciones" '$T seed --count 3 | grep -q "\"users_count\": 3"'
+check "task.sh seed --format sql genera sentencias SQL válidas" '$T seed --count 2 --format sql | grep -q "CREATE TABLE IF NOT EXISTS users"'
+check "task.sh seed --count 0 falla con exit 1" '! $T seed --count 0 >/dev/null 2>&1'
+check "task.sh seed con formato inválido falla con exit 2" '! $T seed --format invalid_fmt >/dev/null 2>&1'
+
+# 11. task.sh swarm
 check "task.sh swarm status muestra el estado del enjambre" '$T swarm status | grep -q "Enjambre Multi-Agente"'
 check "task.sh swarm list lista las tareas en formato estructurado" '$T swarm list | grep -q "ID	AGENTE	ESTADO"'
 check "task.sh swarm con subcomando desconocido falla con exit 1" '! $T swarm invalid_cmd >/dev/null 2>&1'

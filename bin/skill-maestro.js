@@ -51,6 +51,7 @@ Commands:
   serve [--port <port>]     Start real-time interactive Live Dashboard (default: 4200)
   ui                        Alias for 'serve'
   swarm [status|list|run]   Coordinate concurrent multi-agent branches & workspaces
+  seed [--count N] [--fmt]  Generate realistic synthetic seed test data (JSON/SQL)
   mock [--port <port>]      Start autonomous API Mock Server from contracts.json
   mcp [--port <port>]       Start native Model Context Protocol (MCP) server (stdio or SSE)
   task <subcommand> [...]   Execute task.sh commands (list, add, start, close, doctor, etc.)
@@ -61,6 +62,7 @@ Examples:
   npx skill-maestro adopt ./existing-repo
   npx skill-maestro kickoff
   npx skill-maestro serve --port 4200
+  npx skill-maestro seed --count 20 --format sql
   npx skill-maestro swarm run TASK-001 TASK-002 --parallel 2
   npx skill-maestro doctor
 
@@ -257,6 +259,12 @@ async function main() {
       const localTaskSh = resolve(process.cwd(), '.agents/scripts/task.sh');
       const taskSh = existsSync(localTaskSh) ? localTaskSh : resolve(PKG_ROOT, '.agents/scripts/task.sh');
       runScript('bash', [taskSh, 'swarm', ...args.slice(1)]);
+      break;
+    }
+    case 'seed': {
+      const localTaskSh = resolve(process.cwd(), '.agents/scripts/task.sh');
+      const taskSh = existsSync(localTaskSh) ? localTaskSh : resolve(PKG_ROOT, '.agents/scripts/task.sh');
+      runScript('bash', [taskSh, 'seed', ...args.slice(1)]);
       break;
     }
     case 'task': {

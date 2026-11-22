@@ -1873,6 +1873,16 @@ else:
     esac
     ;;
 
+  seed)
+    if ! command -v python3 >/dev/null 2>&1; then
+      die "python3 es requerido para task.sh seed."
+    fi
+    SEED_SCRIPT="$SCRIPT_DIR/seed-generator.py"
+    [ -f "$SEED_SCRIPT" ] || SEED_SCRIPT="$PROJECT_ROOT/.agents/scripts/seed-generator.py"
+    [ -f "$SEED_SCRIPT" ] || die "Script seed-generator.py no encontrado."
+    exec python3 "$SEED_SCRIPT" "${@:2}"
+    ;;
+
   help|-h|--help|*)
     # Un comando desconocido (errata como 'clsoe') no puede parecer un éxito: ayuda por stderr y exit 1
     HELP_RC=0
@@ -1914,7 +1924,8 @@ else:
                                          Lección en lessons_learned.md (fuente única; rechaza
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
-  contracts [validate] [ruta]            Valida contratos API y DTOs (contracts.json por defecto)
+  contracts [validate|mock] [ruta]       Valida contratos API o inicia servidor de mocks
+  seed [--count N] [--format json|sql]   Genera datos sintéticos realistas para pruebas y persistencia
   swarm [status|list|spawn|run|merge|clean] Coordina enjambres concurrentes de agentes y workspaces aislados
   check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones
                                          de esas rutas; exit 2 si alguna está bloqueada (Antigravity)
