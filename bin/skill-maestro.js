@@ -51,6 +51,7 @@ Commands:
   serve [--port <port>]     Start real-time interactive Live Dashboard (default: 4200)
   ui                        Alias for 'serve'
   swarm [status|list]       Coordinate concurrent multi-agent branches & workspaces
+  mock [--port <port>]      Start autonomous API Mock Server from contracts.json
   mcp [--port <port>]       Start native Model Context Protocol (MCP) server (stdio or SSE)
   task <subcommand> [...]   Execute task.sh commands (list, add, start, close, doctor, etc.)
 
@@ -238,6 +239,17 @@ async function main() {
     case 'mcp': {
       const mcpServer = resolve(PKG_ROOT, '.agents/mcp/server.mjs');
       runScript('node', [mcpServer, ...args.slice(1)]);
+      break;
+    }
+    case 'mock': {
+      const mockScript = resolve(PKG_ROOT, '.agents/scripts/contracts-mock.py');
+      runScript('python3', [mockScript, ...args.slice(1)]);
+      break;
+    }
+    case 'contracts': {
+      const localTaskSh = resolve(process.cwd(), '.agents/scripts/task.sh');
+      const taskSh = existsSync(localTaskSh) ? localTaskSh : resolve(PKG_ROOT, '.agents/scripts/task.sh');
+      runScript('bash', [taskSh, 'contracts', ...args.slice(1)]);
       break;
     }
     case 'swarm': {

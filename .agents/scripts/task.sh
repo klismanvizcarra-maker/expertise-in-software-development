@@ -1535,8 +1535,15 @@ count = len(data["endpoints"])
 print(f"✅ Contratos válidos: {count} endpoints definidos en {path}")
 ' "$C_FILE" || exit 1
         ;;
+      mock)
+        shift 2
+        MOCK_SCRIPT="$SCRIPT_DIR/contracts-mock.py"
+        [ -f "$MOCK_SCRIPT" ] || MOCK_SCRIPT="$PROJECT_ROOT/.agents/scripts/contracts-mock.py"
+        [ -f "$MOCK_SCRIPT" ] || die "Script contracts-mock.py no encontrado."
+        exec python3 "$MOCK_SCRIPT" "$@"
+        ;;
       *)
-        die "Comando contracts desconocido: '$sub'"$'\n'"   Uso: ./task.sh contracts validate [ruta/contracts.json]"
+        die "Comando contracts desconocido: '$sub'"$'\n'"   Uso: ./task.sh contracts [validate [ruta]|mock [--port N] [--file ruta]]"
         ;;
     esac
     ;;
