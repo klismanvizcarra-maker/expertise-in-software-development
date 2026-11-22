@@ -68,6 +68,7 @@
 | `TASK-106` | Telemetria de Agentes y Metricas de Productividad en Live Dashboard 2.0 | frontend-agent | `DONE` | `0/3` | Añadir a dashboard-server.py vista de Agent Analytics & Velocity con tiempo promedio de ciclo (lead time), tasa de aprobacion de QA a la primera, antipatrones prevenidos por el cerebro y calculo de horas ahorradas; tests pasando |
 | `TASK-107` | Pipeline de Auto-Sanacion de CI (Self-Healing Pipeline) | devops-cloud-agent | `DONE` | `0/3` | Implementar script .agents/scripts/auto-heal-ci.sh y workflow .github/workflows/self-heal.yml que analiza trazas de error de CI y genera parches automaticos estructurados via /bugfix; tests en test-scripts.sh pasando |
 | `TASK-108` | Release v2.1.0 Enterprise: bump de version, CHANGELOG con tareas TASK-098..107, showcase README y archivo del tablero | docs-architecture-agent | `DONE` | `0/3` | Actualizar .agents/VERSION y package.json a 2.1.0; documentar seccion [2.1.0] en CHANGELOG.md; actualizar showcase y comandos en README.md; archivar tareas antiguas con task.sh archive --keep 5; tag v2.1.0 de Git; task.sh doctor en verde |
+| `TASK-109` | Exportador de OpenAPI 3.1 / Swagger desde contracts.json (task.sh contracts export openapi) | backend-agent | `DONE` | `0/3` | Implementar task.sh contracts export openapi [--output ruta] [--file ruta] que lee contracts.json y genera una especificacion OpenAPI 3.1.0 valida en JSON con info, paths, requestBody, responses y componentes; tests en test-scripts.sh pasando |
 
 > **Estados Válidos**: `BACKLOG` | `TODO` | `AWAITING_HUMAN_APPROVAL` | `IN_PROGRESS` | `IN_REVIEW_QA` | `BLOCKED` | `DONE`
 
@@ -368,3 +369,5 @@
 | `2026-11-22` | orchestrator-agent | orchestrator-agent | `TASK-080..TASK-102` | Archivadas 23 tareas DONE en .agents/archive/tasks_2026-11-22.md (--keep 5). |
 | `2026-11-22` | docs-architecture-agent | qa-security-agent | `TASK-108` | Consolidada release v2.1.0 con bump de version, CHANGELOG, showcase README y archivo del tablero. Comandos: `grep -q '2.1.0' .agents/VERSION` |
 | `2026-11-22` | qa-security-agent | orchestrator-agent | `TASK-108` | Aprobada por QA -> DONE. Sin lección: release formal v2.1.0 completada. |
+| `2026-11-22` | backend-agent | qa-security-agent | `TASK-109` | Implementado exportador OpenAPI 3.1.0 desde contracts.json con soporte para paths, requestBody, responses, schemas y seguridad Bearer JWT. Comandos: `./.agents/scripts/task.sh contracts export openapi --file .agents/templates/contracts_template.json / grep -q 'openapi.*3.1.0'` |
+| `2026-11-22` | qa-security-agent | orchestrator-agent | `TASK-109` | Aprobada por QA -> DONE. Sin lección: exportador de openapi completado sin defectos. |
