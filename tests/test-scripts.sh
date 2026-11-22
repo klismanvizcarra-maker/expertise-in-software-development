@@ -1279,6 +1279,11 @@ check "task.sh swarm run --parallel sin valor falla con exit 1" '! $T swarm run 
 check "task.sh swarm run --help muestra ayuda y sale con exit 0" '$T swarm run --help | grep -q "Despacha y orquesta concurrentemente"'
 check "task.sh swarm run despacha workspaces en paralelo para tareas indicadas" '$T add "Tarea swarm parallel 1" "backend-agent" "criterios" >/dev/null && TSW1=$(grep "Tarea swarm parallel 1" GLOBAL_STATE.md | grep -oE "TASK-[0-9]+" | head -1) && $T add "Tarea swarm parallel 2" "frontend-agent" "criterios" >/dev/null && TSW2=$(grep "Tarea swarm parallel 2" GLOBAL_STATE.md | grep -oE "TASK-[0-9]+" | head -1) && $T swarm run "$TSW1" "$TSW2" --parallel 2 >/dev/null && [ -d ".agents/workspaces/$TSW1" ] && [ -d ".agents/workspaces/$TSW2" ] && $T swarm clean >/dev/null && [ ! -d ".agents/workspaces/$TSW1" ]'
 
+# 12. auto-heal-ci.sh
+check "auto-heal-ci.sh --help muestra ayuda y sale con exit 0" 'bash "$ROOT/.agents/scripts/auto-heal-ci.sh" --help | grep -q "Pipeline de Auto-Sanación"'
+check "auto-heal-ci.sh detecta anomalías de secretos y genera diagnóstico estructurado" 'printf "Secreto detectado en el repositorio\nArchivo: src/auth.ts: sk_live_1234567890abcdef\nFAIL\n" | bash "$ROOT/.agents/scripts/auto-heal-ci.sh" --diagnose | grep -q "SECRET_LEAK"'
+check "auto-heal-ci.sh reporta limpio ante traza exitosa" 'printf "=== Diagnóstico ===\nTodos los tests pasaron exitosamente.\n" | bash "$ROOT/.agents/scripts/auto-heal-ci.sh" --diagnose | grep -q "No se detectaron fallos críticos"'
+
 cd "$WORK" || exit 1
 
 printf "\nResultado: %d OK, %d fallidas\n" "$PASS" "$FAIL"
