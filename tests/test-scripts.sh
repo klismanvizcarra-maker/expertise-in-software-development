@@ -1268,6 +1268,9 @@ check "task.sh swarm clean limpia el workspace aislado de la tarea" '$T swarm cl
 check "task.sh swarm merge sin ID falla con exit 1" '! $T swarm merge >/dev/null 2>&1'
 check "task.sh swarm merge sobre tarea no DONE falla con exit 1" '! $T swarm merge "$TSWARM" >/dev/null 2>&1'
 check "task.sh swarm merge sobre tarea DONE fusiona a main exitosamente" 'mkdir -p .agents/reviews && printf "# Reporte\n- **Tarea**: %s\n- **Revisor**: qa-security-agent\n- **Veredicto**: APROBADO\n" "$TSWARM" > ".agents/reviews/qa_${TSWARM}.md" && $T handoff "$TSWARM" >/dev/null && $T close "$TSWARM" --no-lesson "test" >/dev/null && $T swarm merge "$TSWARM" >/dev/null && ! git branch --format="%(refname:short)" | grep -q "$TSWARM"'
+check "task.sh swarm run --parallel sin valor falla con exit 1" '! $T swarm run --parallel >/dev/null 2>&1'
+check "task.sh swarm run --help muestra ayuda y sale con exit 0" '$T swarm run --help | grep -q "Despacha y orquesta concurrentemente"'
+check "task.sh swarm run despacha workspaces en paralelo para tareas indicadas" '$T add "Tarea swarm parallel 1" "backend-agent" "criterios" >/dev/null && TSW1=$(grep "Tarea swarm parallel 1" GLOBAL_STATE.md | grep -oE "TASK-[0-9]+" | head -1) && $T add "Tarea swarm parallel 2" "frontend-agent" "criterios" >/dev/null && TSW2=$(grep "Tarea swarm parallel 2" GLOBAL_STATE.md | grep -oE "TASK-[0-9]+" | head -1) && $T swarm run "$TSW1" "$TSW2" --parallel 2 >/dev/null && [ -d ".agents/workspaces/$TSW1" ] && [ -d ".agents/workspaces/$TSW2" ] && $T swarm clean >/dev/null && [ ! -d ".agents/workspaces/$TSW1" ]'
 
 cd "$WORK" || exit 1
 
