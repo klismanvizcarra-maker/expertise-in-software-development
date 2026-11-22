@@ -119,6 +119,9 @@ check "init-project.sh --lang con idioma invalido falla con exit 1" '! bash "$RO
 check "package.json es valido y define el binario skill-maestro" 'node -e "const pkg = JSON.parse(require(\"fs\").readFileSync(\"$ROOT/package.json\")); if (pkg.name !== \"skill-maestro\" || !pkg.bin[\"skill-maestro\"]) process.exit(1);"'
 check "bin/skill-maestro.js --help muestra el banner y comandos disponibles" 'OUT=$(node "$ROOT/bin/skill-maestro.js" --help); printf "%s" "$OUT" | grep -q "SKILL MAESTRO" && printf "%s" "$OUT" | grep -q "Klisman Vizcarra" && printf "%s" "$OUT" | grep -q "serve"'
 check "bin/skill-maestro.js --version muestra la version de skill-maestro" 'OUT=$(node "$ROOT/bin/skill-maestro.js" --version); printf "%s" "$OUT" | grep -q "skill-maestro v"'
+check "devcontainer.json es JSON valido y preconfigura extensiones y puertos" 'node -e "const dc = JSON.parse(require(\"fs\").readFileSync(\"$ROOT/.devcontainer/devcontainer.json\")); if (!dc.forwardPorts.includes(4200) || !dc.customizations.vscode.extensions.length) process.exit(1);"'
+check "Dockerfile de devcontainer instala Node 22 y Python 3" 'grep -q "node:1-22" "$ROOT/.devcontainer/Dockerfile" && grep -q "python3" "$ROOT/.devcontainer/Dockerfile"'
+check "plantilla devcontainer existe en .agents/templates" '[ -f "$ROOT/.agents/templates/devcontainer/devcontainer.json" ] && [ -f "$ROOT/.agents/templates/devcontainer/Dockerfile" ]'
 
 # ------------------------------------------------------------------------------
 section "task.sh add / move / list / metrics"
