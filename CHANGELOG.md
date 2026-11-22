@@ -2,6 +2,44 @@
 
 Todos los cambios relevantes de la librería SKILL MAESTRO. El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el versionado, [SemVer](https://semver.org/lang/es/). La versión instalada en un proyecto está en `.agents/VERSION`; `init-project.sh --update` la sincroniza.
 
+## [2.1.0] - 2026-11-22
+
+### Añadido (Hito: Autonomía Operativa, Mocks, Enjambres Paralelos y Auto-Sanación de CI)
+- **Servidor de Mocks Automático desde Contratos (`task.sh contracts mock`)**:
+  - Servidor HTTP ligero embebido (`.agents/scripts/contracts-mock.py`) basado en `http.server.ThreadingHTTPServer` con cero dependencias externas (TASK-103).
+  - Simulación dinámica de endpoints declarados en `contracts.json` con soporte REST (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`), CORS completo, simulación de códigos de error vía `X-Mock-Status` y latencia vía `X-Mock-Delay`/`--delay` (TASK-103).
+  - Endpoints de introspección `/__health` y `/__contracts` y subcomando `npx skill-maestro mock` (TASK-103).
+- **Despachador de Enjambre Paralelo (`task.sh swarm run`)**:
+  - Orquestación y *spawning* concurrente de múltiples agentes en worktrees aislados (`.agents/workspaces/$TID`) con control de concurrencia `--parallel N` (TASK-104).
+  - Selección automática de tareas en `TODO`/`IN_PROGRESS` y ejecución opcional de comandos paralelos (`--exec 'cmd'`) (TASK-104).
+- **Generador Inteligente de Datos Sintéticos Realistas (`task.sh seed`)**:
+  - Motor generador `.agents/scripts/seed-generator.py` en Python estándar para pruebas unitarias y E2E (TASK-105).
+  - Generación de usuarios con roles RBAC (`admin`, `editor`, `user`, `viewer`), contraseñas hasheadas en SHA-256, perfiles con avatares SVG, transacciones financieras multidivisa y soporte de nombres no-ASCII (TASK-105).
+  - Exportación en JSON estructurado y SQL relacional compatible con PostgreSQL / SQLite (TASK-105).
+- **Telemetría de Agentes y Métricas de Productividad en Live Dashboard 2.0**:
+  - Endpoint dedicado `GET /api/analytics` y reactivo vía SSE (`/api/events`) (TASK-106).
+  - Métricas de lead time promedio, tasa de aprobación de QA a la primera (`qaFirstPassRate`), antipatrones prevenidos y cálculo de horas de ingeniería ahorradas (4.5h por ciclo completado) (TASK-106).
+  - Visualización en Live Dashboard con tarjetas de KPIs y distribución de velocidad por rol de especialista (`agentVelocity`) (TASK-106).
+- **Pipeline de Auto-Sanación de CI (`auto-heal-ci.sh` y `.github/workflows/self-heal.yml`)**:
+  - Script de análisis inteligente `.agents/scripts/auto-heal-ci.sh` que clasifica fallos de CI (secretos, linter del cerebro, tests, errores TypeScript) (TASK-107).
+  - Creación automática de tareas estructuradas `/bugfix` en `GLOBAL_STATE.md` (`--create-task`) y auto-corrección determinista (`--auto-fix`) (TASK-107).
+  - Workflow GitHub Actions `.github/workflows/self-heal.yml` con trigger `workflow_run` sobre `Librería` con fallos (TASK-107).
+- **Servidor MCP v2 (SSE HTTP, Resources URI y Prompts)**:
+  - Soporte de transporte HTTP SSE (`--port`/`--sse`) además del transporte `stdio` (TASK-098).
+  - Exposición de resources URI (`maestro://state`, `maestro://brain`, `maestro://contracts`) y prompts guiados (TASK-098).
+- **Live Dashboard 2.0 con Streaming de Diagnóstico**:
+  - Eventos reactivos Server-Sent Events (`/api/events`) con latencia menor a 50ms (TASK-099).
+  - Terminal interactiva web para streaming en vivo de `task.sh doctor` y `doctor --kickoff` (TASK-099).
+- **CLI Wizard Interactivo y Diagnóstico Kickoff**:
+  - Asistente paso a paso en `bin/skill-maestro.js` e `init-project.sh --interactive` para inicialización de proyectos (TASK-101).
+  - Diagnóstico pre-vuelo `task.sh doctor --kickoff` para validación de entorno local (TASK-101).
+- **Coordinador de Integración y Fusión de Enjambre (`task.sh swarm merge`)**:
+  - Fusión con trazabilidad `--no-ff` a `main`, validación de contratos, comprobación de conflictos y eliminación de ramas locales y worktrees (TASK-097).
+- **Renovación de Skills de Planificación e Inicio**:
+  - Matriz heurística de arquitectura de 4 preguntas clave y generación estandarizada de 5 tareas fundacionales en `/iniciar-proyecto` y `/crear-plan` (TASK-102).
+- **Cierre formal de Evals de Activación**:
+  - Validación y registro de evals de activación contra Claude real en `tests/triggers/results/` (TASK-082).
+
 ## [2.0.0] - 2026-11-21
 
 ### Añadido (Hito Mayor: Enterprise Multi-Agent Operating System)

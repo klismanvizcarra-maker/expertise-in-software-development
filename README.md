@@ -4,8 +4,8 @@
 
 [![CI Audit](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions/workflows/audit.yml/badge.svg)](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions)
 [![npm version](https://img.shields.io/npm/v/skill-maestro.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/skill-maestro)
-![Version](https://img.shields.io/badge/version-v2.0.0-blue.svg?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-435%20passing-success.svg?style=flat-square)
+![Version](https://img.shields.io/badge/version-v2.1.0-blue.svg?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-448%20passing-success.svg?style=flat-square)
 ![Skills](https://img.shields.io/badge/skills-56%20expertos-success.svg?style=flat-square)
 ![Architecture](https://img.shields.io/badge/governance-multi--agent-purple.svg?style=flat-square)
 ![Protocol](https://img.shields.io/badge/protocol-MCP%20v2%20SSE-yellow.svg?style=flat-square)
@@ -27,7 +27,7 @@
  * ╠══════════════════════════════════════════════════════════════════════════════╣
  * ║  SYSTEM   : SKILL MAESTRO — Enterprise Multi-Agent Operating System         ║
  * ║  CREATOR  : Klisman Vizcarra                                                ║
- * ║  VERSION  : v2.0.0 Enterprise Edition                                       ║
+ * ║  VERSION  : v2.1.0 Enterprise Edition                                       ║
  * ║  TARGETS  : Claude Code & Google Antigravity IDE                            ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  */
@@ -118,7 +118,7 @@ import type { GovernanceFramework, AutonomousAgentSuite } from "@skill-maestro/c
 
 export const FrameworkConfig: GovernanceFramework = {
   name: "SKILL MAESTRO",
-  version: "2.0.0",
+  version: "2.1.0",
   creator: "Klisman Vizcarra",
   architecture: "Deterministic Multi-Agent Governance & Continuous Learning",
   
@@ -249,7 +249,16 @@ export const FrameworkConfig: GovernanceFramework = {
 # Enjambres Concurrentes (Swarm)
 ./.agents/scripts/task.sh swarm status             # Inspeccionar agentes y ramas activas
 ./.agents/scripts/task.sh swarm spawn TASK-XXX     # Crear workspace aislado en git worktree
+./.agents/scripts/task.sh swarm run TASK-1 TASK-2  # Despacho en paralelo con límite de concurrencia
 ./.agents/scripts/task.sh swarm merge TASK-XXX     # Fusión segura --no-ff a main y poda
+
+# Contratos de Integración y Simulación
+./.agents/scripts/task.sh contracts validate       # Validar integridad de contracts.json
+./.agents/scripts/task.sh contracts mock --port 4390 # Servidor HTTP de mocks dinámico desde contratos
+
+# Datos Sintéticos y Auto-Sanación de CI
+./.agents/scripts/task.sh seed --count 10 --format json # Generar datos sintéticos realistas
+./.agents/scripts/auto-heal-ci.sh                  # Diagnóstico y auto-sanación de fallos de CI
 
 # Cerebro y Memoria Persistente
 ./.agents/scripts/task.sh brain for TASK-XXX       # Consultar lecciones relevantes para la tarea
@@ -262,7 +271,7 @@ export const FrameworkConfig: GovernanceFramework = {
 
 ## 🧪 Batería de Pruebas y Validación Continua
 
-El ecosistema se somete a una suite rigurosa de **435 pruebas deterministas**:
+El ecosistema se somete a una suite rigurosa de **448 pruebas deterministas**:
 
 ```bash
 # 1. Validación de scripts, hooks, servidor MCP v2 y Live Dashboard
