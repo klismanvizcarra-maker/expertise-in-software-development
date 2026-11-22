@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-104",
+  "summary": "Despachador de Enjambre Paralelo (task.sh swarm run --parallel)",
+  "source_agent": "orchestrator-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T14:42:41Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "bin/skill-maestro.js" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "./.agents/scripts/task.sh swarm run --help | grep -q 'Despacha y orquesta concurrentemente'"
+  ]
+}
