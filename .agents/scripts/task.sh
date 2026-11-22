@@ -1542,8 +1542,18 @@ print(f"✅ Contratos válidos: {count} endpoints definidos en {path}")
         [ -f "$MOCK_SCRIPT" ] || die "Script contracts-mock.py no encontrado."
         exec python3 "$MOCK_SCRIPT" "$@"
         ;;
+      export|openapi)
+        shift 2
+        if [ "$1" = "openapi" ]; then
+          shift
+        fi
+        OAPI_SCRIPT="$SCRIPT_DIR/contracts-openapi.py"
+        [ -f "$OAPI_SCRIPT" ] || OAPI_SCRIPT="$PROJECT_ROOT/.agents/scripts/contracts-openapi.py"
+        [ -f "$OAPI_SCRIPT" ] || die "Script contracts-openapi.py no encontrado."
+        exec python3 "$OAPI_SCRIPT" "$@"
+        ;;
       *)
-        die "Comando contracts desconocido: '$sub'"$'\n'"   Uso: ./task.sh contracts [validate [ruta]|mock [--port N] [--file ruta]]"
+        die "Comando contracts desconocido: '$sub'"$'\n'"   Uso: ./task.sh contracts [validate [ruta]|mock [--port N] [--file ruta]|export openapi [--file ruta] [--output ruta]]"
         ;;
     esac
     ;;
@@ -1924,7 +1934,7 @@ else:
                                          Lección en lessons_learned.md (fuente única; rechaza
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
-  contracts [validate|mock] [ruta]       Valida contratos API o inicia servidor de mocks
+  contracts [validate|mock|export] [ruta] Valida contratos API, inicia mock server o exporta a OpenAPI 3.1
   seed [--count N] [--format json|sql]   Genera datos sintéticos realistas para pruebas y persistencia
   swarm [status|list|spawn|run|merge|clean] Coordina enjambres concurrentes de agentes y workspaces aislados
   check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones

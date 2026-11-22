@@ -1258,6 +1258,8 @@ check "task.sh contracts validate valida contrato mínimo válido (exit 0)" '$T 
 rm -f bad_contract.json bad_path.json no_version.json valid_contract.json
 check "task.sh contracts con subcomando inválido falla (exit 1)" '! $T contracts invalid_sub >/dev/null 2>&1'
 check "task.sh contracts mock inicia el servidor mock y responde en /__health y endpoints simulados" '$T contracts mock --port 4390 --file "$ROOT/.agents/templates/contracts_template.json" >/dev/null 2>&1 & MPID=$!; sleep 1; HEALTH=$(curl -s http://127.0.0.1:4390/__health || true); echo "$HEALTH" | grep -q "skill-maestro-mock-server"; R1=$?; LOGIN_MOCK=$(curl -s -X POST http://127.0.0.1:4390/auth/login || true); echo "$LOGIN_MOCK" | grep -q "token"; R2=$?; kill $MPID 2>/dev/null; [ $R1 -eq 0 ] && [ $R2 -eq 0 ]'
+check "task.sh contracts export openapi genera especificacion OpenAPI 3.1 valida en JSON" '$T contracts export openapi --file "$ROOT/.agents/templates/contracts_template.json" | grep -q "\"openapi\": \"3.1.0\""'
+check "task.sh contracts export openapi con --output escribe archivo y genera paths" 'rm -f "$TMP_DIR/oapi_out.json"; $T contracts export openapi --file "$ROOT/.agents/templates/contracts_template.json" --output "$TMP_DIR/oapi_out.json" >/dev/null 2>&1 && [ -f "$TMP_DIR/oapi_out.json" ] && grep -q "\"/auth/login\"" "$TMP_DIR/oapi_out.json"'
 
 # 10. task.sh seed
 check "task.sh seed genera JSON válido con usuarios y transacciones" '$T seed --count 3 | grep -q "\"users_count\": 3"'
