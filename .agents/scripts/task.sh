@@ -1763,8 +1763,112 @@ else:
         say "   Rama eliminada: $BRANCH"
         ;;
 
+      run)
+        require_state
+        shift 2
+        PARALLEL=3
+        EXEC_CMD=""
+        TARGET_TASKS=""
+        while [ $# -gt 0 ]; do
+          case "$1" in
+            --parallel|-p)
+              shift
+              [ -n "${1:-}" ] || die "Falta el valor para --parallel."
+              PARALLEL="$1"
+              ;;
+            --parallel=*)
+              PARALLEL="${1#*=}"
+              ;;
+            --exec|-e)
+              shift
+              [ -n "${1:-}" ] || die "Falta el comando para --exec."
+              EXEC_CMD="$1"
+              ;;
+            --exec=*)
+              EXEC_CMD="${1#*=}"
+              ;;
+            -h|--help)
+              say "Uso: ./task.sh swarm run [TASK-ID...] [--parallel N] [--exec 'cmd']"
+              say "Despacha y orquesta concurrentemente workspaces aislados en git worktrees para las tareas indicadas."
+              exit 0
+              ;;
+            TASK-*|task-*)
+              TARGET_TASKS="$TARGET_TASKS $(normalize_id "$1")"
+              ;;
+            *)
+              die "Argumento no reconocido para swarm run: '$1'"$'\n'"   Uso: ./task.sh swarm run [TASK-ID...] [--parallel N] [--exec 'cmd']"
+              ;;
+          esac
+          shift
+        done
+
+        if [ -z "$TARGET_TASKS" ]; then
+          TARGET_TASKS=$(awk -F'|' '
+            /^\|[[:space:]]*`TASK-[0-9]+/ {
+              id = $2;
+              gsub(/[[:space:]]|`/, "", id);
+              status = $5;
+              gsub(/[[:space:]]/, "", status);
+              if (status == "TODO" || status == "IN_PROGRESS") {
+                print id;
+              }
+            }
+          ' "$STATE_FILE" | tr '\n' ' ')
+        fi
+
+        TARGET_TASKS=$(printf '%s' "$TARGET_TASKS" | tr '\t\n' ' ' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+        if [ -z "$TARGET_TASKS" ]; then
+          say "ℹ️  No hay tareas en TODO o IN_PROGRESS para despachar en el enjambre."
+          exit 0
+        fi
+
+        TASK_COUNT=$(printf '%s\n' $TARGET_TASKS | wc -w | tr -d '[:space:]')
+        say "${BLUE}${BOLD}=== Despachador de Enjambre Paralelo (Parallel Swarm Runner) ===${NC}"
+        say "-> Tareas seleccionadas: $TASK_COUNT"
+        say "-> Concurrencia máxima: $PARALLEL"
+
+        SPAWNED_COUNT=0
+        for tid in $TARGET_TASKS; do
+          tid=$(normalize_id "$tid")
+          require_task "$tid"
+          AGENT=$(task_field "$tid" 4)
+          DESC=$(task_field "$tid" 3)
+          say "-> Despachando workspace para $tid (agente: $AGENT)..."
+          "$0" swarm spawn "$tid" >/dev/null 2>&1 || true
+          WS_DIR="$PROJECT_ROOT/.agents/workspaces/$tid"
+          if [ -d "$WS_DIR" ]; then
+            SPAWNED_COUNT=$((SPAWNED_COUNT + 1))
+            say "   [OK] Workspace listo: $WS_DIR"
+          else
+            say "   [WARN] No se pudo crear workspace para $tid"
+          fi
+        done
+
+        if [ -n "$EXEC_CMD" ]; then
+          say "-> Ejecutando en paralelo con concurrencia $PARALLEL: '$EXEC_CMD'..."
+          for tid in $TARGET_TASKS; do
+            WS_DIR="$PROJECT_ROOT/.agents/workspaces/$tid"
+            if [ -d "$WS_DIR" ]; then
+              while [ $(jobs -rp | wc -l) -ge "$PARALLEL" ]; do
+                sleep 0.1
+              done
+              (
+                cd "$WS_DIR" && eval "$EXEC_CMD"
+              ) &
+            fi
+          done
+          wait
+          say "✅ Ejecución paralela finalizada en todos los workspaces del enjambre."
+        fi
+
+        say "================================================================="
+        say "${GREEN}${BOLD}✅ Enjambre despachado: $SPAWNED_COUNT/$TASK_COUNT workspaces activos y listos para ejecución simultánea.${NC}"
+        say "💡 Para ver el estado del enjambre: ./task.sh swarm status"
+        say "💡 Para limpiar workspaces al terminar: ./task.sh swarm clean"
+        ;;
+
       *)
-        die "Comando swarm desconocido: '$sub'"$'\n'"   Uso: ./task.sh swarm [status|list|spawn TASK-XXX|merge TASK-XXX|clean [TASK-XXX]]"
+        die "Comando swarm desconocido: '$sub'"$'\n'"   Uso: ./task.sh swarm [status|list|spawn TASK-XXX|run [TASK-XXX...] [--parallel N]|merge TASK-XXX|clean [TASK-XXX]]"
         ;;
     esac
     ;;
@@ -1811,7 +1915,7 @@ else:
                                          duplicados salvo --force)
   debt "<desc>" TASK-ID "<acción>" [ALTA|MEDIA|BAJA]    Deuda técnica
   contracts [validate] [ruta]            Valida contratos API y DTOs (contracts.json por defecto)
-  swarm [status|list|spawn|merge|clean]  Coordina enjambres concurrentes de agentes y workspaces aislados
+  swarm [status|list|spawn|run|merge|clean] Coordina enjambres concurrentes de agentes y workspaces aislados
   check <ruta> [ruta...]                 Antes de editar: tarea activa (cero código sin tarea) y lecciones
                                          de esas rutas; exit 2 si alguna está bloqueada (Antigravity)
   brain search <términos...>             Busca en lecciones, gotchas y deuda

@@ -50,7 +50,7 @@ Commands:
   update [path]             Update installed skills, hooks, and scripts to latest
   serve [--port <port>]     Start real-time interactive Live Dashboard (default: 4200)
   ui                        Alias for 'serve'
-  swarm [status|list]       Coordinate concurrent multi-agent branches & workspaces
+  swarm [status|list|run]   Coordinate concurrent multi-agent branches & workspaces
   mock [--port <port>]      Start autonomous API Mock Server from contracts.json
   mcp [--port <port>]       Start native Model Context Protocol (MCP) server (stdio or SSE)
   task <subcommand> [...]   Execute task.sh commands (list, add, start, close, doctor, etc.)
@@ -61,6 +61,7 @@ Examples:
   npx skill-maestro adopt ./existing-repo
   npx skill-maestro kickoff
   npx skill-maestro serve --port 4200
+  npx skill-maestro swarm run TASK-001 TASK-002 --parallel 2
   npx skill-maestro doctor
 
 Learn more at:
