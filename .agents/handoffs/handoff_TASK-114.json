@@ -1,0 +1,15 @@
+{
+  "task_id": "TASK-114",
+  "summary": "Fix: corregir variable de directorio temporal WORK en pruebas de openapi y audit report",
+  "source_agent": "qa-security-agent",
+  "target_agent": "devops-cloud-agent",
+  "timestamp": "2026-11-22T20:15:54Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "bash tests/test-scripts.sh"
+  ]
+}
