@@ -5,7 +5,7 @@
 [![CI Audit](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions/workflows/audit.yml/badge.svg)](https://github.com/klismanvizcarra-maker/expertise-in-software-development/actions)
 [![npm version](https://img.shields.io/npm/v/skill-maestro.svg?style=flat-square&color=cb3837)](https://www.npmjs.com/package/skill-maestro)
 ![Version](https://img.shields.io/badge/version-v2.1.0-blue.svg?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-448%20passing-success.svg?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-462%20passing-success.svg?style=flat-square)
 ![Skills](https://img.shields.io/badge/skills-56%20expertos-success.svg?style=flat-square)
 ![Architecture](https://img.shields.io/badge/governance-multi--agent-purple.svg?style=flat-square)
 ![Protocol](https://img.shields.io/badge/protocol-MCP%20v2%20SSE-yellow.svg?style=flat-square)
@@ -255,6 +255,11 @@ export const FrameworkConfig: GovernanceFramework = {
 # Contratos de Integración y Simulación
 ./.agents/scripts/task.sh contracts validate       # Validar integridad de contracts.json
 ./.agents/scripts/task.sh contracts mock --port 4390 # Servidor HTTP de mocks dinámico desde contratos
+./.agents/scripts/task.sh contracts export openapi # Exportador a especificación estándar OpenAPI 3.1
+
+# Simulación de Carga y Reportes Ejecutivos
+./.agents/scripts/task.sh stress --url http://127.0.0.1:4200/api/status -c 5 -n 50 # Simulador de resiliencia (p50/p95/p99)
+./.agents/scripts/task.sh audit report --format html # Reporte ejecutivo de cumplimiento y gobernanza
 
 # Datos Sintéticos y Auto-Sanación de CI
 ./.agents/scripts/task.sh seed --count 10 --format json # Generar datos sintéticos realistas
@@ -264,6 +269,7 @@ export const FrameworkConfig: GovernanceFramework = {
 ./.agents/scripts/task.sh brain for TASK-XXX       # Consultar lecciones relevantes para la tarea
 ./.agents/scripts/task.sh brain hotspots           # Mapa de rutas de alto riesgo por lecciones
 ./.agents/scripts/task.sh brain lint               # Audita activamente antipatrones en el código
+./.agents/scripts/task.sh brain fix                # Auto-cura determinista de antipatrones aprendidos
 ./.agents/scripts/task.sh prefer "<cat>" "<regla>" # Registrar preferencia vinculante para agentes
 ```
 
@@ -271,7 +277,7 @@ export const FrameworkConfig: GovernanceFramework = {
 
 ## 🧪 Batería de Pruebas y Validación Continua
 
-El ecosistema se somete a una suite rigurosa de **448 pruebas deterministas**:
+El ecosistema se somete a una suite rigurosa de **462 pruebas deterministas**:
 
 ```bash
 # 1. Validación de scripts, hooks, servidor MCP v2 y Live Dashboard
