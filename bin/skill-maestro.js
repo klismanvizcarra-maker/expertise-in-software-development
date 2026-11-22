@@ -53,6 +53,7 @@ Commands:
   swarm [status|list|run]   Coordinate concurrent multi-agent branches & workspaces
   seed [--count N] [--fmt]  Generate realistic synthetic seed test data (JSON/SQL)
   stress [--url URL]        Run HTTP load & resilience simulator (p50/p95/p99)
+  audit [report]            Generate executive compliance & governance audit report
   mock [--port <port>]      Start autonomous API Mock Server from contracts.json
   mcp [--port <port>]       Start native Model Context Protocol (MCP) server (stdio or SSE)
   task <subcommand> [...]   Execute task.sh commands (list, add, start, close, doctor, etc.)
@@ -64,6 +65,7 @@ Examples:
   npx skill-maestro kickoff
   npx skill-maestro serve --port 4200
   npx skill-maestro stress --url http://127.0.0.1:4200/api/status -c 5 -n 20
+  npx skill-maestro audit report --format html
   npx skill-maestro seed --count 20 --format sql
   npx skill-maestro swarm run TASK-001 TASK-002 --parallel 2
   npx skill-maestro doctor
@@ -273,6 +275,12 @@ async function main() {
       const localTaskSh = resolve(process.cwd(), '.agents/scripts/task.sh');
       const taskSh = existsSync(localTaskSh) ? localTaskSh : resolve(PKG_ROOT, '.agents/scripts/task.sh');
       runScript('bash', [taskSh, 'stress', ...args.slice(1)]);
+      break;
+    }
+    case 'audit': {
+      const localTaskSh = resolve(process.cwd(), '.agents/scripts/task.sh');
+      const taskSh = existsSync(localTaskSh) ? localTaskSh : resolve(PKG_ROOT, '.agents/scripts/task.sh');
+      runScript('bash', [taskSh, 'audit', ...args.slice(1)]);
       break;
     }
     case 'task': {

@@ -1283,7 +1283,12 @@ check "task.sh stress con concurrencia inválida falla con exit 1" '! $T stress 
 check "bin/skill-maestro.js stress funciona a través del CLI global" 'node "$ROOT/bin/skill-maestro.js" stress --url http://127.0.0.1:4395/__health -c 2 -n 4 --json | grep -q "\"requests_per_second\""'
 kill $STRESS_PID 2>/dev/null || true
 
-# 12. task.sh swarm
+# 12. task.sh audit report
+check "task.sh audit report genera reporte HTML ejecutivo" 'rm -f "$TMP_DIR/audit.html"; $T audit report --format html --output "$TMP_DIR/audit.html" >/dev/null 2>&1 && [ -f "$TMP_DIR/audit.html" ] && grep -q "Reporte de Cumplimiento" "$TMP_DIR/audit.html"'
+check "task.sh audit report --format md genera resumen markdown a stdout" '$T audit report --format md --output - | grep -q "Resumen Ejecutivo de Cumplimiento"'
+check "bin/skill-maestro.js audit report funciona via CLI global" 'rm -f "$TMP_DIR/audit.md"; node "$ROOT/bin/skill-maestro.js" audit report --format md --output "$TMP_DIR/audit.md" >/dev/null 2>&1 && [ -f "$TMP_DIR/audit.md" ] && grep -q "Memoria Persistente" "$TMP_DIR/audit.md"'
+
+# 13. task.sh swarm
 check "task.sh swarm status muestra el estado del enjambre" '$T swarm status | grep -q "Enjambre Multi-Agente"'
 check "task.sh swarm list lista las tareas en formato estructurado" '$T swarm list | grep -q "ID	AGENTE	ESTADO"'
 check "task.sh swarm con subcomando desconocido falla con exit 1" '! $T swarm invalid_cmd >/dev/null 2>&1'
