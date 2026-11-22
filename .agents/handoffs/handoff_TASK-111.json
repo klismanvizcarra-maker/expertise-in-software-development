@@ -1,0 +1,18 @@
+{
+  "task_id": "TASK-111",
+  "summary": "Simulador de Carga y Resiliencia HTTP (task.sh stress)",
+  "source_agent": "qa-security-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T19:58:54Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/stress-test.py" },
+    { "type": "file", "path": ".agents/scripts/task.sh" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "bin/skill-maestro.js" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "python3 .agents/scripts/stress-test.py --help | grep -q 'Simulador de Carga'"
+  ]
+}
