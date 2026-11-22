@@ -1,0 +1,16 @@
+{
+  "task_id": "TASK-106",
+  "summary": "Telemetria de Agentes y Metricas de Productividad en Live Dashboard 2.0",
+  "source_agent": "frontend-agent",
+  "target_agent": "qa-security-agent",
+  "timestamp": "2026-11-22T14:52:04Z",
+  "iteration": 1,
+  "deliverables": [
+    { "type": "file", "path": ".agents/scripts/dashboard-server.py" },
+    { "type": "file", "path": "GLOBAL_STATE.md" },
+    { "type": "file", "path": "tests/test-scripts.sh" }
+  ],
+  "verification_commands": [
+    "python3 .agents/scripts/dashboard-server.py --port 4333 >/dev/null 2>&1 & SPID=$!; sleep 1; curl -s http://127.0.0.1:4333/api/analytics | grep -q 'qaFirstPassRate'; RC=$?; kill $SPID 2>/dev/null; [ $RC -eq 0 ]"
+  ]
+}
